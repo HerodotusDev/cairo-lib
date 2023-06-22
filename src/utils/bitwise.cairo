@@ -11,6 +11,7 @@ fn left_shift<
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
+// TODO refactor shift type from T to usize
 >(num: T, shift: T) -> T {
     // TODO change this logic
     let two = TOneable::one() + TOneable::one();
