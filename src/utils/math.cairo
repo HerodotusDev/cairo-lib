@@ -11,7 +11,7 @@ fn pow<
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
 >(base: T, mut exp: T) -> T {
-    if base.is_zero() {
+    if exp.is_zero() {
         TOneable::one()
     } else {
         base * pow(base, exp - TOneable::one())

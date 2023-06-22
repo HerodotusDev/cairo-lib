@@ -147,11 +147,3 @@ impl MPTImpl of MPTTrait {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{MPT, MPTTrait};
-    #[test]
-    fn test() {
-    }
-}

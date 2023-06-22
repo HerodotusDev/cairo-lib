@@ -11,6 +11,11 @@ impl BytesTryIntoU256 of TryInto<Bytes, u256> {
             return Option::None(());
         }
 
+        if self.is_empty() {
+            return Option::Some(0);
+        }
+
+        let offset = len.into() - 1;
         let mut result: u256 = 0;
         let mut i: usize = 0;
         loop {
@@ -18,7 +23,9 @@ impl BytesTryIntoU256 of TryInto<Bytes, u256> {
                 break ();
             }
             let byte: u256 = (*self.at(i)).into();
-            result += left_shift(byte, 8 * (31 - i.into()));
+            result += left_shift(byte, 8 * (offset - i.into()));
+
+            i += 1;
         };
 
         Option::Some(result)
