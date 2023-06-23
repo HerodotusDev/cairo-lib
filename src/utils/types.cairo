@@ -31,3 +31,45 @@ impl BytesTryIntoU256 of TryInto<Bytes, u256> {
         Option::Some(result)
     }
 }
+
+impl BytesPartialEq of PartialEq<Bytes> {
+    fn eq(lhs: @Bytes, rhs: @Bytes) -> bool {
+        let len_lhs = (*lhs).len();
+        if len_lhs != (*rhs).len() {
+            return false;
+        }
+
+        let mut i: usize = 0;
+        loop {
+            if i >= len_lhs {
+                break true;
+            }
+
+            if (*lhs).at(i) != (*rhs).at(i) {
+                break false;
+            }
+
+            i += 1;
+        }
+    }
+
+    fn ne(lhs: @Bytes, rhs: @Bytes) -> bool {
+        let len_lhs = (*lhs).len();
+        if len_lhs != (*rhs).len() {
+            return true;
+        }
+
+        let mut i: usize = 0;
+        loop {
+            if i >= len_lhs {
+                break false;
+            }
+
+            if (*lhs).at(i) != (*rhs).at(i) {
+                break true;
+            }
+
+            i += 1;
+        }
+    }
+}
