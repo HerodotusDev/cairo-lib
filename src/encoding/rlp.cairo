@@ -39,7 +39,7 @@ impl RLPTypeImpl of RLPTypeTrait {
 enum RLPItem {
     Bytes: Bytes,
     // Should be Array<RLPItem> to allow for any depth , but compiler panic
-    List: Array<Bytes>
+    List: Span<Bytes>
 }
 
 //trait RLPItemTrait {
@@ -94,8 +94,8 @@ impl RLPItemPartialEq of PartialEq<RLPItem> {
                 match rhs {
                     RLPItem::Bytes(_) => false,
                     RLPItem::List(l2) => {
-                        let len_l = l.len();
-                        if len_l != l2.len() {
+                        let len_l = (*l).len();
+                        if len_l != (*l2).len() {
                             return false;
                         }
                         let mut i: usize = 0;
@@ -103,7 +103,7 @@ impl RLPItemPartialEq of PartialEq<RLPItem> {
                             if i >= len_l {
                                 break true;
                             }
-                            if l.at(i) != l2.at(i) {
+                            if (*l).at(i) != (*l2).at(i) {
                                 break false;
                             }
                             i += 1;
@@ -139,26 +139,25 @@ fn rlp_decode(input: Span<u8>) -> Result<Array<RLPItem>, felt252> {
                 arr.append(prefix);
                 RLPItem::Bytes(arr.span())
             },
-            RLPType::StringShort(()) => RLPItem::Bytes(ArrayTrait::new().span()),
+            RLPType::StringShort(()) => {
+                let len = prefix - 0x80;
+                let mut j: usize = i;
+                let mut arr = ArrayTrait::new();
+                loop {
+                    if j >= i + len.into() {
+                        break ();
+                    }
+
+                    arr.append(*input[j]);
+                    j += 1;
+                };
+
+                i += len.into();
+                RLPItem::Bytes(arr.span())
+            },
             RLPType::StringLong(()) => RLPItem::Bytes(ArrayTrait::new().span()),
             RLPType::ListShort(()) => RLPItem::Bytes(ArrayTrait::new().span()),
             RLPType::ListLong(()) => RLPItem::Bytes(ArrayTrait::new().span()),
-            //RLPType::StringShort(()) => {
-                //let len = prefix - 0x80;
-                //let mut j: usize = i;
-                //let mut arr = ArrayTrait::new();
-                //loop {
-                    //if j >= i + len.into() {
-                        //break ();
-                    //}
-
-                    //arr.append(*input[j]);
-                    //j += 1;
-                //};
-
-                //i += len.into();
-                //RLPItem::Bytes(arr)
-            //},
             //RLPType::StringLong(()) => {
                 //let len_len = prefix - 0xb7;
                 //let mut j: usize = i;
