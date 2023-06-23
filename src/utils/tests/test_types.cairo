@@ -41,14 +41,6 @@ fn test_bytes_try_into_u256() {
     helper_test_bytes_try_into_u256(arr.span(), 115792089237316195423570985008687907853269984665640564039457584007913129639935);
 
     let mut arr = ArrayTrait::new();
-    let mut i: usize = 0;
-    loop {
-        if i == 26 {
-            break ();
-        }
-        arr.append(255);
-        i += 1;
-    };
     arr.append(1);
     arr.append(2);
     arr.append(3);
@@ -56,6 +48,5 @@ fn test_bytes_try_into_u256() {
     arr.append(5);
     arr.append(6);
     // Max value
-    // TODO failing
-    //helper_test_bytes_try_into_u256(arr.span(), 1108152157446);
+    helper_test_bytes_try_into_u256(arr.span(), 1108152157446);
 }
