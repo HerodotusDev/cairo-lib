@@ -38,8 +38,7 @@ fn test_rlp_decode_string() {
         let mut arr = ArrayTrait::new();
         arr.append(i);
 
-        let mut sp = arr.span();
-        let (res, len) = rlp_decode(ref sp).unwrap();
+        let (res, len) = rlp_decode(arr.span()).unwrap();
         assert(len == 1, 'Wrong len');
         assert(res == RLPItem::Bytes(arr.span()), 'Wrong value');
 
@@ -80,8 +79,7 @@ fn test_rlp_decode_short_string() {
     arr.append(0x3b);
     arr.append(0xf7);
 
-    let mut sp = arr.span();
-    let (res, len) = rlp_decode(ref sp).unwrap();
+    let (res, len) = rlp_decode(arr.span()).unwrap();
     assert(len == 1 + (0x9b-0x80), 'Wrong len');
 
     arr.pop_front();
@@ -157,8 +155,7 @@ fn test_rlp_decode_long_string_len_of_len_1() {
     arr.append(0x7d);
     arr.append(0xd9);
     
-    let mut sp = arr.span();
-    let (res, len) = rlp_decode(ref sp).unwrap();
+    let (res, len) = rlp_decode(arr.span()).unwrap();
     assert(len == 1 + (0xb8-0xb7) + 0x3c, 'Wrong len');
 
     arr.pop_front();
@@ -434,8 +431,7 @@ fn test_rlp_decode_long_string_len_of_len_2() {
     arr.append(0x87);
     arr.append(0x60);
     
-    let mut sp = arr.span();
-    let (res, len) = rlp_decode(ref sp).unwrap();
+    let (res, len) = rlp_decode(arr.span()).unwrap();
     assert(len == 1 + (0xb9-0xb7) + 0x0102, 'Wrong len');
 
     arr.pop_front();
@@ -461,8 +457,7 @@ fn test_rlp_decode_short_list() {
     arr.append(0x38);
     arr.append(0x92);
 
-    let mut sp = arr.span();
-    let (res, len) = rlp_decode(ref sp).unwrap();
+    let (res, len) = rlp_decode(arr.span()).unwrap();
     assert(len == 1 + (0xc9-0xc0), 'Wrong len');
 
     let mut expected = ArrayTrait::new();

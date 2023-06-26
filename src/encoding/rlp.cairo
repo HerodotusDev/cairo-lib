@@ -44,7 +44,7 @@ enum RLPItem {
     List: Span<Bytes>
 }
 
-fn rlp_decode(ref input: Bytes) -> Result<(RLPItem, usize), felt252> {
+fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
     let prefix = *input.at(0);
 
     // Unwrap is impossible to panic here
@@ -56,73 +56,39 @@ fn rlp_decode(ref input: Bytes) -> Result<(RLPItem, usize), felt252> {
             Result::Ok((RLPItem::Bytes(arr.span()), 1))
         },
         RLPType::StringShort(()) => {
-            let len = prefix - 0x80;
-            let mut i: usize = 1;
-            let mut arr = ArrayTrait::new();
-            loop {
-                if i >= 1 + len.into() {
-                    break ();
-                }
+            let len = prefix.into() - 0x80;
+            let res = input.slice(1, len);
 
-                arr.append(*input[i]);
-                i += 1;
-            };
-
-            Result::Ok((RLPItem::Bytes(arr.span()), 1 + len.into()))
+            Result::Ok((RLPItem::Bytes(res), 1 + len))
         },
         RLPType::StringLong(()) => {
-            let len_len = prefix - 0xb7;
-            let mut i: usize = 1;
-            let mut len_arr = ArrayTrait::new();
-            loop {
-                if i >= 1 + len_len.into() {
-                    break ();
-                }
-
-                len_arr.append(*input[i]);
-                i += 1;
-            };
+            let len_len = prefix.into() - 0xb7;
+            let len_span = input.slice(1, len_len);
 
             // TODO handle error of byte conversion
             // TODO handle error of converting u256 to u32
             // If RLP is correclty formated it should never fail, so using unwrap for now
-            let len: u32 = len_arr.span().try_into().unwrap().try_into().unwrap();
+            // Bytes => u256 => u32
+            let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
+            let res = input.slice(1 + len_len, len); 
 
-            let mut arr = ArrayTrait::new(); 
-            i = 1 + len_len.into();
-            loop {
-                if i >= 1 + len_len.into() + len {
-                    break ();
-                }
-
-                arr.append(*input[i]);
-                i += 1;
-            };
-
-            Result::Ok((RLPItem::Bytes(arr.span()), 1 + len_len.into() + len))
+            Result::Ok((RLPItem::Bytes(res), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
-            let len = prefix - 0xc0;
-            let mut i: usize = 1;
-            input.pop_front();
+            let len = prefix.into() - 0xc0;
+            let mut i: usize = 0;
+            let mut in = input.slice(1, len);
             let mut arr = ArrayTrait::new();
             loop {
-                if i >= 1 + len.into() {
+                if i >= len {
                     break ();
                 }
 
-                let (decoded, decoded_len) = rlp_decode(ref input).unwrap();
+                let (decoded, decoded_len) = rlp_decode(in).unwrap();
                 match decoded {
                     RLPItem::Bytes(b) => {
                         arr.append(b);
-                        let mut j = 0;
-                        loop {
-                            if j == decoded_len {
-                                break ();
-                            }
-                            input.pop_front();
-                            j += 1;
-                        };
+                        in = in.slice(decoded_len, in.len() - decoded_len);
                     },
                     RLPItem::List(_) => {
                         // TODO return Err
