@@ -4,6 +4,7 @@ use array::{Array, ArrayTrait, Span, SpanTrait};
 use clone::Clone;
 use traits::{Into, TryInto};
 use cairo_lib::utils::types::{Bytes, BytesPartialEq, BytesTryIntoU256};
+use debug::PrintTrait;
 
 #[derive(Drop, PartialEq)]
 enum RLPType {
@@ -43,42 +44,106 @@ enum RLPItem {
     List: Span<Bytes>
 }
 
-//trait RLPItemTrait {
-    //fn len(self: @RLPItem) -> usize;
-//}
+fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
+    let prefix = *input.at(0);
 
-//impl RLPItemImpl of RLPItemTrait {
-    //fn len(self: @RLPItem) -> usize {
-        //match self {
-            //RLPItem::Bytes(b) => {
-                //if b.len() == 1 {
-                    //if *b.at(0) <= 23 {
-                        //1
-                    //} else {
-                        //// TODO handle b.len() > 55
-                        //1 + b.len()
-                    //}
-                //} else {
-                    //1 + b.len()
+    // Unwrap is impossible to panic here
+    let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
+    match rlp_type {
+        RLPType::String(()) => {
+            let mut arr = ArrayTrait::new();
+            arr.append(prefix);
+            Result::Ok((RLPItem::Bytes(arr.span()), 1))
+        },
+        RLPType::StringShort(()) => {
+            let len = prefix - 0x80;
+            let mut i: usize = 1;
+            let mut arr = ArrayTrait::new();
+            loop {
+                if i >= 1 + len.into() {
+                    break ();
+                }
+
+                arr.append(*input[i]);
+                i += 1;
+            };
+
+            Result::Ok((RLPItem::Bytes(arr.span()), 1 + len.into()))
+        },
+        RLPType::StringLong(()) => {
+            let len_len = prefix - 0xb7;
+            let mut i: usize = 1;
+            let mut len_arr = ArrayTrait::new();
+            loop {
+                if i >= 1 + len_len.into() {
+                    break ();
+                }
+
+                len_arr.append(*input[i]);
+                i += 1;
+            };
+
+            // TODO handle error of byte conversion
+            // TODO handle error of converting u256 to u32
+            // If RLP is correclty formated it should never fail, so using unwrap for now
+            let len: u32 = len_arr.span().try_into().unwrap().try_into().unwrap();
+
+            let mut arr = ArrayTrait::new(); 
+            i = 1 + len_len.into();
+            loop {
+                if i >= 1 + len_len.into() + len {
+                    break ();
+                }
+
+                arr.append(*input[i]);
+                i += 1;
+            };
+
+            Result::Ok((RLPItem::Bytes(arr.span()), 1 + len_len.into() + len))
+        },
+        RLPType::ListShort(()) => {
+            //let len = prefix - 0xc0;
+            //let mut i: usize = 0;
+            Result::Err('Not implemented')
+        },
+        RLPType::ListLong(()) => Result::Err('Not implemented'),
+        //RLPType::ListLong(()) => {
+            //let len_len = prefix - 0xf7;
+            //let mut j: usize = i;
+            //let mut len_arr = ArrayTrait::new();
+            //loop {
+                //if j >= i + len_len.into() {
+                    //break ();
                 //}
-            //},
-            //RLPItem::List(l) => {
-                //let mut payload_len = 0;
-                //let mut i: usize = 0;
-                //loop {
-                    //if i >= l.len() {
-                        //break ();
-                    //}
-                    //let item = RLPItem::Bytes(l.at(i).clone());
-                    //payload_len += item.len();
-                //};
 
-                //1 + payload_len
-                //// TODO handle payload_len > 55
-            //}
+                //len_arr.append(*input[j]);
+                //j += 1;
+            //};
+
+            //// TODO let len = len_arr.into() -> Implement Array<u8> to usize
+            //let len = 0;
+            //i += len_len.into();
+
+            //let mut arr = ArrayTrait::new(); 
+            //j = i;
+            //loop {
+                //if j >= i + len {
+                    //break ();
+                //}
+
+                //arr.append(*input[j]);
+                //j += 1;
+            //};
+
+            //i += len.into();
+
+            //let mut span = arr.span();
+            //// TODO replace unwrap
+            //let decoded_list = rlp_decode_list(ref span).unwrap();
+            //RLPItem::List(decoded_list)
         //}
-    //}
-//}
+    }
+}
 
 impl RLPItemPartialEq of PartialEq<RLPItem> {
     fn eq(lhs: @RLPItem, rhs: @RLPItem) -> bool {
@@ -121,151 +186,3 @@ impl RLPItemPartialEq of PartialEq<RLPItem> {
     }
 }
 
-fn rlp_decode(input: Span<u8>) -> Result<Array<RLPItem>, felt252> {
-    let mut i: usize = 0;
-    let mut output = ArrayTrait::new();
-
-    loop {
-        if i >= input.len() {
-            break ();
-        }
-        let prefix = *input.at(i);
-        i += 1;
-
-        // Unwrap is impossible to panic here
-        let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
-        let item = match rlp_type {
-            RLPType::String(()) => {
-                let mut arr = ArrayTrait::new();
-                arr.append(prefix);
-                RLPItem::Bytes(arr.span())
-            },
-            RLPType::StringShort(()) => {
-                let len = prefix - 0x80;
-                let mut j: usize = i;
-                let mut arr = ArrayTrait::new();
-                loop {
-                    if j >= i + len.into() {
-                        break ();
-                    }
-
-                    arr.append(*input[j]);
-                    j += 1;
-                };
-
-                i += len.into();
-                RLPItem::Bytes(arr.span())
-            },
-            RLPType::StringLong(()) => {
-                let len_len = prefix - 0xb7;
-                let mut j: usize = i;
-                let mut len_arr = ArrayTrait::new();
-                loop {
-                    if j >= i + len_len.into() {
-                        break ();
-                    }
-
-                    len_arr.append(*input[j]);
-                    j += 1;
-                };
-
-                // TODO handle error of byte conversion
-                // TODO handle error of converting u256 to u32
-                // If RLP is correclty formated it should never fail, so using unwrap for now
-                let len: u32 = len_arr.span().try_into().unwrap().try_into().unwrap();
-                i += len_len.into();
-
-                let mut arr = ArrayTrait::new(); 
-                j = i;
-                loop {
-                    if j >= i + len {
-                        break ();
-                    }
-
-                    arr.append(*input[j]);
-                    j += 1;
-                };
-
-                i += len.into();
-                RLPItem::Bytes(arr.span())
-            },
-            RLPType::ListShort(()) => RLPItem::Bytes(ArrayTrait::new().span()),
-            RLPType::ListLong(()) => RLPItem::Bytes(ArrayTrait::new().span()),
-            //RLPType::ListLong(()) => {
-                //let len_len = prefix - 0xf7;
-                //let mut j: usize = i;
-                //let mut len_arr = ArrayTrait::new();
-                //loop {
-                    //if j >= i + len_len.into() {
-                        //break ();
-                    //}
-
-                    //len_arr.append(*input[j]);
-                    //j += 1;
-                //};
-
-                //// TODO let len = len_arr.into() -> Implement Array<u8> to usize
-                //let len = 0;
-                //i += len_len.into();
-
-                //let mut arr = ArrayTrait::new(); 
-                //j = i;
-                //loop {
-                    //if j >= i + len {
-                        //break ();
-                    //}
-
-                    //arr.append(*input[j]);
-                    //j += 1;
-                //};
-
-                //i += len.into();
-
-                //let mut span = arr.span();
-                //// TODO replace unwrap
-                //let decoded_list = rlp_decode_list(ref span).unwrap();
-                //RLPItem::List(decoded_list)
-            //}
-        };
-        output.append(item);
-    };
-
-    Result::Ok(output)
-}
-
- //fn rlp_decode_list(ref input: Span<u8>) -> Result<Array<Array<u8>>, felt252> {
-    //let mut i = 0;
-    //let mut output = ArrayTrait::new();
-
-    //loop {
-        //if i >= input.len() {
-            //break Result::Ok(output.clone());
-        //}
-        //let mut j = i;
-        //loop {
-            //if j == 0 {
-                //break ();
-            //}
-
-            //input.pop_back();
-            //j -= 1;
-        //};
-
-        //// TODO replace unwrap
-        //let items = rlp_decode(input).unwrap();
-        //if items.len() > 1 {
-            //break Result::Err('Recursive arrays not supported');
-        //}
-        //let item = items.at(0);
-        //i += item.len();
-
-        //match item {
-            //RLPItem::Bytes(b) => {
-                //output.append(b.clone());
-            //},
-            //RLPItem::List(_) => {
-                //break Result::Err('Recursive arrays not supported');
-            //}
-        //};
-    //}
-//}

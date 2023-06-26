@@ -1,7 +1,7 @@
 use cairo_lib::encoding::rlp::{rlp_decode, RLPType, RLPTypeTrait, RLPItem};
 use cairo_lib::utils::types::Bytes;
 use array::{ArrayTrait, SpanTrait};
-use core::result::ResultTrait;
+use result::ResultTrait;
 
 #[test]
 #[available_gas(9999999)]
@@ -38,9 +38,9 @@ fn test_rlp_decode_string() {
         let mut arr = ArrayTrait::new();
         arr.append(i);
 
-        let res = rlp_decode(arr.span()).unwrap();
-        assert(res.len() == 1, 'Wrong len');
-        assert(res.at(0) == @RLPItem::Bytes(arr.span()), 'Wrong value');
+        let (res, len) = rlp_decode(arr.span()).unwrap();
+        assert(len == 1, 'Wrong len');
+        assert(res == RLPItem::Bytes(arr.span()), 'Wrong value');
 
         i += 1;
     };
@@ -79,13 +79,13 @@ fn test_rlp_decode_short_string() {
     arr.append(0x3b);
     arr.append(0xf7);
 
-    let res = rlp_decode(arr.span()).unwrap();
-    assert(res.len() == 1, 'Wrong len');
+    let (res, len) = rlp_decode(arr.span()).unwrap();
+    assert(len == 1 + (0x9b-0x80), 'Wrong len');
 
     arr.pop_front();
     let expected_item = RLPItem::Bytes(arr.span());
 
-    assert(res.at(0) == @expected_item, 'Wrong value');
+    assert(res == expected_item, 'Wrong value');
 }
 
 #[test]
@@ -155,14 +155,14 @@ fn test_rlp_decode_long_string_len_of_len_1() {
     arr.append(0x7d);
     arr.append(0xd9);
     
-    let res = rlp_decode(arr.span()).unwrap();
-    assert(res.len() == 1, 'Wrong len');
+    let (res, len) = rlp_decode(arr.span()).unwrap();
+    assert(len == 1 + (0xb8-0xb7) + 0x3c, 'Wrong len');
 
     arr.pop_front();
     arr.pop_front();
     let expected_item = RLPItem::Bytes(arr.span());
 
-    assert(res.at(0) == @expected_item, 'Wrong value');
+    assert(res == expected_item, 'Wrong value');
 }
 
 #[test]
@@ -431,13 +431,13 @@ fn test_rlp_decode_long_string_len_of_len_2() {
     arr.append(0x87);
     arr.append(0x60);
     
-    let res = rlp_decode(arr.span()).unwrap();
-    assert(res.len() == 1, 'Wrong len');
+    let (res, len) = rlp_decode(arr.span()).unwrap();
+    assert(len == 1 + (0xb9-0xb7) + 0x0102, 'Wrong len');
 
     arr.pop_front();
     arr.pop_front();
     arr.pop_front();
     let expected_item = RLPItem::Bytes(arr.span());
 
-    assert(res.at(0) == @expected_item, 'Wrong value');
+    assert(res == expected_item, 'Wrong value');
 }
