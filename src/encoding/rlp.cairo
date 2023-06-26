@@ -104,6 +104,7 @@ fn rlp_decode(ref input: Bytes) -> Result<(RLPItem, usize), felt252> {
         RLPType::ListShort(()) => {
             let len = prefix - 0xc0;
             let mut i: usize = 1;
+            input.pop_front();
             let mut arr = ArrayTrait::new();
             loop {
                 if i >= 1 + len.into() {
@@ -116,10 +117,11 @@ fn rlp_decode(ref input: Bytes) -> Result<(RLPItem, usize), felt252> {
                         arr.append(b);
                         let mut j = 0;
                         loop {
-                            if j > b.len() {
+                            if j == decoded_len {
                                 break ();
                             }
                             input.pop_front();
+                            j += 1;
                         };
                     },
                     RLPItem::List(_) => {
@@ -133,50 +135,51 @@ fn rlp_decode(ref input: Bytes) -> Result<(RLPItem, usize), felt252> {
             Result::Ok((RLPItem::List(arr.span()), 1 + len.into()))
         },
         RLPType::ListLong(()) => {
-            let len_len = prefix - 0xb7;
-            let mut i: usize = 1;
-            let mut len_arr = ArrayTrait::new();
-            loop {
-                if i >= 1 + len_len.into() {
-                    break ();
-                }
+            //let len_len = prefix - 0xb7;
+            //let mut i: usize = 1;
+            //let mut len_arr = ArrayTrait::new();
+            //loop {
+                //if i >= 1 + len_len.into() {
+                    //break ();
+                //}
 
-                len_arr.append(*input[i]);
-                i += 1;
-            };
+                //len_arr.append(*input[i]);
+                //i += 1;
+            //};
 
-            // TODO handle error of byte conversion
-            // TODO handle error of converting u256 to u32
-            // If RLP is correclty formated it should never fail, so using unwrap for now
-            let len: u32 = len_arr.span().try_into().unwrap().try_into().unwrap();
-            let mut i: usize = 1;
-            let mut arr = ArrayTrait::new();
-            loop {
-                if i >= 1 + len.into() {
-                    break ();
-                }
+            //// TODO handle error of byte conversion
+            //// TODO handle error of converting u256 to u32
+            //// If RLP is correclty formated it should never fail, so using unwrap for now
+            //let len: u32 = len_arr.span().try_into().unwrap().try_into().unwrap();
+            //let mut i: usize = 1;
+            //let mut arr = ArrayTrait::new();
+            //loop {
+                //if i >= 1 + len.into() {
+                    //break ();
+                //}
 
-                let (decoded, decoded_len) = rlp_decode(ref input).unwrap();
-                match decoded {
-                    RLPItem::Bytes(b) => {
-                        arr.append(b);
-                        let mut j = 0;
-                        loop {
-                            if j > b.len() {
-                                break ();
-                            }
-                            input.pop_front();
-                        };
-                    },
-                    RLPItem::List(_) => {
-                        // TODO return Err
-                        panic_with_felt252('Recursive list not supported');
-                        // return Result::Err('Recursive list not supported');
-                    }
-                }
-                i += decoded_len;
-            };
-            Result::Ok((RLPItem::List(arr.span()), 1 + len_len.into() + len))
+                //let (decoded, decoded_len) = rlp_decode(ref input).unwrap();
+                //match decoded {
+                    //RLPItem::Bytes(b) => {
+                        //arr.append(b);
+                        //let mut j = 0;
+                        //loop {
+                            //if j > b.len() {
+                                //break ();
+                            //}
+                            //input.pop_front();
+                        //};
+                    //},
+                    //RLPItem::List(_) => {
+                        //// TODO return Err
+                        //panic_with_felt252('Recursive list not supported');
+                        //// return Result::Err('Recursive list not supported');
+                    //}
+                //}
+                //i += decoded_len;
+            //};
+            //Result::Ok((RLPItem::List(arr.span()), 1 + len_len.into() + len))
+            Result::Err('Not implemented')
         }
     }
 }

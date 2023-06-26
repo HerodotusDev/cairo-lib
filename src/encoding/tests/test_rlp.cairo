@@ -445,3 +445,45 @@ fn test_rlp_decode_long_string_len_of_len_2() {
 
     assert(res == expected_item, 'Wrong value');
 }
+
+#[test]
+#[available_gas(99999999999)]
+fn test_rlp_decode_short_list() {
+    let mut arr = ArrayTrait::new();
+    arr.append(0xc9);
+    arr.append(0x83);
+    arr.append(0x35);
+    arr.append(0x35);
+    arr.append(0x89);
+    arr.append(0x42);
+    arr.append(0x83);
+    arr.append(0x45);
+    arr.append(0x38);
+    arr.append(0x92);
+
+    let mut sp = arr.span();
+    let (res, len) = rlp_decode(ref sp).unwrap();
+    assert(len == 1 + (0xc9-0xc0), 'Wrong len');
+
+    let mut expected = ArrayTrait::new();
+
+    let mut expected_0 = ArrayTrait::new();
+    expected_0.append(0x35);
+    expected_0.append(0x35);
+    expected_0.append(0x89);
+    expected.append(expected_0.span());
+
+    let mut expected_1 = ArrayTrait::new();
+    expected_1.append(0x42);
+    expected.append(expected_1.span());
+
+    let mut expected_2 = ArrayTrait::new();
+    expected_2.append(0x45);
+    expected_2.append(0x38);
+    expected_2.append(0x92);
+    expected.append(expected_2.span());
+
+    let expected_item = RLPItem::List(expected.span());
+
+    assert(res == expected_item, 'Wrong value');
+}
