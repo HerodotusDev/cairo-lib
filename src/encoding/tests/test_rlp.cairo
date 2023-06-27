@@ -1587,6 +1587,7 @@ fn test_rlp_decode_long_list() {
 
     let mut expected_16 = ArrayTrait::new();
     expected.append(expected_16.span());
+    let expected_item = RLPItem::List(expected.span());
 
     assert(res == expected_item, 'Wrong value');
 }
