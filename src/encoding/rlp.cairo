@@ -4,7 +4,6 @@ use array::{Array, ArrayTrait, Span, SpanTrait};
 use clone::Clone;
 use traits::{Into, TryInto};
 use cairo_lib::utils::types::{Bytes, BytesPartialEq, BytesTryIntoU256};
-use debug::PrintTrait;
 
 #[derive(Drop, PartialEq)]
 enum RLPType {
@@ -76,78 +75,52 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
         },
         RLPType::ListShort(()) => {
             let len = prefix.into() - 0xc0;
-            let mut i: usize = 0;
             let mut in = input.slice(1, len);
-            let mut arr = ArrayTrait::new();
-            loop {
-                if i >= len {
-                    break ();
-                }
-
-                let (decoded, decoded_len) = rlp_decode(in).unwrap();
-                match decoded {
-                    RLPItem::Bytes(b) => {
-                        arr.append(b);
-                        in = in.slice(decoded_len, in.len() - decoded_len);
-                    },
-                    RLPItem::List(_) => {
-                        // TODO return Err
-                        panic_with_felt252('Recursive list not supported');
-                        // return Result::Err('Recursive list not supported');
-                    }
-                }
-                i += decoded_len;
-            };
-            Result::Ok((RLPItem::List(arr.span()), 1 + len.into()))
+            let res = rlp_decode_list(ref in);
+            Result::Ok((RLPItem::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
-            //let len_len = prefix - 0xb7;
-            //let mut i: usize = 1;
-            //let mut len_arr = ArrayTrait::new();
-            //loop {
-                //if i >= 1 + len_len.into() {
-                    //break ();
-                //}
+            let len_len = prefix.into() - 0xf7;
+            let len_span = input.slice(1, len_len);
 
-                //len_arr.append(*input[i]);
-                //i += 1;
-            //};
-
-            //// TODO handle error of byte conversion
-            //// TODO handle error of converting u256 to u32
-            //// If RLP is correclty formated it should never fail, so using unwrap for now
-            //let len: u32 = len_arr.span().try_into().unwrap().try_into().unwrap();
-            //let mut i: usize = 1;
-            //let mut arr = ArrayTrait::new();
-            //loop {
-                //if i >= 1 + len.into() {
-                    //break ();
-                //}
-
-                //let (decoded, decoded_len) = rlp_decode(ref input).unwrap();
-                //match decoded {
-                    //RLPItem::Bytes(b) => {
-                        //arr.append(b);
-                        //let mut j = 0;
-                        //loop {
-                            //if j > b.len() {
-                                //break ();
-                            //}
-                            //input.pop_front();
-                        //};
-                    //},
-                    //RLPItem::List(_) => {
-                        //// TODO return Err
-                        //panic_with_felt252('Recursive list not supported');
-                        //// return Result::Err('Recursive list not supported');
-                    //}
-                //}
-                //i += decoded_len;
-            //};
-            //Result::Ok((RLPItem::List(arr.span()), 1 + len_len.into() + len))
-            Result::Err('Not implemented')
+            // TODO handle error of byte conversion
+            // TODO handle error of converting u256 to u32
+            // If RLP is correclty formated it should never fail, so using unwrap for now
+            // Bytes => u256 => u32
+            let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
+            let mut in = input.slice(1 + len_len, len);
+            let res = rlp_decode_list(ref in);
+            Result::Ok((RLPItem::List(res), 1 + len_len + len))
         }
     }
+}
+
+fn rlp_decode_list(ref input: Bytes) -> Span<Bytes> {
+    let mut i = 0;
+    let len = input.len();
+    let mut output = ArrayTrait::new();
+
+    loop {
+        if i >= len {
+            break ();
+        }
+
+        let (decoded, decoded_len) = rlp_decode(input).unwrap();
+        match decoded {
+            RLPItem::Bytes(b) => {
+                output.append(b);
+                input = input.slice(decoded_len, input.len() - decoded_len);
+            },
+            RLPItem::List(_) => {
+                // TODO return Err
+                panic_with_felt252('Recursive list not supported');
+                // return Result::Err('Recursive list not supported');
+            }
+        }
+        i += decoded_len;
+
+    };
+    output.span()
 }
 
 impl RLPItemPartialEq of PartialEq<RLPItem> {
