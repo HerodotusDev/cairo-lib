@@ -12,12 +12,6 @@ struct MPT {
     root: u256
 }
 
-trait MPTTrait {
-    fn new(root: u256) -> MPT;
-    fn verify(self: @MPT, key: Bytes, proof: Span<Bytes>) -> Result<u256, felt252>;
-    fn decode_rlp_node(rlp: Bytes) -> Result<MPTNode, felt252>;
-}
-
 impl MPTDefault of Default<MPT> {
     fn default() -> MPT {
         MPTTrait::new(0)
@@ -34,6 +28,7 @@ enum MPTNode {
     Leaf: (Bytes, u256)
 }
 
+#[generate_trait]
 impl MPTImpl of MPTTrait {
     fn new(root: u256) -> MPT {
         MPT { root }

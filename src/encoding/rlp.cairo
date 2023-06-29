@@ -15,10 +15,7 @@ enum RLPType {
     ListLong: (),
 }
 
-trait RLPTypeTrait {
-    fn from_byte(byte: Byte) -> Result<RLPType, felt252>;
-}
-
+#[generate_trait]
 impl RLPTypeImpl of RLPTypeTrait {
     fn from_byte(byte: Byte) -> Result<RLPType, felt252> {
         if byte <= 0x7f {
