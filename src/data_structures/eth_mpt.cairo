@@ -21,7 +21,7 @@ impl MPTDefault of Default<MPT> {
 #[derive(Drop)]
 enum MPTNode {
     // hashes of correspondible child with nibble, value
-    Branch: (Span<Bytes>, u256),
+    Branch: (Span<u256>, u256),
     // shared nibbles, next node
     Extension: (Bytes, u256),
     // key end, value
@@ -63,7 +63,7 @@ impl MPTImpl of MPTTrait {
                         break Result::Ok(value);
                     } else {
                         // TODO error handling
-                        current_hash = (*nibbles.at((*key.at(key_index)).into())).try_into().unwrap();
+                        current_hash = *nibbles.at((*key.at(key_index)).into());
                     }
                     key_index += 1;
                 },
@@ -94,11 +94,23 @@ impl MPTImpl of MPTTrait {
             RLPItem::List(l) => {
                 let len = l.len();
                 if len == 17 {
-                    let nibble_hashes = l.slice(0, 16);
+                    let nibble_hashes_bytes = l.slice(0, 16);
+                    let mut nibble_hashes = ArrayTrait::new();
+                    let mut i: usize = 0;
+                    loop {
+                        if i >= nibble_hashes_bytes.len() {
+                            break ();
+                        }
+
+                        // TODO error handling
+                        let hash = (*nibble_hashes_bytes.at(i)).try_into().unwrap();
+                        nibble_hashes.append(hash);
+                        i += 1;
+                    };
                     // TODO error handling (should never fail if RLP is properly formated)
                     let value = (*l.at(16)).try_into().unwrap();
                     
-                    Result::Ok(MPTNode::Branch((nibble_hashes, value)))
+                    Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)))
                 } else if len == 2 {
                     let (prefix, nibble) = (*(*l.at(0)).at(0)).extract_nibbles();
 
