@@ -1,4 +1,4 @@
-use cairo_lib::utils::types::{Bytes, BytesTryIntoU256};
+use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256};
 use array::ArrayTrait;
 use traits::{TryInto};
 use option::OptionTrait;

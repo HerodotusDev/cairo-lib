@@ -3,7 +3,8 @@ use option::OptionTrait;
 use array::{Array, ArrayTrait, Span, SpanTrait};
 use clone::Clone;
 use traits::{Into, TryInto};
-use cairo_lib::utils::types::{Bytes, BytesPartialEq, BytesTryIntoU256};
+use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
+use cairo_lib::utils::types::byte::Byte;
 
 #[derive(Drop, PartialEq)]
 enum RLPType {
@@ -15,11 +16,11 @@ enum RLPType {
 }
 
 trait RLPTypeTrait {
-    fn from_byte(byte: u8) -> Result<RLPType, felt252>;
+    fn from_byte(byte: Byte) -> Result<RLPType, felt252>;
 }
 
 impl RLPTypeImpl of RLPTypeTrait {
-    fn from_byte(byte: u8) -> Result<RLPType, felt252> {
+    fn from_byte(byte: Byte) -> Result<RLPType, felt252> {
         if byte <= 0x7f {
             Result::Ok(RLPType::String(()))
         } else if byte <= 0xb7 {

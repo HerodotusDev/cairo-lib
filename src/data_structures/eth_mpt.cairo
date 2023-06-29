@@ -1,7 +1,8 @@
 use array::{ArrayTrait, SpanTrait};
 use cairo_lib::hashing::keccak::KeccakHasherSpanU8;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
-use cairo_lib::utils::types::{Bytes, BytesTryIntoU256, BytesPartialEq};
+use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256, BytesPartialEq};
+use cairo_lib::utils::types::byte::ByteTrait;
 use traits::{TryInto, Into};
 use option::OptionTrait;
 use cairo_lib::utils::bitwise::right_shift;
@@ -38,6 +39,7 @@ impl MPTImpl of MPTTrait {
         MPT { root }
     }
 
+    // key is a nibble array
     fn verify(self: @MPT, key: Bytes, proof: Span<Bytes>) -> Result<u256, felt252> {
         let mut current_hash = 0;
         let mut proof_index: usize = 0;
@@ -103,7 +105,7 @@ impl MPTImpl of MPTTrait {
                     
                     Result::Ok(MPTNode::Branch((nibble_hashes, value)))
                 } else if len == 2 {
-                    let (prefix, nibble) = extract_nibbles(*(*l.at(0)).at(0));
+                    let (prefix, nibble) = (*(*l.at(0)).at(0)).extract_nibbles();
 
                     if prefix == 0 {
                         let mut shared_nibbles = *l.at(0);
@@ -166,14 +168,4 @@ impl MPTImpl of MPTTrait {
             }
         }
     }
-}
-
-fn extract_nibbles(byte: u8) -> (u8, u8) {
-    // TODO fix all hte conversions. Bitwise AND only supported for u128 and u256 :(
-    // (next compiler version already supports)
-    let masked = byte.into() & 0xf0_u128;
-    let high = right_shift(masked, 4);
-    let low = byte.into() & 0x0f_u128;
-
-    (high.try_into().unwrap(), low.try_into().unwrap())
 }

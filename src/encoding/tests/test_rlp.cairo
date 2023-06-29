@@ -1,5 +1,5 @@
 use cairo_lib::encoding::rlp::{rlp_decode, RLPType, RLPTypeTrait, RLPItem};
-use cairo_lib::utils::types::Bytes;
+use cairo_lib::utils::types::bytes::Bytes;
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
 
