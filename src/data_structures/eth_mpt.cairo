@@ -164,3 +164,54 @@ impl MPTImpl of MPTTrait {
         }
     }
 }
+
+impl MPTNodePartialEq of PartialEq<MPTNode> {
+    fn eq(lhs: @MPTNode, rhs: @MPTNode) -> bool {
+        match lhs {
+            MPTNode::Branch((lhs_nibbles, lhs_value)) => {
+                match rhs {
+                    MPTNode::Branch((rhs_nibbles, rhs_value)) => {
+                        if (*lhs_nibbles).len() != (*rhs_nibbles).len() {
+                            return false;
+                        }
+                        let mut i: usize = 0;
+                        loop {
+                            if i >= (*lhs_nibbles).len() {
+                                break lhs_value == rhs_value;
+                            }
+                            if (*lhs_nibbles).at(i) != (*rhs_nibbles).at(i) {
+                                break false;
+                            }
+                            i += 1;
+                        }
+                    },
+                    MPTNode::Extension(_) => false,
+                    MPTNode::Leaf(_) => false
+                }
+            },
+            MPTNode::Extension((lhs_shared_nibbles, lhs_next_node)) => {
+                match rhs {
+                    MPTNode::Branch(_) => false,
+                    MPTNode::Extension((rhs_shared_nibbles, rhs_next_node)) => {
+                        lhs_shared_nibbles == rhs_shared_nibbles && lhs_next_node == rhs_next_node
+                    },
+                    MPTNode::Leaf(_) => false
+                }
+            },
+            MPTNode::Leaf((lhs_key_end, lhs_value)) => {
+                match rhs {
+                    MPTNode::Branch(_) => false,
+                    MPTNode::Extension(_) => false,
+                    MPTNode::Leaf((rhs_key_end, rhs_value)) => {
+                        lhs_key_end == rhs_key_end && lhs_value == rhs_value
+                    }
+                }
+            }
+        }
+    }
+
+    fn ne(lhs: @MPTNode, rhs: @MPTNode) -> bool {
+        // TODO optimize
+        !(lhs == rhs)
+    }
+}
