@@ -117,30 +117,43 @@ impl MPTImpl of MPTTrait {
 
                     if prefix == 0 {
                         let mut shared_nibbles = *l.at(0);
-                        shared_nibbles.pop_front();
-
-                        // TODO error handling (should never fail if RLP is properly formated)
-                        let next_node = (*l.at(1)).try_into().unwrap();
-                        Result::Ok(MPTNode::Extension((shared_nibbles, next_node)))
-                    } else if prefix == 1 {
-                        let mut shared_nibbles = *l.at(0);
-                        shared_nibbles.pop_front();
-
-                         // TODO optimize logic without creating new array
-                        let mut i: usize = 0;
-                        let mut arr = ArrayTrait::new();
-                        arr.append(nibble);
+                        let mut i: usize = 1;
+                        let mut shared_nibbles_nibbles = ArrayTrait::new();
+                        shared_nibbles_nibbles.append(nibble);
                         loop {
                             if i >= shared_nibbles.len() {
                                 break ();
                             }
-                            arr.append(*shared_nibbles.at(i));
+
+                            let (high, low) = (*shared_nibbles.at(i)).extract_nibbles();
+                            shared_nibbles_nibbles.append(high);
+                            shared_nibbles_nibbles.append(low);
+
                             i += 1;
                         };
 
                         // TODO error handling (should never fail if RLP is properly formated)
                         let next_node = (*l.at(1)).try_into().unwrap();
-                        Result::Ok(MPTNode::Extension((arr.span(), next_node)))
+                        Result::Ok(MPTNode::Extension((shared_nibbles_nibbles.span(), next_node)))
+                    } else if prefix == 1 {
+                        let mut shared_nibbles = *l.at(0);
+                        let mut i: usize = 1;
+                        let mut shared_nibbles_nibbles = ArrayTrait::new();
+                        loop {
+                            if i >= shared_nibbles.len() {
+                                break ();
+                            }
+
+                            let (high, low) = (*shared_nibbles.at(i)).extract_nibbles();
+                            shared_nibbles_nibbles.append(high);
+                            shared_nibbles_nibbles.append(low);
+
+                            i += 1;
+                        };
+
+                        // TODO error handling (should never fail if RLP is properly formated)
+                        let next_node = (*l.at(1)).try_into().unwrap();
+                        Result::Ok(MPTNode::Extension((shared_nibbles_nibbles.span(), next_node)))
                     } else if prefix == 2 {
                         let key_end = *l.at(0);
                         let mut i: usize = 1;
