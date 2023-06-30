@@ -61,5 +61,5 @@ fn bit_length<
         bit_position = bit_position + TOneable::one();
         cur_n = left_shift(cur_n, TOneable::one());
     };
-    return bit_position;
+    bit_position
 }
