@@ -7,6 +7,8 @@ use traits::{TryInto, Into};
 use option::OptionTrait;
 use cairo_lib::utils::bitwise::right_shift;
 
+// TODO create nibble type
+
 #[derive(Drop)]
 struct MPT {
     root: u256
@@ -21,11 +23,11 @@ impl MPTDefault of Default<MPT> {
 #[derive(Drop)]
 enum MPTNode {
     // hashes of correspondible child with nibble, value
-    Branch: (Span<u256>, u256),
+    Branch: (Span<u256>, Bytes),
     // shared nibbles, next node
     Extension: (Bytes, u256),
     // key end, value
-    Leaf: (Bytes, u256)
+    Leaf: (Bytes, Bytes)
 }
 
 #[generate_trait]
@@ -35,7 +37,7 @@ impl MPTImpl of MPTTrait {
     }
 
     // key is a nibble array
-    fn verify(self: @MPT, key: Bytes, proof: Span<Bytes>) -> Result<u256, felt252> {
+    fn verify(self: @MPT, key: Bytes, proof: Span<Bytes>) -> Result<Bytes, felt252> {
         let mut current_hash = 0;
         let mut proof_index: usize = 0;
         let mut key_index: usize = 0;
@@ -107,8 +109,7 @@ impl MPTImpl of MPTTrait {
                         nibble_hashes.append(hash);
                         i += 1;
                     };
-                    // TODO error handling (should never fail if RLP is properly formated)
-                    let value = (*l.at(16)).try_into().unwrap();
+                    let value = *l.at(16);
                     
                     Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)))
                 } else if len == 2 {
@@ -141,31 +142,41 @@ impl MPTImpl of MPTTrait {
                         let next_node = (*l.at(1)).try_into().unwrap();
                         Result::Ok(MPTNode::Extension((arr.span(), next_node)))
                     } else if prefix == 2 {
-                        let mut key_end = *l.at(0);
-                        key_end.pop_front();
-
-                        // TODO error handling (should never fail if RLP is properly formated)
-                        let value = (*l.at(1)).try_into().unwrap();
-                        Result::Ok(MPTNode::Leaf((key_end, value)))
-                    } else if prefix == 3 {
-                        let mut key_end = *l.at(0);
-                        key_end.pop_front();
-
-                         // TODO optimize logic without creating new array
-                        let mut i: usize = 0;
-                        let mut arr = ArrayTrait::new();
-                        arr.append(nibble);
+                        let key_end = *l.at(0);
+                        let mut i: usize = 1;
+                        let mut key_end_nibbles = ArrayTrait::new();
                         loop {
                             if i >= key_end.len() {
                                 break ();
                             }
-                            arr.append(*key_end.at(i));
+
+                            let (high, low) = (*key_end.at(i)).extract_nibbles();
+                            key_end_nibbles.append(high);
+                            key_end_nibbles.append(low);
+
                             i += 1;
                         };
 
-                        // TODO error handling (should never fail if RLP is properly formated)
-                        let value = (*l.at(1)).try_into().unwrap();
-                        Result::Ok(MPTNode::Leaf((arr.span(), value)))
+                        let value = *l.at(1);
+                        Result::Ok(MPTNode::Leaf((key_end_nibbles.span(), value)))
+                    } else if prefix == 3 {
+                        let key_end = *l.at(0);
+                        let mut i: usize = 1;
+                        let mut key_end_nibbles = ArrayTrait::new();
+                        key_end_nibbles.append(nibble);
+                        loop {
+                            if i >= key_end.len() {
+                                break ();
+                            }
+                            let (high, low) = (*key_end.at(i)).extract_nibbles();
+                            key_end_nibbles.append(high);
+                            key_end_nibbles.append(low);
+
+                            i += 1;
+                        };
+
+                        let value = *l.at(1);
+                        Result::Ok(MPTNode::Leaf((key_end_nibbles.span(), value)))
                     } else {
                         Result::Err('Invalid RLP prefix')
                     }
