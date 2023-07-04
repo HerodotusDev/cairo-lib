@@ -1,7 +1,11 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
+
 use debug::PrintTrait;
+use starknet::SyscallResultTrait;
+use traits::TryInto;
+use option::OptionTrait;
 
 #[test]
 #[available_gas(9999999999)]
@@ -1052,3 +1056,225 @@ fn test_decode_rlp_node_leaf_even() {
     let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span()));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
+
+const KECCAK_FULL_RATE_IN_BYTES: usize = 136;
+const KECCAK_FULL_RATE_IN_U64S: usize = 17;
+const BYTES_IN_U64_WORD: usize = 8;
+
+#[test]
+#[available_gas(9999999999)]
+fn test_keccak_node() {
+    let mut rlp_node = ArrayTrait::<u64>::new();
+    rlp_node.append(3486121673926654310);
+    rlp_node.append(7292235332718256435);
+    rlp_node.append(7003436509876729187);
+    rlp_node.append(7219327812702266213);
+    rlp_node.append(7220226096555374689);
+    rlp_node.append(7233125365159899489);
+    rlp_node.append(7147319468316113252);
+    rlp_node.append(3688556075549287218);
+    rlp_node.append(3474355804310091577);
+    rlp_node.append(7365974978555097185);
+    rlp_node.append(7365974956278364259);
+    rlp_node.append(3979039338107331639);
+    rlp_node.append(7076059244337980005);
+    rlp_node.append(3761685895287366962);
+    rlp_node.append(3761176606574654050);
+    rlp_node.append(3544392711566078264);
+    rlp_node.append(7220177730076238387);
+    rlp_node.append(3544444374838501938);
+    rlp_node.append(7293923981556658278);
+    rlp_node.append(3544390314082198628);
+    rlp_node.append(7149522928339936050);
+    rlp_node.append(4049974339363562551);
+    rlp_node.append(7305226968821477990);
+    rlp_node.append(3486683546699392100);
+    rlp_node.append(3991368183484606050);
+    rlp_node.append(3991368363819742050);
+    rlp_node.append(7148165203143702580);
+    rlp_node.append(3472668066798855267);
+    rlp_node.append(3760898631926047539);
+    rlp_node.append(3473174921037309233);
+    rlp_node.append(3690754004309585974);
+    rlp_node.append(3761179930896131428);
+    rlp_node.append(3690756177545672546);
+    rlp_node.append(3486129379940119138);
+    rlp_node.append(3904681776986415969);
+    rlp_node.append(4123099572784411445);
+    rlp_node.append(3617343095402739041);
+    rlp_node.append(4122029729982592611);
+    rlp_node.append(7234576750572746805);
+    rlp_node.append(7161117256848650597);
+    rlp_node.append(7363446083778929250);
+    rlp_node.append(3775201985518855473);
+    rlp_node.append(7233685218427940961);
+    rlp_node.append(3690246020542260793);
+    rlp_node.append(7365979573314465889);
+    rlp_node.append(3631416651720045104);
+    rlp_node.append(3761128237408018738);
+    rlp_node.append(7220453694707939120);
+    rlp_node.append(4049690880111699044);
+    rlp_node.append(3702584731388622640);
+    rlp_node.append(4049355528950855472);
+    rlp_node.append(3991094409364124513);
+    rlp_node.append(3991652037853340976);
+    rlp_node.append(3976788667836479028);
+    rlp_node.append(3545518421622219877);
+    rlp_node.append(7292511112655025509);
+    rlp_node.append(3977859587836621360);
+    rlp_node.append(4048843135138226788);
+    rlp_node.append(3833460902626342754);
+    rlp_node.append(7306020816233247842);
+    rlp_node.append(7364287236041815604);
+    rlp_node.append(7004560000307114595);
+    rlp_node.append(3689966959320445028);
+    rlp_node.append(4121699894482461241);
+    rlp_node.append(3559593265654740020);
+    rlp_node.append(4122823775046951479);
+    rlp_node.append(3486175756239189554);
+    rlp_node.append(7233682816752630073);
+    rlp_node.append(7306637633733800498);
+    rlp_node.append(3775254761979327538);
+    rlp_node.append(3919036802461153072);
+    rlp_node.append(3978988790587352625);
+    rlp_node.append(7004052025938163507);
+    rlp_node.append(3474307434404996663);
+    rlp_node.append(3702584732213786725);
+    rlp_node.append(7149242514186252385);
+    rlp_node.append(3762530119042217273);
+    rlp_node.append(7364057407996442466);
+    rlp_node.append(7148166312084582456);
+    rlp_node.append(3690810061467181366);
+    rlp_node.append(3774360847010246963);
+    rlp_node.append(3691090437653936176);
+    rlp_node.append(7076055940683228516);
+    rlp_node.append(7293071829124604211);
+    rlp_node.append(3761405519758190128);
+    rlp_node.append(4122590493780947760);
+    rlp_node.append(7291720744163358001);
+    rlp_node.append(3691037880206309172);
+    rlp_node.append(7363494450194441017);
+    rlp_node.append(4048790375813560628);
+    rlp_node.append(3919033487498634552);
+    rlp_node.append(3833179427713464421);
+    rlp_node.append(4049641402122330466);
+    rlp_node.append(3904731073849079344);
+    rlp_node.append(3978193814420731957);
+    rlp_node.append(7305177684222960485);
+    rlp_node.append(7016952612255262261);
+    rlp_node.append(3977911450355184178);
+    rlp_node.append(3906651009998546480);
+    rlp_node.append(3486125006908567861);
+    rlp_node.append(3919647023526129716);
+    rlp_node.append(3834026975018116408);
+    rlp_node.append(4121469198095639352);
+    rlp_node.append(3976737179785573425);
+    rlp_node.append(7365415317778162232);
+    rlp_node.append(3762816193948705332);
+    rlp_node.append(3847826038535317041);
+    rlp_node.append(3906366228749641313);
+    rlp_node.append(3689353411198922849);
+    rlp_node.append(3907213749529306677);
+    rlp_node.append(7077519171583042609);
+    rlp_node.append(3847029794564879458);
+    rlp_node.append(3976739172633502819);
+    rlp_node.append(7233405766310638898);
+    rlp_node.append(4123152319341670755);
+    rlp_node.append(3977867464836985401);
+    rlp_node.append(7149292026454946405);
+    rlp_node.append(3763146953691915576);
+    rlp_node.append(3619035248800968805);
+    rlp_node.append(7365744051001505329);
+    rlp_node.append(3760612565632301111);
+    rlp_node.append(7089282880932098865);
+    rlp_node.append(3990863516150478643);
+    rlp_node.append(3617289031078983269);
+    rlp_node.append(7365408909670310199);
+    rlp_node.append(3546131025776292664);
+    rlp_node.append(7365463688434825009);
+    rlp_node.append(3775533136862078008);
+    rlp_node.append(3616729580816120118);
+    rlp_node.append(3919314068249392434);
+    rlp_node.append(7147837562436335201);
+    rlp_node.append(4134639144178705720);
+    rlp_node.append(3474586903665783348);
+    let hash = cairo_keccak(ref rlp_node, 3474586903665783348, 8);
+    'hash'.print();
+    hash.print();
+}
+
+// Computes the keccak of `input` + `last_input_num_bytes` LSB bytes of `last_input_word`.
+// To use this function, split the input into words of 64 bits (little endian).
+// For example, to compute keccak('Hello world!'), use:
+//   inputs = [8031924123371070792, 560229490]
+// where:
+//   8031924123371070792 == int.from_bytes(b'Hello wo', 'little')
+//   560229490 == int.from_bytes(b'rld!', 'little')
+//
+// Returns the hash as a little endian u256.
+fn cairo_keccak(ref input: Array<u64>, last_input_word: u64, last_input_num_bytes: usize) -> u256 {
+    add_padding(ref input, last_input_word, last_input_num_bytes);
+    starknet::syscalls::keccak_syscall(input.span()).unwrap_syscall()
+}
+
+// The padding in keccak256 is "1 0* 1".
+// `last_input_num_bytes` (0-7) is the number of bytes in the last u64 input - `last_input_word`.
+fn add_padding(ref input: Array<u64>, last_input_word: u64, last_input_num_bytes: usize) {
+    let words_divisor = KECCAK_FULL_RATE_IN_U64S.try_into().unwrap();
+    // `last_block_num_full_words` is in range [0, KECCAK_FULL_RATE_IN_U64S - 1]
+    let (_, last_block_num_full_words) = integer::u32_safe_divmod(input.len(), words_divisor);
+    // `last_block_num_bytes` is in range [0, KECCAK_FULL_RATE_IN_BYTES - 1]
+    let last_block_num_bytes = last_block_num_full_words * BYTES_IN_U64_WORD + last_input_num_bytes;
+
+    // The first word to append would be of the form
+    //     0x1<`last_input_num_bytes` LSB bytes of `last_input_word`>.
+    // For example, for `last_input_num_bytes == 4`:
+    //     0x1000000 + (last_input_word & 0xffffff)
+    let first_word_to_append = if last_input_num_bytes == 0 {
+        // This case is handled separately to avoid unnecessary computations.
+        1
+    } else {
+        let first_padding_byte_part = if last_input_num_bytes == 1 {
+            0x100
+        } else if last_input_num_bytes == 2 {
+            0x10000
+        } else if last_input_num_bytes == 3 {
+            0x1000000
+        } else if last_input_num_bytes == 4 {
+            0x100000000
+        } else if last_input_num_bytes == 5 {
+            0x10000000000
+        } else if last_input_num_bytes == 6 {
+            0x1000000000000
+        } else if last_input_num_bytes == 7 {
+            0x100000000000000
+        } else {
+            panic_with_felt252('Keccak last input word >7b')
+        };
+        let (_, r) = integer::u64_safe_divmod(
+            last_input_word, first_padding_byte_part.try_into().unwrap()
+        );
+        first_padding_byte_part + r
+    };
+
+    if last_block_num_full_words == KECCAK_FULL_RATE_IN_U64S - 1 {
+        input.append(0x8000000000000000 + first_word_to_append);
+        return;
+    }
+
+    // last_block_num_full_words < KECCAK_FULL_RATE_IN_U64S - 1
+    input.append(first_word_to_append);
+    finalize_padding(ref input, KECCAK_FULL_RATE_IN_U64S - 1 - last_block_num_full_words);
+}
+
+// Finalize the padding by appending "0* 1".
+fn finalize_padding(ref input: Array<u64>, num_padding_words: u32) {
+    if (num_padding_words == 1) {
+        input.append(0x8000000000000000);
+        return;
+    }
+
+    input.append(0);
+    finalize_padding(ref input, num_padding_words - 1);
+}
+
