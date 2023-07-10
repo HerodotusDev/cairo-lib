@@ -1,11 +1,12 @@
 use array::{ArrayTrait, SpanTrait};
-use cairo_lib::hashing::keccak::KeccakHasherSpanU8;
+use cairo_lib::hashing::keccak::KeccakTrait;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
 use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256, BytesPartialEq};
 use cairo_lib::utils::types::byte::ByteTrait;
 use traits::{TryInto, Into};
 use option::OptionTrait;
 use cairo_lib::utils::bitwise::right_shift;
+use keccak::u128_split;
 
 // TODO create nibble type
 
@@ -50,7 +51,7 @@ impl MPTImpl of MPTTrait {
             let node = *proof.at(proof_index);
             proof_index += 1;
 
-            let hash = KeccakHasherSpanU8::hash_single(node);
+            let hash = MPTTrait::hash_rlp_node(node);
             if key_index == 0 {
                 assert(hash == *self.root, 'Root not matching');
             } else {
@@ -198,6 +199,13 @@ impl MPTImpl of MPTTrait {
                 }
             }
         }
+    }
+
+    fn hash_rlp_node(rlp: Bytes) -> u256 {
+        let keccak_res = KeccakTrait::keccak_cairo(rlp);
+        let high = integer::u128_byte_reverse(keccak_res.high);
+        let low = integer::u128_byte_reverse(keccak_res.low);
+        u256 { low: high, high: low }
     }
 }
 
