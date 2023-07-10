@@ -4,42 +4,58 @@ use traits::{Into, TryInto};
 use option::OptionTrait;
 use array::{ArrayTrait, SpanTrait};
 use debug::PrintTrait;
+use cairo_lib::utils::array::{array_contains};
+use cairo_lib::utils::bitwise::{left_shift, bit_length};
+
+// temporary
 use math::Oneable;
 use zeroable::Zeroable;
-use cairo_lib::utils::bitwise::{left_shift, bit_length};
-use cairo_lib::hashing::hasher::Hasher;
 
-/// StatelessMMR representation.
+/// StatelessMmr representation.
 #[derive(Drop)]
-struct StatelessMmr<T> {
-    root: T,
-    elements_count: usize,
-}
+struct StatelessMmr {}
 
-// Need Generic type change method
-extern fn usize_to_T<T>(a: usize) -> T nopanic;
-
-impl IUsizeIntoT<T> of Into<usize, T> {
-    fn into(self: usize) -> T {
-        usize_to_T(self)
-    }
-}
-
-/// StatelessMmr implementatizon.
+/// StatelessMmr trait.
 #[generate_trait]
-impl StatelessMmrImpl<
-    T,
-    H,
-    impl TDrop: Drop<T>,
-    impl TCopy: Copy<T>,
-    impl TPartialEq: PartialEq<T>,
-    impl HHasher: Hasher<T, T>,
-    impl HDrop: Drop<H>
-> of StatelessMmrTrait<T, H> {
+trait StatelessMmrTrait<T> {
+    /// Create a new stateless merkle mountain range instance.
+    fn new() -> StatelessMmr;
+    /// Compute the bagging of a given peaks.
+    fn bag_peaks(peaks: Span<T>) -> T;
+    /// Compute the root of a given peaks.
+    fn compute_root(peaks: Span<T>, size: T) -> T;
+    /// Compute the tree height of a given index
+    fn height(index: u128) -> u128;
+    /// Append a new element to the MMR.
+    fn append(
+        ref self: StatelessMmr, element: T, peaks: Array<T>, last_elements_count: T, last_root: T
+    ) -> (T, T, Array<T>);
+    /// Append multiple elements to the MMR.
+    fn multi_append(
+        ref self: StatelessMmr,
+        elements: Array<T>,
+        peaks: Array<T>,
+        last_elements_count: T,
+        last_root: T
+    ) -> (T, T, Array<T>);
+    /// Verify a proof.
+    fn verify_proof(
+        ref self: StatelessMmr,
+        index: u128,
+        value: T,
+        proof: Array<T>,
+        peaks: Array<T>,
+        elements_count: T,
+        root: T
+    ) -> bool;
+}
+
+/// StatelessMmr implementation.
+impl StatelessMmrImpl of StatelessMmrTrait<felt252> {
     /// Create a new stateless merkle mountain range instance.
     #[inline(always)]
-    fn new(root: T, elements_count: usize) -> StatelessMmr<T> {
-        StatelessMmr { root, elements_count }
+    fn new() -> StatelessMmr {
+        StatelessMmr {}
     }
 
     /// Compute the bagging of a given peaks. (Bagging == Hasing all the peaks from the last one to the first one)
@@ -47,7 +63,7 @@ impl StatelessMmrImpl<
     /// * `peaks` - The current list of peaks.
     /// # Returns
     /// The bagged value of the peaks.
-    fn bag_peaks(peaks: Span<T>) -> T {
+    fn bag_peaks(peaks: Span<felt252>) -> felt252 {
         let peaks_len = peaks.len();
         assert(peaks_len > 0, 'ERR_INPUT_SHORT');
 
@@ -55,7 +71,7 @@ impl StatelessMmrImpl<
             return *peaks.at(0);
         }
 
-        let mut root = HHasher::hash_double(*peaks.at(peaks_len - 2), *peaks.at(peaks_len - 1));
+        let mut root = pedersen(*peaks.at(peaks_len - 2), *peaks.at(peaks_len - 1));
 
         if peaks_len == 2 {
             return root;
@@ -64,7 +80,7 @@ impl StatelessMmrImpl<
         let mut i = peaks_len - 3;
         let mut k = 0;
         loop {
-            root = HHasher::hash_double(*peaks.at(i - k), root);
+            root = pedersen(*peaks.at(i - k), root);
             if k + 3 == peaks_len {
                 break ();
             };
@@ -72,35 +88,37 @@ impl StatelessMmrImpl<
         };
         return root;
     }
+
     /// Compute the root of a given peaks.
     /// # Arguments
     /// * `peaks` - The current list of peaks.
     /// * `size` - The size of tree
     /// # Returns
     /// Root value of the tree.
-    fn compute_root(peaks: Span<T>, size: usize) -> T {
-        let bagged_peaks = StatelessMmrTrait::<T, H>::bag_peaks(peaks);
-        let size_hashable: T = usize_to_T(size);
-        let root = HHasher::hash_double(size_hashable, bagged_peaks);
+    fn compute_root(peaks: Span<felt252>, size: felt252) -> felt252 {
+        let bagged_peaks = StatelessMmrTrait::bag_peaks(peaks);
+        let root = pedersen(size, bagged_peaks);
         return root;
     }
+
     /// Compute the tree height of a given index
     /// # Arguments
     /// * `index` - Index of the element.
     /// # Returns
     /// The height of the tree.
-    fn height(index: usize) -> usize {
+    fn height(index: u128) -> u128 {
         assert(index > 0, 'index must be at least 1');
         let bits = bit_length(index);
         let ones = left_shift(1, bits) - 1;
         if !(index == ones) {
             let shifted = left_shift(1, bits - 1);
             let shifted_index = (index - (shifted - 1));
-            let rec_height = StatelessMmrTrait::<T, H>::height(shifted_index);
+            let rec_height = StatelessMmrTrait::<felt252>::height(shifted_index);
             return rec_height;
         }
         return bits - 1;
     }
+
     /// Append a new element to the MMR.
     /// # Arguments
     /// * `element` - The element to append.
@@ -109,13 +127,19 @@ impl StatelessMmrImpl<
     /// * `last_root` - The root of the tree.
     /// # Returns
     /// The updated number of elements, the updated root and the updated list of peaks.
-    fn append_element(
-        self: StatelessMmr<T>, element: T, peaks: Array<T>
-    ) -> (StatelessMmr<T>, Array<T>) {
-        let (updated_elements_count, new_root, new_peaks): (usize, T, Array<T>) = do_append::<T,
-        H>(element, peaks, self.elements_count, self.root);
-        return (StatelessMmr { root: new_root, elements_count: updated_elements_count }, new_peaks);
+    fn append(
+        ref self: StatelessMmr,
+        element: felt252,
+        peaks: Array<felt252>,
+        last_elements_count: felt252,
+        last_root: felt252
+    ) -> (felt252, felt252, Array<felt252>) {
+        let (updated_elements_count, new_root, new_peaks) = do_append(
+            element, peaks, last_elements_count, last_root
+        );
+        return (updated_elements_count, new_root, new_peaks);
     }
+
     /// Append multiple elements to the MMR.
     /// # Arguments
     /// * `elements` - The elements to append.
@@ -125,26 +149,32 @@ impl StatelessMmrImpl<
     /// # Returns
     /// The updated number of elements, the updated root and the updated list of peaks.
     fn multi_append(
-        self: StatelessMmr<T>, elements: Array<T>, peaks: Array<T>, 
-    ) -> (StatelessMmr<T>, Array<T>) {
-        let mut elements_count = self.elements_count;
-        let mut root = self.root;
+        ref self: StatelessMmr,
+        elements: Array<felt252>,
+        peaks: Array<felt252>,
+        last_elements_count: felt252,
+        last_root: felt252
+    ) -> (felt252, felt252, Array<felt252>) {
+        let mut elements_count = last_elements_count;
+        let mut root = last_root;
         let mut updated_peaks = peaks;
         let mut i = 0;
         loop {
             if i == elements.len() {
                 break ();
             };
-            let (elements_count_temp, root_temp, updated_peaks_temp) = do_append::<T,
-            H>(*elements.at(i), updated_peaks, elements_count, root);
+            let (elements_count_temp, root_temp, updated_peaks_temp) = do_append(
+                *elements.at(i), updated_peaks, elements_count, root
+            );
             elements_count = elements_count_temp;
             root = root_temp;
             updated_peaks = updated_peaks_temp;
             i += 1;
         };
 
-        return (StatelessMmr { root, elements_count }, updated_peaks);
+        return (elements_count, root, updated_peaks);
     }
+
     /// Verify a proof.
     /// # Arguments
     /// * `index` - Index of the element.
@@ -154,124 +184,110 @@ impl StatelessMmrImpl<
     /// * `elements_count` - The number of elements in the tree.
     /// * `root` - The root of the tree.
     /// # Returns
-    // /// Nothing if the proof is valid, an error otherwise.
+    /// Nothing if the proof is valid, an error otherwise.
     fn verify_proof(
-        self: StatelessMmr<T>, index: usize, value: T, proof: Array<T>, peaks: Array<T>, 
+        ref self: StatelessMmr,
+        index: u128,
+        value: felt252,
+        proof: Array<felt252>,
+        peaks: Array<felt252>,
+        elements_count: felt252,
+        root: felt252
     ) -> bool {
-        assert(index <= self.elements_count, 'Index out of bound');
-        let computed_root = StatelessMmrTrait::<T,
-        H>::compute_root(peaks.span(), self.elements_count);
-        assert(self.root == computed_root, 'Not matching root hashes');
-        let hash = HHasher::hash_double(usize_to_T(index), value);
-        let top_peak = get_proof_top_peak::<T, H>(0, hash, index, proof);
-        let is_valid = array_contains::<T>(top_peak, peaks.span());
+        let elements_count_u128: u128 = elements_count.try_into().unwrap();
+        assert(index <= elements_count_u128, 'Index out of bound');
+        let computed_root = StatelessMmrTrait::compute_root(peaks.span(), elements_count);
+        assert(root == computed_root, 'Not matching root hashes');
+
+        let index_felt: felt252 = index.into();
+        let hash = pedersen(index_felt, value);
+        let top_peak = get_proof_top_peak(0, hash, index, proof);
+        let is_valid = array_contains(top_peak, peaks.span());
 
         return (is_valid);
     }
 }
 
-/// # Not on Implementation
-fn get_proof_top_peak<
-    T,
-    H,
-    impl TDrop: Drop<T>,
-    impl TCopy: Copy<T>,
-    impl TPartialEq: PartialEq<T>,
-    impl HHasher: Hasher<T, T>,
-    impl HDrop: Drop<H>
->(
-    mut height: usize, mut hash: T, mut elements_count: usize, proof: Array<T>
-) -> T {
+
+fn get_proof_top_peak(
+    mut height: u128, mut hash: felt252, mut elements_count: u128, proof: Array<felt252>
+) -> felt252 {
     let mut i = 0;
-    let mut current_sibling = hash;
+    let mut elements_count_felt: felt252 = elements_count.into();
+    let mut current_sibling = 0;
     let mut next_height = 0;
     let mut is_higher = false;
-    let mut hashed = hash;
-    let mut parent_hash = hash;
+    let mut hashed = 0;
+    let mut parent_hash = 0;
     loop {
         if i == proof.len() {
             break ();
         };
         current_sibling = *proof.at(i);
-        next_height = StatelessMmrTrait::<T, H>::height(elements_count + 1);
+        next_height = StatelessMmrTrait::<felt252>::height(elements_count + 1);
         if next_height >= height + 1 {
             is_higher = true;
         } else {
             is_higher = false;
         };
         if is_higher {
-            hashed = HHasher::hash_double(current_sibling, hash);
+            hashed = pedersen(current_sibling, hash);
             elements_count = elements_count + 1;
         } else {
-            hashed = HHasher::hash_double(hash, current_sibling);
+            hashed = pedersen(hash, current_sibling);
             elements_count = elements_count + left_shift(height, 2);
         };
-
-        parent_hash = HHasher::hash_double(usize_to_T(elements_count), hashed);
+        elements_count_felt = elements_count.into();
+        parent_hash = pedersen(elements_count_felt, hashed);
         hash = parent_hash;
         height = height + 1;
-        i += 1;
+        i = i + 1;
     };
     return hash;
 }
-
-fn do_append<
-    T,
-    H,
-    impl TDrop: Drop<T>,
-    impl TCopy: Copy<T>,
-    impl TPartialEq: PartialEq<T>,
-    impl HHasher: Hasher<T, T>,
-    impl HDrop: Drop<H>,
->(
-    elem: T, mut peaks: Array<T>, last_elements_count: usize, last_root: T
-) -> (usize, T, Array<T>) {
+fn do_append(
+    elem: felt252, mut peaks: Array<felt252>, last_elements_count: felt252, last_root: felt252
+) -> (felt252, felt252, Array<felt252>) {
     let elements_count = last_elements_count + 1;
     if last_elements_count == 0 {
-        let root0 = HHasher::hash_double(usize_to_T(1), elem);
-        let first_root = HHasher::hash_double(usize_to_T(1), root0);
-        let mut new_peaks: Array<T> = Default::default();
+        let root0 = pedersen(1, elem);
+        let first_root = pedersen(1, root0);
+        let mut new_peaks: Array<felt252> = Default::default();
         new_peaks.append(root0);
         return (elements_count, first_root, new_peaks);
     }
-    let computed_root = StatelessMmrTrait::<T, H>::compute_root(peaks.span(), last_elements_count);
+    let computed_root = StatelessMmrTrait::compute_root(peaks.span(), last_elements_count);
     assert(last_root == computed_root, 'Not matching root hashes');
-    let hash = HHasher::hash_double(usize_to_T(elements_count), elem);
+    let hash = pedersen(elements_count, elem);
     peaks.append(hash);
-    let (updated_peaks, updated_elements_count): (Array<T>, usize) = append_rec::<T,
-    H>(0_usize, peaks, elements_count);
-    let new_root = StatelessMmrTrait::<T,
-    H>::compute_root(updated_peaks.span(), updated_elements_count);
+    let (updated_peaks, updated_elements_count) = append_rec(0, peaks, elements_count);
+    let new_root = StatelessMmrTrait::compute_root(updated_peaks.span(), updated_elements_count);
     return (updated_elements_count, new_root, updated_peaks);
 }
-fn append_rec<
-    T,
-    H,
-    impl TDrop: Drop<T>,
-    impl TCopy: Copy<T>,
-    impl TPartialEq: PartialEq<T>,
-    impl HHasher: Hasher<T, T>,
-    impl HDrop: Drop<H>
->(
-    h: usize, peaks: Array<T>, last_elements_count: usize
-) -> (Array<T>, usize) {
-    let next_height = StatelessMmrTrait::<T, H>::height(last_elements_count + 1);
+
+fn append_rec(
+    h: felt252, peaks: Array<felt252>, last_elements_count: felt252
+) -> (Array<felt252>, felt252) {
+    let elements_count = last_elements_count;
+    let elements_count_u128: u128 = last_elements_count.try_into().unwrap();
+    let next_height = StatelessMmrTrait::<felt252>::height(elements_count_u128 + 1);
+    let h_u128: u128 = h.try_into().unwrap();
     let mut is_higher = false;
-    if h + 1 <= next_height {
+    if h_u128 + 1 <= next_height {
         is_higher = true;
     }
     let mut peaks_len = peaks.len();
-    let elements_count = last_elements_count + 1;
     if is_higher {
+        let elements_count = elements_count + 1;
+
         let right_hash = peaks.at(peaks_len - 1);
         let left_hash = peaks.at(peaks_len - 2);
         peaks_len = peaks_len - 2;
 
-        let hash = HHasher::hash_double(*left_hash, *right_hash);
-        let elements_count_type: T = usize_to_T(elements_count);
-        let parent_hash = HHasher::hash_double(elements_count_type, hash);
+        let hash = pedersen(*left_hash, *right_hash);
+        let parent_hash = pedersen(elements_count, hash);
 
-        let mut merged_peaks: Array<T> = Default::default();
+        let mut merged_peaks: Array<felt252> = Default::default();
         let mut i = 0;
         loop {
             if i == peaks_len {
@@ -281,49 +297,39 @@ fn append_rec<
             i = i + 1;
         };
         merged_peaks.append(parent_hash);
-        return append_rec::<T, H>(h + 1, merged_peaks, elements_count);
+        return append_rec(h + 1, merged_peaks, elements_count);
     }
 
     return (peaks, elements_count);
 }
 
+fn multi_append_rec(
+    elems: Array<felt252>, mut peaks: Array<felt252>, last_pos: felt252, last_root: felt252
+) -> (felt252, felt252) {
+    let pos = last_pos + 1;
+    if last_pos == 0 {
+        let root0 = pedersen(1, *elems.at(0));
+        let root = pedersen(1, root0);
+        return (pos, root);
+    }
+    let compute_root = StatelessMmrTrait::compute_root(peaks.span(), last_pos);
+    assert(last_root == compute_root, 'Not matching root hashes');
 
-fn array_contains<T, impl TDrop: Drop<T>, impl TCopy: Copy<T>, impl TPartialEq: PartialEq<T>, >(
-    elem: T, arr: Span<T>
-) -> bool {
-    let arr_len = arr.len();
-    let mut i = 0;
-    let mut result = false;
-    loop {
-        if i == arr_len {
-            break ();
-        }
-        if *arr.at(i) == elem {
-            result = true;
-            break ();
-        }
-        i += 1;
-    };
-    return result;
-}
-#[test]
-#[available_gas(10000000)]
-fn test_array_contains() {
-    let mut arr: Array<felt252> = Default::default();
-    arr.append(0);
-    arr.append(1);
-    arr.append(2);
+    let hash = pedersen(pos, *elems.at(0));
 
-    assert(array_contains(0_felt252, arr.span()), 'array contains 0');
-    assert(array_contains(1, arr.span()), 'array contains 1');
-    assert(array_contains(2, arr.span()), 'array contains 2');
-    assert(!array_contains(3, arr.span()), 'array does not contain 3');
-}
+    peaks.append(pos);
+    assert(*peaks.at(peaks.len()) == hash, 'Not matching peak hash');
 
-#[test]
-#[available_gas(200000)]
-fn test_array_does_not_contain() {
-    let arr: Array<felt252> = Default::default();
-    assert(!array_contains(0, arr.span()), 'array does not contain 0');
+    let (peaks, new_pos) = append_rec(0, peaks, pos);
+    let new_root = StatelessMmrTrait::compute_root(peaks.span(), new_pos);
+
+    let mut copy_elems = elems;
+    copy_elems.pop_front();
+
+    if copy_elems.len() == 0 {
+        return (new_pos, new_root);
+    }
+
+    return multi_append_rec(copy_elems, peaks, new_pos, new_root);
 }
 
