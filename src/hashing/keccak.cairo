@@ -7,8 +7,6 @@ use traits::{Into, TryInto};
 use option::OptionTrait;
 use starknet::SyscallResultTrait;
 
-use debug::PrintTrait;
-
 #[derive(Drop)]
 struct Keccak {}
 
@@ -113,12 +111,12 @@ impl KeccakHasher of KeccakTrait {
             let val =
                 (*bytes.at(8*i)).into() + 
                 (*bytes.at(8*i+1)).into() * 256 + 
-                (*bytes.at(8*i+2)).into() * pow(256, 2) +
-                (*bytes.at(8*i+3)).into() * pow(256, 3) +
-                (*bytes.at(8*i+4)).into() * pow(256, 4) +
-                (*bytes.at(8*i+5)).into() * pow(256, 5) +
-                (*bytes.at(8*i+6)).into() * pow(256, 6) +
-                (*bytes.at(8*i+7)).into() * pow(256, 7);
+                (*bytes.at(8*i+2)).into() * 65536 + 
+                (*bytes.at(8*i+3)).into() * 16777216 +
+                (*bytes.at(8*i+4)).into() * 4294967296 +
+                (*bytes.at(8*i+5)).into() * 1099511627776 + 
+                (*bytes.at(8*i+6)).into() * 281474976710656 + 
+                (*bytes.at(8*i+7)).into() * 72057594037927936;
 
             keccak_input.append(val);
 
