@@ -1,3 +1,4 @@
+use core::result::ResultTrait;
 use array::ArrayTrait;
 use core::option::OptionTrait;
 use cairo_lib::data_structures::stateless_mmr::{StatelessMmrTrait};
@@ -15,7 +16,7 @@ fn test_append_initial() -> (felt252, felt252, felt252) {
     let expected_root = pedersen(1, node1);
     assert(new_root == expected_root, 'new root should hash of node');
 
-    let expected_root_method2 = StatelessMmrTrait::compute_root(new_peaks.span(), new_pos);
+    let expected_root_method2 = StatelessMmrTrait::compute_root(new_peaks.span(), new_pos).unwrap();
     assert(new_root == expected_root_method2, 'new root should hash of node');
     return (new_pos, new_root, node1);
 }
@@ -32,7 +33,8 @@ fn test_append_one() -> (felt252, felt252, felt252) {
     let expected_root = pedersen(1, node1);
     assert(last_root == expected_root, 'new root should hash of node');
 
-    let expected_root_method2 = StatelessMmrTrait::compute_root(last_peaks.span(), last_pos);
+    let expected_root_method2 = StatelessMmrTrait::compute_root(last_peaks.span(), last_pos)
+        .unwrap();
     assert(last_root == expected_root_method2, 'new root should hash of node');
 
     let (new_pos, new_root, new_arr) = stateless_mmr.append(2, last_peaks, last_pos, last_root);
@@ -70,7 +72,7 @@ fn test_append_two() -> (felt252, felt252, Array<felt252>) {
 
     assert(new_pos == 4, 'new position should be 4');
 
-    let expected_root = StatelessMmrTrait::compute_root(new_peaks.span(), new_pos);
+    let expected_root = StatelessMmrTrait::compute_root(new_peaks.span(), new_pos).unwrap();
     assert(new_root == expected_root, 'new root should hash of node');
     return (new_pos, new_root, new_peaks);
 }
@@ -95,7 +97,7 @@ fn test_append_three() -> (felt252, felt252, Array<felt252>) {
     let mut peaks: Array<felt252> = Default::default();
     peaks.append(node7);
 
-    let expected_root = StatelessMmrTrait::compute_root(peaks.span(), new_pos);
+    let expected_root = StatelessMmrTrait::compute_root(peaks.span(), new_pos).unwrap();
     assert(new_root == expected_root, 'new root should hash of node');
     return (new_pos, new_root, peaks);
 }
@@ -112,7 +114,7 @@ fn test_append_four() -> (felt252, felt252, Array<felt252>) {
 
     let node8 = pedersen(8, 8);
     test_peaks.append(node8);
-    let expected_root = StatelessMmrTrait::compute_root(test_peaks.span(), new_pos);
+    let expected_root = StatelessMmrTrait::compute_root(test_peaks.span(), new_pos).unwrap();
     assert(new_root == expected_root, 'new root should hash of node');
     return (new_pos, new_root, new_peaks);
 }
@@ -192,7 +194,9 @@ fn test_verify_proof_one_leaf() {
     let mut peaks: Array<felt252> = Default::default();
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(1, peaks, 0, 0);
     assert(new_pos == 1, 'new_pos should be 1');
-    let result = stateless_mmr.verify_proof(1, 1, ArrayTrait::new(), new_peaks, new_pos, new_root);
+    let result = stateless_mmr
+        .verify_proof(1, 1, ArrayTrait::new(), new_peaks, new_pos, new_root)
+        .unwrap();
     assert(result, 'verify_proof should return true');
 }
 
@@ -209,7 +213,9 @@ fn test_verify_proof_two_leaf() {
     assert(new_pos_2 == 3, 'new_pos should be 3');
     let mut proof: Array<felt252> = Default::default();
     proof.append(node1);
-    let result = stateless_mmr.verify_proof(2, 2, proof, new_peaks_2, new_pos_2, new_root_2);
+    let result = stateless_mmr
+        .verify_proof(2, 2, proof, new_peaks_2, new_pos_2, new_root_2)
+        .unwrap();
     assert(result, 'verify_proof should return true');
 }
 
@@ -231,7 +237,8 @@ fn test_verify_proof_three_leaves() {
     test_peaks.append(node4);
 
     let result = stateless_mmr
-        .verify_proof(4, 4, ArrayTrait::<felt252>::new(), test_peaks, new_pos, new_root);
+        .verify_proof(4, 4, ArrayTrait::<felt252>::new(), test_peaks, new_pos, new_root)
+        .unwrap();
     assert(result, 'verify_proof should return true');
 }
 
@@ -258,7 +265,7 @@ fn test_verify_proof_four_leaves() {
     let mut peaks: Array<felt252> = Default::default();
     peaks.append(node7);
 
-    let result = stateless_mmr.verify_proof(5, 5, proof, peaks, new_pos, new_root);
+    let result = stateless_mmr.verify_proof(5, 5, proof, peaks, new_pos, new_root).unwrap();
     assert(result, 'verify_proof should return true');
 }
 
@@ -275,13 +282,13 @@ fn test_verify_proof_five_leaves() {
     let node8 = pedersen(8, 8);
     let proof: Array<felt252> = Default::default();
     test_peaks.append(node8);
-    let result = stateless_mmr.verify_proof(8, 8, proof, new_peaks, new_pos, new_root);
+    let result = stateless_mmr.verify_proof(8, 8, proof, new_peaks, new_pos, new_root).unwrap();
     assert(result, 'verify_proof should return true');
 }
 
 #[test]
 #[available_gas(40000000)]
-#[should_panic(expected: ('ERR_INDEX_OUT_OF_BOUNDS', ))]
+#[should_panic(expected: ('Result::unwrap failed.', ))]
 fn test_verify_proof_invalid_index() {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
@@ -292,13 +299,13 @@ fn test_verify_proof_invalid_index() {
     let node1 = pedersen(1, 1);
     test_peaks.append(node1);
     let proofs: Array<felt252> = Default::default();
-    let result = stateless_mmr.verify_proof(2, 2, proofs, test_peaks, new_pos, new_root);
+    let result = stateless_mmr.verify_proof(2, 2, proofs, test_peaks, new_pos, new_root).unwrap();
     assert(!result, 'verify_proof should false');
 }
 
 #[test]
 #[available_gas(40000000)]
-#[should_panic(expected: ('ERR_ROOT_MISMATCH', ))]
+#[should_panic(expected: ('Result::unwrap failed.', ))]
 fn test_verify_proof_invalid_peaks() {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
@@ -309,13 +316,13 @@ fn test_verify_proof_invalid_peaks() {
     let invalid_node1 = pedersen(1, 42);
     test_peaks.append(invalid_node1);
     let proofs: Array<felt252> = Default::default();
-    let result = stateless_mmr.verify_proof(1, 1, proofs, test_peaks, new_pos, new_root);
+    let result = stateless_mmr.verify_proof(1, 1, proofs, test_peaks, new_pos, new_root).unwrap();
     assert(!result, 'verify_proof should false');
 }
 
 #[test]
 #[available_gas(40000000)]
-#[should_panic(expected: ('ERR_ROOT_MISMATCH', ))]
+#[should_panic(expected: ('Result::unwrap failed.', ))]
 fn test_verify_proof_invalid_proof() {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, node1) = test_append_initial();
@@ -331,6 +338,6 @@ fn test_verify_proof_invalid_proof() {
     let mut proof: Array<felt252> = Default::default();
     proof.append(node3);
 
-    let result = stateless_mmr.verify_proof(2, 2, proof, new_arr, new_pos, new_root);
+    let result = stateless_mmr.verify_proof(2, 2, proof, new_arr, new_pos, new_root).unwrap();
     assert(!result, 'verify_proof should false');
 }

@@ -1,3 +1,4 @@
+use core::result::ResultTrait;
 use clone::Clone;
 use traits::AddEq;
 use traits::{Into, TryInto};
@@ -7,10 +8,11 @@ use debug::PrintTrait;
 use cairo_lib::utils::array::{array_contains};
 use cairo_lib::utils::bitwise::{left_shift, bit_length};
 
-
-/// StatelessMmr representation.
 #[derive(Drop)]
 struct StatelessMmr {}
+
+#[derive(Drop)]
+struct Peaks {}
 
 /// StatelessMmr implementation.
 #[generate_trait]
@@ -25,18 +27,19 @@ impl StatelessMmrImpl of StatelessMmrTrait {
     /// * `peaks` - The current list of peaks.
     /// # Returns
     /// The bagged value of the peaks.
-    fn bag_peaks(peaks: Span<felt252>) -> felt252 {
+    fn bag_peaks(peaks: Span<felt252>) -> Result<felt252, felt252> {
         let peaks_len = peaks.len();
-        assert(peaks_len > 0, 'ERR_INPUT_SHORT');
-
+        if peaks_len == 0 {
+            return Result::Err('ERR_INPUT_SHORT');
+        }
         if peaks_len == 1 {
-            return *peaks.at(0);
+            return Result::Ok(*peaks.at(0));
         }
 
         let mut root = pedersen(*peaks.at(peaks_len - 2), *peaks.at(peaks_len - 1));
 
         if peaks_len == 2 {
-            return root;
+            return Result::Ok(root);
         }
 
         let mut i = peaks_len - 3;
@@ -48,7 +51,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
             };
             k += 1;
         };
-        return root;
+        return Result::Ok(root);
     }
 
     /// Compute the root of a given peaks.
@@ -57,10 +60,10 @@ impl StatelessMmrImpl of StatelessMmrTrait {
     /// * `size` - The size of tree
     /// # Returns
     /// Root value of the tree.
-    fn compute_root(peaks: Span<felt252>, size: felt252) -> felt252 {
+    fn compute_root(peaks: Span<felt252>, size: felt252) -> Result<felt252, felt252> {
         let bagged_peaks = StatelessMmrTrait::bag_peaks(peaks);
-        let root = pedersen(size, bagged_peaks);
-        return root;
+        let root = pedersen(size, bagged_peaks.unwrap());
+        return Result::Ok(root);
     }
 
     /// Compute the tree height of a given index
@@ -68,7 +71,10 @@ impl StatelessMmrImpl of StatelessMmrTrait {
     /// * `index` - Index of the element.
     /// # Returns
     /// The height of the tree.
-    fn height(index: u128) -> u128 {
+    fn height(index: u128) -> Result<u128, felt252> {
+        if index == 0 {
+            return Result::Err(0);
+        }
         assert(index > 0, 'ERR_INDEX_OUT_OF_BOUNDS');
         let bits = bit_length(index);
         let ones = left_shift(1, bits) - 1;
@@ -78,7 +84,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
             let rec_height = StatelessMmrTrait::height(shifted_index);
             return rec_height;
         }
-        return bits - 1;
+        return Result::Ok(bits - 1);
     }
 
     /// Append a new element to the MMR.
@@ -155,25 +161,32 @@ impl StatelessMmrImpl of StatelessMmrTrait {
         peaks: Array<felt252>,
         elements_count: felt252,
         root: felt252
-    ) -> bool {
+    ) -> Result<bool, felt252> {
         let elements_count_u128: u128 = elements_count.try_into().unwrap();
-        assert(index <= elements_count_u128, 'ERR_INDEX_OUT_OF_BOUNDS');
-        let computed_root = StatelessMmrTrait::compute_root(peaks.span(), elements_count);
-        assert(root == computed_root, 'ERR_ROOT_MISMATCH');
+
+        if index > elements_count_u128 {
+            return Result::Err('ERR_INDEX_OUT_OF_BOUNDS');
+        }
+
+        let computed_root = StatelessMmrTrait::compute_root(peaks.span(), elements_count).unwrap();
+
+        if !(root == computed_root) {
+            return Result::Err('ERR_ROOT_MISMATCH');
+        }
 
         let index_felt: felt252 = index.into();
         let hash = pedersen(index_felt, value);
-        let top_peak = get_proof_top_peak(0, hash, index, proof);
+        let top_peak = get_proof_top_peak(0, hash, index, proof).unwrap();
         let is_valid = array_contains(top_peak, peaks.span());
 
-        return (is_valid);
+        return Result::Ok(is_valid);
     }
 }
 
 
 fn get_proof_top_peak(
     mut height: u128, mut hash: felt252, mut elements_count: u128, proof: Array<felt252>
-) -> felt252 {
+) -> Result<felt252, felt252> {
     let mut i = 0;
     let mut elements_count_felt: felt252 = elements_count.into();
     let mut current_sibling = 0;
@@ -186,7 +199,7 @@ fn get_proof_top_peak(
             break ();
         };
         current_sibling = *proof.at(i);
-        next_height = StatelessMmrTrait::height(elements_count + 1);
+        next_height = StatelessMmrTrait::height(elements_count + 1).unwrap();
         if next_height >= height + 1 {
             is_higher = true;
         } else {
@@ -205,7 +218,7 @@ fn get_proof_top_peak(
         height = height + 1;
         i = i + 1;
     };
-    return hash;
+    return Result::Ok(hash);
 }
 fn do_append(
     elem: felt252, mut peaks: Array<felt252>, last_elements_count: felt252, last_root: felt252
@@ -218,12 +231,13 @@ fn do_append(
         new_peaks.append(root0);
         return (elements_count, first_root, new_peaks);
     }
-    let computed_root = StatelessMmrTrait::compute_root(peaks.span(), last_elements_count);
+    let computed_root = StatelessMmrTrait::compute_root(peaks.span(), last_elements_count).unwrap();
     assert(last_root == computed_root, 'ERR_ROOT_MISMATCH');
     let hash = pedersen(elements_count, elem);
     peaks.append(hash);
     let (updated_peaks, updated_elements_count) = append_rec(0, peaks, elements_count);
-    let new_root = StatelessMmrTrait::compute_root(updated_peaks.span(), updated_elements_count);
+    let new_root = StatelessMmrTrait::compute_root(updated_peaks.span(), updated_elements_count)
+        .unwrap();
     return (updated_elements_count, new_root, updated_peaks);
 }
 
@@ -232,7 +246,7 @@ fn append_rec(
 ) -> (Array<felt252>, felt252) {
     let elements_count = last_elements_count;
     let elements_count_u128: u128 = last_elements_count.try_into().unwrap();
-    let next_height = StatelessMmrTrait::height(elements_count_u128 + 1);
+    let next_height = StatelessMmrTrait::height(elements_count_u128 + 1).unwrap();
     let h_u128: u128 = h.try_into().unwrap();
     let mut is_higher = false;
     if h_u128 + 1 <= next_height {
@@ -274,7 +288,7 @@ fn multi_append_rec(
         let root = pedersen(1, root0);
         return (pos, root);
     }
-    let compute_root = StatelessMmrTrait::compute_root(peaks.span(), last_pos);
+    let compute_root = StatelessMmrTrait::compute_root(peaks.span(), last_pos).unwrap();
     assert(last_root == compute_root, 'ERR_ROOT_MISMATCH');
 
     let hash = pedersen(pos, *elems.at(0));
@@ -283,7 +297,7 @@ fn multi_append_rec(
     assert(*peaks.at(peaks.len()) == hash, 'ERR_PEAK_HASH_MISMATCH');
 
     let (peaks, new_pos) = append_rec(0, peaks, pos);
-    let new_root = StatelessMmrTrait::compute_root(peaks.span(), new_pos);
+    let new_root = StatelessMmrTrait::compute_root(peaks.span(), new_pos).unwrap();
 
     let mut copy_elems = elems;
     copy_elems.pop_front();
