@@ -1,6 +1,7 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
+use cairo_lib::utils::types::bytes::BytesPartialEq;
 
 #[test]
 #[available_gas(9999999999)]
@@ -4431,6 +4432,79 @@ fn test_full_verify() {
     key.append(0x1);
     key.append(0x5);
 
+    let mut expected_res = ArrayTrait::new();
+    expected_res.append(0xf8);
+    expected_res.append(0x44);
+    expected_res.append(0x01);
+    expected_res.append(0x80);
+    expected_res.append(0xa0);
+    expected_res.append(0x69);
+    expected_res.append(0x68);
+    expected_res.append(0xaa);
+    expected_res.append(0x4d);
+    expected_res.append(0x96);
+    expected_res.append(0xa8);
+    expected_res.append(0x17);
+    expected_res.append(0xeb);
+    expected_res.append(0x4d);
+    expected_res.append(0x24);
+    expected_res.append(0xaa);
+    expected_res.append(0x4d);
+    expected_res.append(0x09);
+    expected_res.append(0x6d);
+    expected_res.append(0x0d);
+    expected_res.append(0x84);
+    expected_res.append(0x1f);
+    expected_res.append(0x9c);
+    expected_res.append(0x52);
+    expected_res.append(0xed);
+    expected_res.append(0x7b);
+    expected_res.append(0xbc);
+    expected_res.append(0x4c);
+    expected_res.append(0xa7);
+    expected_res.append(0xd7);
+    expected_res.append(0x95);
+    expected_res.append(0x1b);
+    expected_res.append(0xba);
+    expected_res.append(0x6f);
+    expected_res.append(0xc6);
+    expected_res.append(0x55);
+    expected_res.append(0x71);
+    expected_res.append(0xa0);
+    expected_res.append(0x89);
+    expected_res.append(0xb1);
+    expected_res.append(0xde);
+    expected_res.append(0x4a);
+    expected_res.append(0x1e);
+    expected_res.append(0x01);
+    expected_res.append(0x2d);
+    expected_res.append(0x6a);
+    expected_res.append(0x62);
+    expected_res.append(0xb1);
+    expected_res.append(0x8b);
+    expected_res.append(0x6a);
+    expected_res.append(0xd1);
+    expected_res.append(0x84);
+    expected_res.append(0x98);
+    expected_res.append(0x5d);
+    expected_res.append(0x57);
+    expected_res.append(0x54);
+    expected_res.append(0x5b);
+    expected_res.append(0xf1);
+    expected_res.append(0xda);
+    expected_res.append(0x0a);
+    expected_res.append(0xe1);
+    expected_res.append(0xc2);
+    expected_res.append(0x18);
+    expected_res.append(0xf4);
+    expected_res.append(0xce);
+    expected_res.append(0xa3);
+    expected_res.append(0x4d);
+    expected_res.append(0xaf);
+    expected_res.append(0x09);
+    expected_res.append(0x9b);
+
     let mpt = MPTTrait::new(0xc2b5189e67f029875a3a375dce537add0f4d6b30adeb4bf146344f5cb08bbf2b);
-    mpt.verify(key.span(), proof.span());
+    let res = mpt.verify(key.span(), proof.span()).unwrap();
+    assert(res == expected_res.span(), 'Result not matching');
 }
