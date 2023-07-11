@@ -5,7 +5,6 @@ use cairo_lib::data_structures::stateless_mmr::{StatelessMmrTrait};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // test_stateless_mmr append
-
 #[test]
 #[available_gas(2000000)]
 fn test_append_initial() -> (felt252, felt252, felt252) {
