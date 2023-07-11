@@ -7,9 +7,6 @@ use debug::PrintTrait;
 use cairo_lib::utils::array::{array_contains};
 use cairo_lib::utils::bitwise::{left_shift, bit_length};
 
-// temporary
-use math::Oneable;
-use zeroable::Zeroable;
 
 /// StatelessMmr representation.
 #[derive(Drop)]
@@ -72,7 +69,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
     /// # Returns
     /// The height of the tree.
     fn height(index: u128) -> u128 {
-        assert(index > 0, 'index must be at least 1');
+        assert(index > 0, 'ERR_INDEX_OUT_OF_BOUNDS');
         let bits = bit_length(index);
         let ones = left_shift(1, bits) - 1;
         if !(index == ones) {
@@ -160,9 +157,9 @@ impl StatelessMmrImpl of StatelessMmrTrait {
         root: felt252
     ) -> bool {
         let elements_count_u128: u128 = elements_count.try_into().unwrap();
-        assert(index <= elements_count_u128, 'Index out of bound');
+        assert(index <= elements_count_u128, 'ERR_INDEX_OUT_OF_BOUNDS');
         let computed_root = StatelessMmrTrait::compute_root(peaks.span(), elements_count);
-        assert(root == computed_root, 'Not matching root hashes');
+        assert(root == computed_root, 'ERR_ROOT_MISMATCH');
 
         let index_felt: felt252 = index.into();
         let hash = pedersen(index_felt, value);
@@ -222,7 +219,7 @@ fn do_append(
         return (elements_count, first_root, new_peaks);
     }
     let computed_root = StatelessMmrTrait::compute_root(peaks.span(), last_elements_count);
-    assert(last_root == computed_root, 'Not matching root hashes');
+    assert(last_root == computed_root, 'ERR_ROOT_MISMATCH');
     let hash = pedersen(elements_count, elem);
     peaks.append(hash);
     let (updated_peaks, updated_elements_count) = append_rec(0, peaks, elements_count);
@@ -278,12 +275,12 @@ fn multi_append_rec(
         return (pos, root);
     }
     let compute_root = StatelessMmrTrait::compute_root(peaks.span(), last_pos);
-    assert(last_root == compute_root, 'Not matching root hashes');
+    assert(last_root == compute_root, 'ERR_ROOT_MISMATCH');
 
     let hash = pedersen(pos, *elems.at(0));
 
     peaks.append(pos);
-    assert(*peaks.at(peaks.len()) == hash, 'Not matching peak hash');
+    assert(*peaks.at(peaks.len()) == hash, 'ERR_PEAK_HASH_MISMATCH');
 
     let (peaks, new_pos) = append_rec(0, peaks, pos);
     let new_root = StatelessMmrTrait::compute_root(peaks.span(), new_pos);

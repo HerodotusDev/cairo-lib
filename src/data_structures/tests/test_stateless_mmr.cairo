@@ -281,7 +281,7 @@ fn test_verify_proof_five_leaves() {
 
 #[test]
 #[available_gas(40000000)]
-#[should_panic(expected: ('Index out of bound', ))]
+#[should_panic(expected: ('ERR_INDEX_OUT_OF_BOUNDS', ))]
 fn test_verify_proof_invalid_index() {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
@@ -298,7 +298,7 @@ fn test_verify_proof_invalid_index() {
 
 #[test]
 #[available_gas(40000000)]
-#[should_panic(expected: ('Not matching root hashes', ))]
+#[should_panic(expected: ('ERR_ROOT_MISMATCH', ))]
 fn test_verify_proof_invalid_peaks() {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
@@ -315,7 +315,7 @@ fn test_verify_proof_invalid_peaks() {
 
 #[test]
 #[available_gas(40000000)]
-#[should_panic(expected: ('Not matching root hashes', ))]
+#[should_panic(expected: ('ERR_ROOT_MISMATCH', ))]
 fn test_verify_proof_invalid_proof() {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, node1) = test_append_initial();
