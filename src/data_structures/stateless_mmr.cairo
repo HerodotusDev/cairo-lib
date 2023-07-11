@@ -15,45 +15,10 @@ use zeroable::Zeroable;
 #[derive(Drop)]
 struct StatelessMmr {}
 
-/// StatelessMmr trait.
-#[generate_trait]
-trait StatelessMmrTrait<T> {
-    /// Create a new stateless merkle mountain range instance.
-    fn new() -> StatelessMmr;
-    /// Compute the bagging of a given peaks.
-    fn bag_peaks(peaks: Span<T>) -> T;
-    /// Compute the root of a given peaks.
-    fn compute_root(peaks: Span<T>, size: T) -> T;
-    /// Compute the tree height of a given index
-    fn height(index: u128) -> u128;
-    /// Append a new element to the MMR.
-    fn append(
-        ref self: StatelessMmr, element: T, peaks: Array<T>, last_elements_count: T, last_root: T
-    ) -> (T, T, Array<T>);
-    /// Append multiple elements to the MMR.
-    fn multi_append(
-        ref self: StatelessMmr,
-        elements: Array<T>,
-        peaks: Array<T>,
-        last_elements_count: T,
-        last_root: T
-    ) -> (T, T, Array<T>);
-    /// Verify a proof.
-    fn verify_proof(
-        ref self: StatelessMmr,
-        index: u128,
-        value: T,
-        proof: Array<T>,
-        peaks: Array<T>,
-        elements_count: T,
-        root: T
-    ) -> bool;
-}
-
 /// StatelessMmr implementation.
-impl StatelessMmrImpl of StatelessMmrTrait<felt252> {
+#[generate_trait]
+impl StatelessMmrImpl of StatelessMmrTrait {
     /// Create a new stateless merkle mountain range instance.
-    #[inline(always)]
     fn new() -> StatelessMmr {
         StatelessMmr {}
     }
@@ -113,7 +78,7 @@ impl StatelessMmrImpl of StatelessMmrTrait<felt252> {
         if !(index == ones) {
             let shifted = left_shift(1, bits - 1);
             let shifted_index = (index - (shifted - 1));
-            let rec_height = StatelessMmrTrait::<felt252>::height(shifted_index);
+            let rec_height = StatelessMmrTrait::height(shifted_index);
             return rec_height;
         }
         return bits - 1;
@@ -224,7 +189,7 @@ fn get_proof_top_peak(
             break ();
         };
         current_sibling = *proof.at(i);
-        next_height = StatelessMmrTrait::<felt252>::height(elements_count + 1);
+        next_height = StatelessMmrTrait::height(elements_count + 1);
         if next_height >= height + 1 {
             is_higher = true;
         } else {
@@ -270,7 +235,7 @@ fn append_rec(
 ) -> (Array<felt252>, felt252) {
     let elements_count = last_elements_count;
     let elements_count_u128: u128 = last_elements_count.try_into().unwrap();
-    let next_height = StatelessMmrTrait::<felt252>::height(elements_count_u128 + 1);
+    let next_height = StatelessMmrTrait::height(elements_count_u128 + 1);
     let h_u128: u128 = h.try_into().unwrap();
     let mut is_higher = false;
     if h_u128 + 1 <= next_height {

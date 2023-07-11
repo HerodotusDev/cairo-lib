@@ -6,7 +6,7 @@ use cairo_lib::data_structures::stateless_mmr::{StatelessMmrTrait};
 #[test]
 #[available_gas(2000000)]
 fn test_append_initial() -> (felt252, felt252, felt252) {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
     let node1 = pedersen(1, 1);
 
@@ -23,7 +23,7 @@ fn test_append_initial() -> (felt252, felt252, felt252) {
 #[test]
 #[available_gas(20000000)]
 fn test_append_one() -> (felt252, felt252, felt252) {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
     let node1 = pedersen(1, 1);
     let (last_pos, last_root, last_peaks) = stateless_mmr.append(1, peaks, 0, 0);
@@ -50,7 +50,7 @@ fn test_append_one() -> (felt252, felt252, felt252) {
 #[test]
 #[available_gas(400000000)]
 fn test_append_two() -> (felt252, felt252, Array<felt252>) {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
 
     let (last_pos_1, last_root_1, last_peaks_1) = stateless_mmr.append(1, peaks, 0, 0);
@@ -78,7 +78,7 @@ fn test_append_two() -> (felt252, felt252, Array<felt252>) {
 #[test]
 #[available_gas(100000000)]
 fn test_append_three() -> (felt252, felt252, Array<felt252>) {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, last_peaks) = test_append_two();
     let last_peaks_0 = *last_peaks.at(0);
     let last_peaks_1 = *last_peaks.at(1);
@@ -103,7 +103,7 @@ fn test_append_three() -> (felt252, felt252, Array<felt252>) {
 #[test]
 #[available_gas(200000000)]
 fn test_append_four() -> (felt252, felt252, Array<felt252>) {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, mut last_peaks) = test_append_three();
     let (test_pos, test_root, mut test_peaks) = test_append_three();
 
@@ -121,7 +121,7 @@ fn test_append_four() -> (felt252, felt252, Array<felt252>) {
 #[test]
 #[available_gas(400000000)]
 fn test_multi_append_single_element() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut elems: Array<felt252> = Default::default();
     elems.append(1);
     let mut peaks: Array<felt252> = Default::default();
@@ -133,7 +133,7 @@ fn test_multi_append_single_element() {
 #[test]
 #[available_gas(400000000)]
 fn test_multi_append_two_elements() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut elems: Array<felt252> = Default::default();
     elems.append(1);
     elems.append(2);
@@ -145,7 +145,7 @@ fn test_multi_append_two_elements() {
 #[test]
 #[available_gas(400000000)]
 fn test_multi_append_three_elements() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut elems: Array<felt252> = Default::default();
     elems.append(1);
     elems.append(2);
@@ -158,7 +158,7 @@ fn test_multi_append_three_elements() {
 #[test]
 #[available_gas(400000000)]
 fn test_multi_append_four_elements() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut elems: Array<felt252> = Default::default();
     elems.append(1);
     elems.append(2);
@@ -172,7 +172,7 @@ fn test_multi_append_four_elements() {
 #[test]
 #[available_gas(400000000)]
 fn test_multi_append_five_elements() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut elems: Array<felt252> = Default::default();
     elems.append(1);
     elems.append(2);
@@ -188,12 +188,11 @@ fn test_multi_append_five_elements() {
 #[test]
 #[available_gas(40000000)]
 fn test_verify_proof_one_leaf() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(1, peaks, 0, 0);
     assert(new_pos == 1, 'new_pos should be 1');
-    let result = stateless_mmr
-        .verify_proof(1, 1, ArrayTrait::<felt252>::new(), new_peaks, new_pos, new_root);
+    let result = stateless_mmr.verify_proof(1, 1, ArrayTrait::new(), new_peaks, new_pos, new_root);
     assert(result, 'verify_proof should return true');
 }
 
@@ -201,7 +200,7 @@ fn test_verify_proof_one_leaf() {
 #[test]
 #[available_gas(40000000)]
 fn test_verify_proof_two_leaf() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
     let (new_pos_1, new_root_1, new_peaks_1) = stateless_mmr.append(1, peaks, 0, 0);
     let (new_pos_2, new_root_2, new_peaks_2) = stateless_mmr
@@ -218,7 +217,7 @@ fn test_verify_proof_two_leaf() {
 #[test]
 #[available_gas(40000000)]
 fn test_verify_proof_three_leaves() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, node3) = test_append_one();
     let mut peaks: Array<felt252> = Default::default();
     peaks.append(node3);
@@ -239,7 +238,7 @@ fn test_verify_proof_three_leaves() {
 #[test]
 #[available_gas(200000000)]
 fn test_verify_proof_four_leaves() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, last_peaks) = test_append_two();
 
     let (new_pos, new_root, new_arr) = stateless_mmr.append(5, last_peaks, last_pos, last_root);
@@ -266,7 +265,7 @@ fn test_verify_proof_four_leaves() {
 #[test]
 #[available_gas(200000000)]
 fn test_verify_proof_five_leaves() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, last_peaks) = test_append_three();
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(8, last_peaks, last_pos, last_root);
 
@@ -284,7 +283,7 @@ fn test_verify_proof_five_leaves() {
 #[available_gas(40000000)]
 #[should_panic(expected: ('Index out of bound', ))]
 fn test_verify_proof_invalid_index() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(1, peaks, 0, 0);
     assert(new_pos == 1, 'new_pos should be 1');
@@ -301,7 +300,7 @@ fn test_verify_proof_invalid_index() {
 #[available_gas(40000000)]
 #[should_panic(expected: ('Not matching root hashes', ))]
 fn test_verify_proof_invalid_peaks() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(1, peaks, 0, 0);
     assert(new_pos == 1, 'new_pos should be 1');
@@ -318,7 +317,7 @@ fn test_verify_proof_invalid_peaks() {
 #[available_gas(40000000)]
 #[should_panic(expected: ('Not matching root hashes', ))]
 fn test_verify_proof_invalid_proof() {
-    let mut stateless_mmr = StatelessMmrTrait::<felt252>::new();
+    let mut stateless_mmr = StatelessMmrTrait::new();
     let (last_pos, last_root, node1) = test_append_initial();
     let mut peaks: Array<felt252> = Default::default();
     peaks.append(node1);
