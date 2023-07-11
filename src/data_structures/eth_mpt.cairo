@@ -77,6 +77,7 @@ impl MPTImpl of MPTTrait {
                     } else {
                         break Result::Err('Shared nibbles not matching');
                     }
+                    key_index += shared_nibbles.len();
                 },
                 MPTNode::Leaf((key_end, value)) => {
                     let expected_end = key.slice(key_index, key.len() - key_index);
