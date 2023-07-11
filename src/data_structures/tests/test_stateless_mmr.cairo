@@ -2,18 +2,20 @@ use core::result::ResultTrait;
 use array::ArrayTrait;
 use core::option::OptionTrait;
 use cairo_lib::data_structures::stateless_mmr::{StatelessMmrTrait};
+use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // test_stateless_mmr append
+
 #[test]
 #[available_gas(2000000)]
 fn test_append_initial() -> (felt252, felt252, felt252) {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
-    let node1 = pedersen(1, 1);
+    let node1 = PoseidonHasher::hash_double(1, 1);
 
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(1, peaks, 0, 0);
     assert(new_pos == 1, 'new position should be 1');
-    let expected_root = pedersen(1, node1);
+    let expected_root = PoseidonHasher::hash_double(1, node1);
     assert(new_root == expected_root, 'new root should hash of node');
 
     let expected_root_method2 = StatelessMmrTrait::compute_root(new_peaks.span(), new_pos).unwrap();
@@ -26,11 +28,11 @@ fn test_append_initial() -> (felt252, felt252, felt252) {
 fn test_append_one() -> (felt252, felt252, felt252) {
     let mut stateless_mmr = StatelessMmrTrait::new();
     let mut peaks: Array<felt252> = Default::default();
-    let node1 = pedersen(1, 1);
+    let node1 = PoseidonHasher::hash_double(1, 1);
     let (last_pos, last_root, last_peaks) = stateless_mmr.append(1, peaks, 0, 0);
 
     assert(last_pos == 1, 'new position should be 1');
-    let expected_root = pedersen(1, node1);
+    let expected_root = PoseidonHasher::hash_double(1, node1);
     assert(last_root == expected_root, 'new root should hash of node');
 
     let expected_root_method2 = StatelessMmrTrait::compute_root(last_peaks.span(), last_pos)
@@ -40,10 +42,10 @@ fn test_append_one() -> (felt252, felt252, felt252) {
     let (new_pos, new_root, new_arr) = stateless_mmr.append(2, last_peaks, last_pos, last_root);
     assert(new_pos == 3, 'new position should be 3');
 
-    let node2 = pedersen(2, 2);
-    let node3_1 = pedersen(node1, node2);
-    let node3 = pedersen(3, node3_1);
-    let expected_root = pedersen(3, node3);
+    let node2 = PoseidonHasher::hash_double(2, 2);
+    let node3_1 = PoseidonHasher::hash_double(node1, node2);
+    let node3 = PoseidonHasher::hash_double(3, node3_1);
+    let expected_root = PoseidonHasher::hash_double(3, node3);
 
     assert(new_root == expected_root, 'new root should hash of node');
     return (new_pos, new_root, node3);
@@ -60,10 +62,10 @@ fn test_append_two() -> (felt252, felt252, Array<felt252>) {
         .append(2, last_peaks_1, last_pos_1, last_root_1);
 
     // calculate node3
-    let node1 = pedersen(1, 1);
-    let node2 = pedersen(2, 2);
-    let node3_1 = pedersen(node1, node2);
-    let node3 = pedersen(3, node3_1);
+    let node1 = PoseidonHasher::hash_double(1, 1);
+    let node2 = PoseidonHasher::hash_double(2, 2);
+    let node3_1 = PoseidonHasher::hash_double(node1, node2);
+    let node3 = PoseidonHasher::hash_double(3, node3_1);
     let mut new_blank_peaks: Array<felt252> = Default::default();
     new_blank_peaks.append(node3);
 
@@ -88,11 +90,11 @@ fn test_append_three() -> (felt252, felt252, Array<felt252>) {
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(5, last_peaks, last_pos, last_root);
     assert(new_pos == 7, 'new position should be 7');
 
-    let node5 = pedersen(5, 5);
-    let node6_1 = pedersen(last_peaks_1, node5);
-    let node6 = pedersen(6, node6_1);
-    let node7_1 = pedersen(last_peaks_0, node6);
-    let node7 = pedersen(7, node7_1);
+    let node5 = PoseidonHasher::hash_double(5, 5);
+    let node6_1 = PoseidonHasher::hash_double(last_peaks_1, node5);
+    let node6 = PoseidonHasher::hash_double(6, node6_1);
+    let node7_1 = PoseidonHasher::hash_double(last_peaks_0, node6);
+    let node7 = PoseidonHasher::hash_double(7, node7_1);
 
     let mut peaks: Array<felt252> = Default::default();
     peaks.append(node7);
@@ -112,7 +114,7 @@ fn test_append_four() -> (felt252, felt252, Array<felt252>) {
     let (new_pos, new_root, new_peaks) = stateless_mmr.append(8, last_peaks, last_pos, last_root);
     assert(new_pos == 8, 'new position should be 8');
 
-    let node8 = pedersen(8, 8);
+    let node8 = PoseidonHasher::hash_double(8, 8);
     test_peaks.append(node8);
     let expected_root = StatelessMmrTrait::compute_root(test_peaks.span(), new_pos).unwrap();
     assert(new_root == expected_root, 'new root should hash of node');
@@ -209,7 +211,7 @@ fn test_verify_proof_two_leaf() {
     let (new_pos_1, new_root_1, new_peaks_1) = stateless_mmr.append(1, peaks, 0, 0);
     let (new_pos_2, new_root_2, new_peaks_2) = stateless_mmr
         .append(2, new_peaks_1, new_pos_1, new_root_1);
-    let node1 = pedersen(1, 1);
+    let node1 = PoseidonHasher::hash_double(1, 1);
     assert(new_pos_2 == 3, 'new_pos should be 3');
     let mut proof: Array<felt252> = Default::default();
     proof.append(node1);
@@ -232,7 +234,7 @@ fn test_verify_proof_three_leaves() {
     assert(new_pos == 4, 'new_pos should be 4');
 
     let mut test_peaks: Array<felt252> = Default::default();
-    let node4 = pedersen(4, 4);
+    let node4 = PoseidonHasher::hash_double(4, 4);
     test_peaks.append(node3);
     test_peaks.append(node4);
 
@@ -257,11 +259,11 @@ fn test_verify_proof_four_leaves() {
     proof.append(*test_peaks.at(1));
     proof.append(*test_peaks.at(0));
 
-    let node5 = pedersen(5, 5);
-    let node6_1 = pedersen(*test_peaks.at(1), node5);
-    let node6 = pedersen(6, node6_1);
-    let node7_1 = pedersen(*test_peaks.at(0), node6);
-    let node7 = pedersen(7, node7_1);
+    let node5 = PoseidonHasher::hash_double(5, 5);
+    let node6_1 = PoseidonHasher::hash_double(*test_peaks.at(1), node5);
+    let node6 = PoseidonHasher::hash_double(6, node6_1);
+    let node7_1 = PoseidonHasher::hash_double(*test_peaks.at(0), node6);
+    let node7 = PoseidonHasher::hash_double(7, node7_1);
     let mut peaks: Array<felt252> = Default::default();
     peaks.append(node7);
 
@@ -279,7 +281,7 @@ fn test_verify_proof_five_leaves() {
     assert(new_pos == 8, 'new_pos should be 8');
 
     let (test_pos, test_root, mut test_peaks) = test_append_three();
-    let node8 = pedersen(8, 8);
+    let node8 = PoseidonHasher::hash_double(8, 8);
     let proof: Array<felt252> = Default::default();
     test_peaks.append(node8);
     let result = stateless_mmr.verify_proof(8, 8, proof, new_peaks, new_pos, new_root).unwrap();
@@ -296,7 +298,7 @@ fn test_verify_proof_invalid_index() {
     assert(new_pos == 1, 'new_pos should be 1');
 
     let mut test_peaks: Array<felt252> = Default::default();
-    let node1 = pedersen(1, 1);
+    let node1 = PoseidonHasher::hash_double(1, 1);
     test_peaks.append(node1);
     let proofs: Array<felt252> = Default::default();
     let result = stateless_mmr.verify_proof(2, 2, proofs, test_peaks, new_pos, new_root).unwrap();
@@ -313,7 +315,7 @@ fn test_verify_proof_invalid_peaks() {
     assert(new_pos == 1, 'new_pos should be 1');
 
     let mut test_peaks: Array<felt252> = Default::default();
-    let invalid_node1 = pedersen(1, 42);
+    let invalid_node1 = PoseidonHasher::hash_double(1, 42);
     test_peaks.append(invalid_node1);
     let proofs: Array<felt252> = Default::default();
     let result = stateless_mmr.verify_proof(1, 1, proofs, test_peaks, new_pos, new_root).unwrap();
@@ -331,9 +333,9 @@ fn test_verify_proof_invalid_proof() {
     let (new_pos, new_root, mut new_arr) = stateless_mmr.append(2, peaks, last_pos, last_root);
     assert(new_pos == 3, 'new_pos should be 3');
 
-    let node2 = pedersen(2, 2);
-    let node3_1 = pedersen(node1, node2);
-    let node3 = pedersen(3, node3_1);
+    let node2 = PoseidonHasher::hash_double(2, 2);
+    let node3_1 = PoseidonHasher::hash_double(node1, node2);
+    let node3 = PoseidonHasher::hash_double(3, node3_1);
     new_arr.append(node3);
     let mut proof: Array<felt252> = Default::default();
     proof.append(node3);

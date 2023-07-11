@@ -7,12 +7,10 @@ use array::{ArrayTrait, SpanTrait};
 use debug::PrintTrait;
 use cairo_lib::utils::array::{array_contains};
 use cairo_lib::utils::bitwise::{left_shift, bit_length};
+use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 #[derive(Drop)]
 struct StatelessMmr {}
-
-#[derive(Drop)]
-struct Peaks {}
 
 /// StatelessMmr implementation.
 #[generate_trait]
@@ -36,7 +34,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
             return Result::Ok(*peaks.at(0));
         }
 
-        let mut root = pedersen(*peaks.at(peaks_len - 2), *peaks.at(peaks_len - 1));
+        let mut root = PoseidonHasher::double_hash(*peaks.at(peaks_len - 2), *peaks.at(peaks_len - 1));
 
         if peaks_len == 2 {
             return Result::Ok(root);
@@ -45,7 +43,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
         let mut i = peaks_len - 3;
         let mut k = 0;
         loop {
-            root = pedersen(*peaks.at(i - k), root);
+            root = PoseidonHasher::double_hash(*peaks.at(i - k), root);
             if k + 3 == peaks_len {
                 break ();
             };
@@ -62,7 +60,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
     /// Root value of the tree.
     fn compute_root(peaks: Span<felt252>, size: felt252) -> Result<felt252, felt252> {
         let bagged_peaks = StatelessMmrTrait::bag_peaks(peaks);
-        let root = pedersen(size, bagged_peaks.unwrap());
+        let root = PoseidonHasher::hash_double(size, bagged_peaks.unwrap());
         return Result::Ok(root);
     }
 
@@ -175,7 +173,7 @@ impl StatelessMmrImpl of StatelessMmrTrait {
         }
 
         let index_felt: felt252 = index.into();
-        let hash = pedersen(index_felt, value);
+        let hash = PoseidonHasher::double_hash(index_felt, value);
         let top_peak = get_proof_top_peak(0, hash, index, proof).unwrap();
         let is_valid = array_contains(top_peak, peaks.span());
 
@@ -206,14 +204,14 @@ fn get_proof_top_peak(
             is_higher = false;
         };
         if is_higher {
-            hashed = pedersen(current_sibling, hash);
+            hashed = PoseidonHasher::double_hash(current_sibling, hash);
             elements_count = elements_count + 1;
         } else {
-            hashed = pedersen(hash, current_sibling);
+            hashed = PoseidonHasher::double_hash(hash, current_sibling);
             elements_count = elements_count + left_shift(height, 2);
         };
         elements_count_felt = elements_count.into();
-        parent_hash = pedersen(elements_count_felt, hashed);
+        parent_hash = PoseidonHasher::double_hash(elements_count_felt, hashed);
         hash = parent_hash;
         height = height + 1;
         i = i + 1;
@@ -225,15 +223,15 @@ fn do_append(
 ) -> (felt252, felt252, Array<felt252>) {
     let elements_count = last_elements_count + 1;
     if last_elements_count == 0 {
-        let root0 = pedersen(1, elem);
-        let first_root = pedersen(1, root0);
+        let root0 = PoseidonHasher::double_hash(1, elem);
+        let first_root = PoseidonHasher::double_hash(1, root0);
         let mut new_peaks: Array<felt252> = Default::default();
         new_peaks.append(root0);
         return (elements_count, first_root, new_peaks);
     }
     let computed_root = StatelessMmrTrait::compute_root(peaks.span(), last_elements_count).unwrap();
     assert(last_root == computed_root, 'ERR_ROOT_MISMATCH');
-    let hash = pedersen(elements_count, elem);
+    let hash = PoseidonHasher::double_hash(elements_count, elem);
     peaks.append(hash);
     let (updated_peaks, updated_elements_count) = append_rec(0, peaks, elements_count);
     let new_root = StatelessMmrTrait::compute_root(updated_peaks.span(), updated_elements_count)
@@ -260,8 +258,8 @@ fn append_rec(
         let left_hash = peaks.at(peaks_len - 2);
         peaks_len = peaks_len - 2;
 
-        let hash = pedersen(*left_hash, *right_hash);
-        let parent_hash = pedersen(elements_count, hash);
+        let hash = PoseidonHasher::double_hash(*left_hash, *right_hash);
+        let parent_hash = PoseidonHasher::double_hash(elements_count, hash);
 
         let mut merged_peaks: Array<felt252> = Default::default();
         let mut i = 0;
@@ -284,14 +282,14 @@ fn multi_append_rec(
 ) -> (felt252, felt252) {
     let pos = last_pos + 1;
     if last_pos == 0 {
-        let root0 = pedersen(1, *elems.at(0));
-        let root = pedersen(1, root0);
+        let root0 = PoseidonHasher::double_hash(1, *elems.at(0));
+        let root = PoseidonHasher::double_hash(1, root0);
         return (pos, root);
     }
     let compute_root = StatelessMmrTrait::compute_root(peaks.span(), last_pos).unwrap();
     assert(last_root == compute_root, 'ERR_ROOT_MISMATCH');
 
-    let hash = pedersen(pos, *elems.at(0));
+    let hash = PoseidonHasher::double_hash(pos, *elems.at(0));
 
     peaks.append(pos);
     assert(*peaks.at(peaks.len()) == hash, 'ERR_PEAK_HASH_MISMATCH');
