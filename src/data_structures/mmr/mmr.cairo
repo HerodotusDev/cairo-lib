@@ -1,5 +1,5 @@
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
-use cairo_lib::hashing::poseidon::PoseidonHasher;
+//use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 struct MMR {
     root: felt252,
