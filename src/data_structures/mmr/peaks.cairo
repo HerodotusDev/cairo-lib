@@ -11,13 +11,18 @@ impl PeaksImpl of PeaksTrait {
     fn bag(self: Peaks) -> felt252 {
         let mut i = self.len() - 1;
         let mut bags = *self.at(i);
-        loop {
-            if i < 0 {
-                break bags;
-            }
 
-            bags = PoseidonHasher::hash_double(*self.at(i), bags);
+        if i == 0 {
+            return bags;
+        }
+
+        loop {
             i -= 1;
+            bags = PoseidonHasher::hash_double(*self.at(i), bags);
+
+            if i == 0 {
+                break bags;
+            };
         }
     }
 
