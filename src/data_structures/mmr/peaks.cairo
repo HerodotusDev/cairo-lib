@@ -23,7 +23,7 @@ impl PeaksImpl of PeaksTrait {
 
     fn valid(self: Peaks, last_pos: usize, root: felt252) -> bool {
         let computed_root = compute_root(last_pos.into(), self);
-        return computed_root == root ;
+        computed_root == root
     }
 
     fn contains_peak(self: Peaks, peak: felt252) -> bool {
