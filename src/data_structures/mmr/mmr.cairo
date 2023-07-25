@@ -1,4 +1,5 @@
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
+use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use traits::Into;
@@ -22,8 +23,7 @@ impl MMRImpl of MMRTrait {
 
     // returns the new MMR root or an error
     fn append(ref self: MMR, element: felt252, peaks: Peaks) -> Result<felt252, felt252> {
-        let computed_root = compute_root(self.last_pos.into(), peaks);
-        if computed_root != self.root {
+        if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
         }
 
@@ -82,4 +82,12 @@ impl MMRImpl of MMRTrait {
         return Result::Ok(new_root);
     }
 
+    fn verify_proof(self: @MMR, index: usize, value: felt252, peaks: Peaks, proof: Proof) -> Result<bool, felt252> {
+        if !peaks.valid(*self.last_pos, *self.root) {
+            return Result::Err('Invalid peaks');
+        }
+
+        let peak = proof.compute_peak(index, value);
+        Result::Ok(peaks.contains_peak(peak))
+    }
 }
