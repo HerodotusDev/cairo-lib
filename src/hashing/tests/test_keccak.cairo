@@ -22,7 +22,6 @@ fn test_keccak_cairo_full_byte() {
 #[available_gas(99999999)]
 fn test_keccak_cairo_remainder() {
     let mut input =  ArrayTrait::new();
-    // append: ab768cf789aefd234abcd245
     input.append(0xab);
     input.append(0x76);
     input.append(0x8c);
