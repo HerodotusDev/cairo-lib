@@ -7,6 +7,7 @@ use result::Result;
 use array::{ArrayTrait, SpanTrait};
 use option::OptionTrait;
 
+#[derive(Drop)]
 struct MMR {
     root: felt252,
     last_pos: usize
@@ -16,7 +17,7 @@ struct MMR {
 impl MMRImpl of MMRTrait {
     fn new() -> MMR {
         MMR {
-            root: 0,
+            root: PoseidonHasher::hash_double(0, 0),
             last_pos: 0
         }
     }
@@ -59,7 +60,7 @@ impl MMRImpl of MMRTrait {
             let mut new_peaks = ArrayTrait::new();
             i = 0;
             loop {
-                if i == peaks.len() - 2 {
+                if i == peaks_arr.len() - 2 {
                     break ();
                 }
 

@@ -9,6 +9,10 @@ type Peaks = Span<felt252>;
 #[generate_trait]
 impl PeaksImpl of PeaksTrait {
     fn bag(self: Peaks) -> felt252 {
+        if self.is_empty() {
+            return 0;
+        }
+
         let mut i = self.len() - 1;
         let mut bags = *self.at(i);
 
