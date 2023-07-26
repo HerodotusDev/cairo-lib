@@ -1,4 +1,5 @@
 use cairo_lib::data_structures::mmr::mmr::{MMR, MMRTrait};
+use cairo_lib::data_structures::mmr::proof::Proof;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
@@ -136,4 +137,79 @@ fn test_append_wrong_peaks() {
     let res = mmr.append(5, peaks);
 
     assert(res.is_err(), 'Wrong peaks');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_verify_proof_all_left() {
+    let elems = helper_test_get_elements();
+    let mmr = MMRTrait::new(
+        root: PoseidonHasher::hash_double(8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))),
+        last_pos: 8
+    );
+
+    let proof = array![*elems.at(1), *elems.at(5)].span();
+    let peaks = array![*elems.at(6), *elems.at(7)].span();
+
+    assert(mmr.verify_proof(1, 1, peaks, proof).unwrap(), 'Invalid proof all left')
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_verify_proof_all_right() {
+    let elems = helper_test_get_elements();
+    let mmr = MMRTrait::new(
+        root: PoseidonHasher::hash_double(8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))),
+        last_pos: 8
+    );
+
+    let proof = array![*elems.at(3), *elems.at(2)].span();
+    let peaks = array![*elems.at(6), *elems.at(7)].span();
+
+    assert(mmr.verify_proof(5, 5, peaks, proof).unwrap(), 'Invalid proof all right')
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_verify_proof_left_right() {
+    let elems = helper_test_get_elements();
+    let mmr = MMRTrait::new(
+        root: PoseidonHasher::hash_double(8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))),
+        last_pos: 8
+    );
+
+    let proof = array![*elems.at(0), *elems.at(5)].span();
+    let peaks = array![*elems.at(6), *elems.at(7)].span();
+
+    assert(mmr.verify_proof(2, 2, peaks, proof).unwrap(), 'Valid invalid proof left right')
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_verify_invalid_proof() {
+    let elems = helper_test_get_elements();
+    let mmr = MMRTrait::new(
+        root: PoseidonHasher::hash_double(8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))),
+        last_pos: 8
+    );
+
+    let proof = array![*elems.at(2), *elems.at(2)].span();
+    let peaks = array![*elems.at(6), *elems.at(7)].span();
+
+    assert(!mmr.verify_proof(2, 2, peaks, proof).unwrap(), 'Invalid proof left right')
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_verify_proof_invalid_peaks() {
+    let elems = helper_test_get_elements();
+    let mmr = MMRTrait::new(
+        root: PoseidonHasher::hash_double(8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))),
+        last_pos: 8
+    );
+
+    let proof = array![*elems.at(0), *elems.at(5)].span();
+    let peaks = array![*elems.at(1), *elems.at(5)].span();
+
+    assert(mmr.verify_proof(2, 2, peaks, proof).is_err(), 'Proof wrong peaks')
 }
