@@ -21,7 +21,7 @@ fn helper_test_get_elements() -> Span<felt252>{
 #[available_gas(99999999)]
 fn test_append_initial() {
     let elems = helper_test_get_elements();
-    let mut mmr = MMRTrait::new();
+    let mut mmr: MMR = Default::default();
     
     let peaks = array![].span();
     mmr.append(1, peaks);
@@ -35,7 +35,7 @@ fn test_append_initial() {
 #[available_gas(99999999)]
 fn test_append_1() {
     let elems = helper_test_get_elements();
-    let mut mmr = MMRTrait::new();
+    let mut mmr: MMR = Default::default();
     
     let mut peaks = array![].span();
     mmr.append(1, peaks);
@@ -52,7 +52,7 @@ fn test_append_1() {
 #[available_gas(99999999)]
 fn test_append_2() {
     let elems = helper_test_get_elements();
-    let mut mmr = MMRTrait::new();
+    let mut mmr: MMR = Default::default();
     
     let mut peaks = array![].span();
     mmr.append(1, peaks);
@@ -72,7 +72,7 @@ fn test_append_2() {
 #[available_gas(99999999)]
 fn test_append_3() {
     let elems = helper_test_get_elements();
-    let mut mmr = MMRTrait::new();
+    let mut mmr: MMR = Default::default();
     
     let mut peaks = array![].span();
     mmr.append(1, peaks);
@@ -95,7 +95,7 @@ fn test_append_3() {
 #[available_gas(99999999)]
 fn test_append_4() {
     let elems = helper_test_get_elements();
-    let mut mmr = MMRTrait::new();
+    let mut mmr: MMR = Default::default();
     
     let mut peaks = array![].span();
     mmr.append(1, peaks);
@@ -121,7 +121,7 @@ fn test_append_4() {
 #[available_gas(99999999)]
 fn test_append_wrong_peaks() {
     let elems = helper_test_get_elements();
-    let mut mmr = MMRTrait::new();
+    let mut mmr: MMR = Default::default();
     
     let mut peaks = array![].span();
     mmr.append(1, peaks);

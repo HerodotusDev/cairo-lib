@@ -2,7 +2,7 @@ use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use traits::Into;
+use traits::{Into, Default};
 use result::Result;
 use array::{ArrayTrait, SpanTrait};
 use option::OptionTrait;
@@ -13,12 +13,22 @@ struct MMR {
     last_pos: usize
 }
 
-#[generate_trait]
-impl MMRImpl of MMRTrait {
-    fn new() -> MMR {
+impl MMRDefault of Default<MMR> {
+    #[inline(always)]
+    fn default() -> MMR {
         MMR {
             root: PoseidonHasher::hash_double(0, 0),
             last_pos: 0
+        }
+    }
+}
+
+#[generate_trait]
+impl MMRImpl of MMRTrait {
+    fn new(root: felt252, last_pos: usize) -> MMR {
+        MMR {
+            root,
+            last_pos
         }
     }
 
