@@ -7,7 +7,7 @@ use result::Result;
 use array::{ArrayTrait, SpanTrait};
 use option::OptionTrait;
 
-#[derive(Drop)]
+#[derive(Drop, starknet::Store)]
 struct MMR {
     root: felt252,
     last_pos: usize
