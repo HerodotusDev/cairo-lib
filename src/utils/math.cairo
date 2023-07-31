@@ -18,3 +18,10 @@ fn pow<
     }
 }
 
+fn pow_felt252(base: felt252, exp: felt252) -> felt252 {
+    if exp == 0 {
+        1
+    } else {
+        base * pow_felt252(base, exp - 1)
+    }
+}

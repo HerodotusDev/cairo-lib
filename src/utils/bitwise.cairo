@@ -1,4 +1,4 @@
-use cairo_lib::utils::math::pow;
+use cairo_lib::utils::math::{pow, pow_felt252};
 use math::Oneable;
 use zeroable::Zeroable;
 
@@ -18,6 +18,10 @@ fn left_shift<
     // TODO change this logic
     let two = TOneable::one() + TOneable::one();
     num * pow(two, shift)
+}
+
+fn left_shift_felt252(num: felt252, shift: felt252) -> felt252 {
+    num * pow_felt252(2, shift)
 }
 
 fn right_shift<
