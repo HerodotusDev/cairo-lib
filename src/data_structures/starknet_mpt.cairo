@@ -1,6 +1,8 @@
 use array::SpanTrait;
-use traits::Into;
+use traits::{Into, TryInto};
 use option::OptionTrait;
+use hash::LegacyHash;
+use cairo_lib::utils::types::bitarr::{BitArr, BitArrTryIntoFelt252};
 
 struct StarkMPT {
     root: felt252
@@ -12,11 +14,27 @@ impl StarkMPTDefault of Default<StarkMPT> {
     }
 }
 
+#[derive(Drop)]
 enum StarkMPTNode {
     // left, right
     Binary: (felt252, felt252),
     // child, path
-    Edge: (felt252, Span<bool>),
+    Edge: (felt252, BitArr),
+}
+
+#[generate_trait]
+impl StarkMPTNodeImpl of StarkMPTNodeTrait {
+    fn hash(self: @StarkMPTNode) -> felt252 {
+        match self {
+            StarkMPTNode::Binary((left, right)) => {
+                LegacyHash::hash(*left, *right)
+            },
+            StarkMPTNode::Edge((child, path)) => {
+                let path_felt252: felt252 = (*path).try_into().unwrap();
+                LegacyHash::hash(*child, path_felt252) + (*path).len().into()
+            }
+        }
+    }
 }
 
 #[derive(Drop)]
@@ -41,7 +59,7 @@ impl StarkMPTImpl of StarkMPTTrait {
         StarkMPT { root: root }
     }
 
-    fn verify(self: @StarkMPT, key: Span<bool>, proof: Span<StarkMPTNode>) -> Result<felt252, felt252> {
+    fn verify(self: @StarkMPT, key: BitArr, proof: Span<StarkMPTNode>) -> Result<felt252, felt252> {
         if key.len() != 251 {
             return Result::Err('Ill-formed key');
         }
@@ -55,7 +73,12 @@ impl StarkMPTImpl of StarkMPTTrait {
                 break Result::Ok(expected_hash);
             }
 
-            match proof.at(i) {
+            let node = proof.at(i);
+            if node.hash() != expected_hash {
+                break Result::Err('Invalid proof');
+            }
+
+            match node {
                 StarkMPTNode::Binary((left, right)) => {
                     let direction: Direction = (*remaining_path.pop_front().unwrap()).into();
 
