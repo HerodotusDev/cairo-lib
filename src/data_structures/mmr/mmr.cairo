@@ -3,11 +3,12 @@ use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use traits::{Into, Default};
+use clone::Clone;
 use result::Result;
 use array::{ArrayTrait, SpanTrait};
 use option::OptionTrait;
 
-#[derive(Drop, starknet::Store)]
+#[derive(Drop, Clone, starknet::Store)]
 struct MMR {
     root: felt252,
     last_pos: usize
