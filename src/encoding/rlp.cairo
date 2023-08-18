@@ -62,11 +62,8 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
             let len_len = prefix.into() - 0xb7;
             let len_span = input.slice(1, len_len);
 
-            // TODO handle error of byte conversion
-            // TODO handle error of converting u256 to u32
-            // If RLP is correclty formated it should never fail, so using unwrap for now
             // Bytes => u256 => u32
-            let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
+            let len: u32 = len_span.try_into().unwrap().try_into()?;
             let res = input.slice(1 + len_len, len); 
 
             Result::Ok((RLPItem::Bytes(res), 1 + len_len + len))
@@ -81,9 +78,6 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
             let len_len = prefix.into() - 0xf7;
             let len_span = input.slice(1, len_len);
 
-            // TODO handle error of byte conversion
-            // TODO handle error of converting u256 to u32
-            // If RLP is correclty formated it should never fail, so using unwrap for now
             // Bytes => u256 => u32
             let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
             let mut in = input.slice(1 + len_len, len);
@@ -110,9 +104,7 @@ fn rlp_decode_list(ref input: Bytes) -> Span<Bytes> {
                 input = input.slice(decoded_len, input.len() - decoded_len);
             },
             RLPItem::List(_) => {
-                // TODO return Err
                 panic_with_felt252('Recursive list not supported');
-                // return Result::Err('Recursive list not supported');
             }
         }
         i += decoded_len;

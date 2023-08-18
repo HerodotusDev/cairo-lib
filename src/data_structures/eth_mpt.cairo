@@ -8,8 +8,6 @@ use option::OptionTrait;
 use cairo_lib::utils::bitwise::right_shift;
 use keccak::u128_split;
 
-// TODO create nibble type
-
 #[derive(Drop)]
 struct MPT {
     root: u256
@@ -65,7 +63,6 @@ impl MPTImpl of MPTTrait {
                     if key_index >= key.len() {
                         break Result::Ok(value);
                     } else {
-                        // TODO error handling
                         current_hash = *nibbles.at((*key.at(key_index)).into());
                     }
                     key_index += 1;
@@ -106,7 +103,6 @@ impl MPTImpl of MPTTrait {
                             break ();
                         }
 
-                        // TODO error handling
                         let hash = (*nibble_hashes_bytes.at(i)).try_into().unwrap();
                         nibble_hashes.append(hash);
                         i += 1;
@@ -134,7 +130,6 @@ impl MPTImpl of MPTTrait {
                             i += 1;
                         };
 
-                        // TODO error handling (should never fail if RLP is properly formated)
                         let next_node = (*l.at(1)).try_into().unwrap();
                         Result::Ok(MPTNode::Extension((shared_nibbles_nibbles.span(), next_node)))
                     } else if prefix == 1 {
@@ -153,7 +148,6 @@ impl MPTImpl of MPTTrait {
                             i += 1;
                         };
 
-                        // TODO error handling (should never fail if RLP is properly formated)
                         let next_node = (*l.at(1)).try_into().unwrap();
                         Result::Ok(MPTNode::Extension((shared_nibbles_nibbles.span(), next_node)))
                     } else if prefix == 2 {

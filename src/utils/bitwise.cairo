@@ -15,7 +15,6 @@ fn left_shift<
 >(
     num: T, shift: T
 ) -> T {
-    // TODO change this logic
     let two = TOneable::one() + TOneable::one();
     num * pow(two, shift)
 }
@@ -38,7 +37,6 @@ fn right_shift<
 >(
     num: T, shift: T
 ) -> T {
-    // TODO change this logic
     let two = TOneable::one() + TOneable::one();
     num / pow(two, shift)
 }
