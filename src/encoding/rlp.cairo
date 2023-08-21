@@ -6,6 +6,7 @@ use traits::{Into, TryInto};
 use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::Byte;
 
+// @notice Enum with all possible RLP types
 #[derive(Drop, PartialEq)]
 enum RLPType {
     String: (),
@@ -17,6 +18,9 @@ enum RLPType {
 
 #[generate_trait]
 impl RLPTypeImpl of RLPTypeTrait {
+    // @notice Returns RLPType from the leading byte
+    // @param byte Leading byte
+    // @return Result with RLPType
     fn from_byte(byte: Byte) -> Result<RLPType, felt252> {
         if byte <= 0x7f {
             Result::Ok(RLPType::String(()))
@@ -34,13 +38,17 @@ impl RLPTypeImpl of RLPTypeTrait {
     }
 }
 
+// @notice Represent a RLP item
 #[derive(Drop)]
 enum RLPItem {
     Bytes: Bytes,
-    // Should be Array<RLPItem> to allow for any depth , but compiler panic
+    // Should be Span<RLPItem> to allow for any depth/recursion, not yet supported by the compiler
     List: Span<Bytes>
 }
 
+// @notice RLP decodes a rlp encoded byte array
+// @param input RLP encoded bytes
+// @return Result with RLPItem and size of the decoded item
 fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
     let prefix = *input.at(0);
 
