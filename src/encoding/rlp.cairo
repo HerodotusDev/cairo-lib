@@ -56,8 +56,7 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
     let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
     match rlp_type {
         RLPType::String(()) => {
-            let mut arr = ArrayTrait::new();
-            arr.append(prefix);
+            let mut arr = array![prefix];
             Result::Ok((RLPItem::Bytes(arr.span()), 1))
         },
         RLPType::StringShort(()) => {
@@ -71,7 +70,7 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
             let len_span = input.slice(1, len_len);
 
             // Bytes => u256 => u32
-            let len: u32 = len_span.try_into().unwrap().try_into()?;
+            let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
             let res = input.slice(1 + len_len, len); 
 
             Result::Ok((RLPItem::Bytes(res), 1 + len_len + len))
