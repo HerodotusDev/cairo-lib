@@ -3,6 +3,8 @@
 
 Welcome to `cairo-lib` – a comprehensive library for the Cairo language. This library provides a suite of tools to supercharge your Cairo development experience.
 
+**⚠️ Disclaimer**: This library is in its early stages and has not been audited yet. It may contain bugs or vulnerabilities. Use at your own risk and ensure proper review and testing when integrating into your projects.
+
 ## Features:
 
 - [**Data Structures**](https://github.com/HerodotusDev/cairo-lib/tree/main/src/data_structures):
@@ -48,3 +50,5 @@ For example, to utilize a specific tool from the library:
 use cairo_lib::utils::types::bytes::Bytes;
 ```
 
+## License
+`cairo-lib` is licensed under the [GNU General Public License v3.0](./LICENSE).
