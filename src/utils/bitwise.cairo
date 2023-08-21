@@ -2,6 +2,10 @@ use cairo_lib::utils::math::{pow, pow_felt252};
 use math::Oneable;
 use zeroable::Zeroable;
 
+// @notice Bitwise left shift
+// @param num The number to be shifted
+// @param shift The number of bits to shift
+// @return The left shifted number
 fn left_shift<
     T,
     impl TZeroable: Zeroable<T>,
@@ -23,6 +27,10 @@ fn left_shift_felt252(num: felt252, shift: felt252) -> felt252 {
     num * pow_felt252(2, shift)
 }
 
+// @notice Bitwise right shift
+// @param num The number to be shifted
+// @param shift The number of bits to shift
+// @return The right shifted number
 fn right_shift<
     T,
     impl TZeroable: Zeroable<T>,
@@ -41,6 +49,9 @@ fn right_shift<
     num / pow(two, shift)
 }
 
+// @notice Bit length of a number
+// @param num The number to be measured
+// @return The number of bits in the number
 fn bit_length<
     T,
     impl TZeroable: Zeroable<T>,

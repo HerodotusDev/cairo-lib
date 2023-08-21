@@ -2,6 +2,10 @@ use zeroable::Zeroable;
 use math::Oneable;
 use traits::{Sub, Mul};
 
+// @notice Computes `base ^ exp`
+// @param base The base of the exponentiation
+// @param exp The exponent of the exponentiation
+// @return The exponentiation result
 fn pow<
     T,
     impl TZeroable: Zeroable<T>,
