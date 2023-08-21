@@ -8,36 +8,49 @@ use option::OptionTrait;
 use cairo_lib::utils::bitwise::right_shift;
 use keccak::u128_split;
 
-// TODO create nibble type
 
+// @notice Ethereum Merkle Patricia Trie struct
 #[derive(Drop)]
 struct MPT {
     root: u256
 }
 
 impl MPTDefault of Default<MPT> {
+    // @return MPT with root 0
     fn default() -> MPT {
         MPTTrait::new(0)
     }
 }
 
+// @notice Represents a node in the MPT
 #[derive(Drop)]
 enum MPTNode {
-    // hashes of correspondible child with nibble, value
+    // @param 16 hashes of children
+    // @param Value of the node
     Branch: (Span<u256>, Bytes),
-    // shared nibbles, next node
+
+    // @param shared nibbles
+    // @param next node
     Extension: (Bytes, u256),
-    // key end, value
+
+    // @param key end
+    // @param value of the node
     Leaf: (Bytes, Bytes)
 }
 
 #[generate_trait]
 impl MPTImpl of MPTTrait {
+    // @notice Create a new MPT with a root
+    // @param root Root of the MPT
+    // @return MPT with the given root
     fn new(root: u256) -> MPT {
         MPT { root }
     }
 
-    // key is a nibble array
+    // @notice Verify that a key exists in the MPT
+    // @param key Key to verify, must be a nibble collection (Ex: array![0xf, 0x2, 0xa].span())
+    // @param proof Merkle proof, collection of rlp encoded nodes
+    // @return Result with the value associated with the key if it exists
     fn verify(self: @MPT, key: Bytes, proof: Span<Bytes>) -> Result<Bytes, felt252> {
         let mut current_hash = 0;
         let mut proof_index: usize = 0;
@@ -65,7 +78,6 @@ impl MPTImpl of MPTTrait {
                     if key_index >= key.len() {
                         break Result::Ok(value);
                     } else {
-                        // TODO error handling
                         current_hash = *nibbles.at((*key.at(key_index)).into());
                     }
                     key_index += 1;
@@ -91,6 +103,9 @@ impl MPTImpl of MPTTrait {
         }
     }
 
+    // @notice Decodes an RLP encoded node
+    // @param rlp RLP encoded node
+    // @return Result with the decoded node
     fn decode_rlp_node(rlp: Bytes) -> Result<MPTNode, felt252> {
         let (item, _) = rlp_decode(rlp)?;
         match item {
@@ -106,7 +121,6 @@ impl MPTImpl of MPTTrait {
                             break ();
                         }
 
-                        // TODO error handling
                         let hash = (*nibble_hashes_bytes.at(i)).try_into().unwrap();
                         nibble_hashes.append(hash);
                         i += 1;
@@ -134,7 +148,6 @@ impl MPTImpl of MPTTrait {
                             i += 1;
                         };
 
-                        // TODO error handling (should never fail if RLP is properly formated)
                         let next_node = (*l.at(1)).try_into().unwrap();
                         Result::Ok(MPTNode::Extension((shared_nibbles_nibbles.span(), next_node)))
                     } else if prefix == 1 {
@@ -153,7 +166,6 @@ impl MPTImpl of MPTTrait {
                             i += 1;
                         };
 
-                        // TODO error handling (should never fail if RLP is properly formated)
                         let next_node = (*l.at(1)).try_into().unwrap();
                         Result::Ok(MPTNode::Extension((shared_nibbles_nibbles.span(), next_node)))
                     } else if prefix == 2 {
@@ -202,6 +214,9 @@ impl MPTImpl of MPTTrait {
         }
     }
 
+    // @notice keccak256 hashes an RLP encoded node
+    // @param rlp RLP encoded node
+    // @return keccak256 hash of the node
     fn hash_rlp_node(rlp: Bytes) -> u256 {
         let keccak_res = KeccakTrait::keccak_cairo(rlp);
         let high = integer::u128_byte_reverse(keccak_res.high);

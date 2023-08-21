@@ -6,6 +6,7 @@ use traits::{Into, TryInto};
 use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::Byte;
 
+// @notice Enum with all possible RLP types
 #[derive(Drop, PartialEq)]
 enum RLPType {
     String: (),
@@ -17,6 +18,9 @@ enum RLPType {
 
 #[generate_trait]
 impl RLPTypeImpl of RLPTypeTrait {
+    // @notice Returns RLPType from the leading byte
+    // @param byte Leading byte
+    // @return Result with RLPType
     fn from_byte(byte: Byte) -> Result<RLPType, felt252> {
         if byte <= 0x7f {
             Result::Ok(RLPType::String(()))
@@ -34,13 +38,17 @@ impl RLPTypeImpl of RLPTypeTrait {
     }
 }
 
+// @notice Represent a RLP item
 #[derive(Drop)]
 enum RLPItem {
     Bytes: Bytes,
-    // Should be Array<RLPItem> to allow for any depth , but compiler panic
+    // Should be Span<RLPItem> to allow for any depth/recursion, not yet supported by the compiler
     List: Span<Bytes>
 }
 
+// @notice RLP decodes a rlp encoded byte array
+// @param input RLP encoded bytes
+// @return Result with RLPItem and size of the decoded item
 fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
     let prefix = *input.at(0);
 
@@ -48,8 +56,7 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
     let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
     match rlp_type {
         RLPType::String(()) => {
-            let mut arr = ArrayTrait::new();
-            arr.append(prefix);
+            let mut arr = array![prefix];
             Result::Ok((RLPItem::Bytes(arr.span()), 1))
         },
         RLPType::StringShort(()) => {
@@ -62,9 +69,6 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
             let len_len = prefix.into() - 0xb7;
             let len_span = input.slice(1, len_len);
 
-            // TODO handle error of byte conversion
-            // TODO handle error of converting u256 to u32
-            // If RLP is correclty formated it should never fail, so using unwrap for now
             // Bytes => u256 => u32
             let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
             let res = input.slice(1 + len_len, len); 
@@ -81,9 +85,6 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
             let len_len = prefix.into() - 0xf7;
             let len_span = input.slice(1, len_len);
 
-            // TODO handle error of byte conversion
-            // TODO handle error of converting u256 to u32
-            // If RLP is correclty formated it should never fail, so using unwrap for now
             // Bytes => u256 => u32
             let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
             let mut in = input.slice(1 + len_len, len);
@@ -110,9 +111,7 @@ fn rlp_decode_list(ref input: Bytes) -> Span<Bytes> {
                 input = input.slice(decoded_len, input.len() - decoded_len);
             },
             RLPItem::List(_) => {
-                // TODO return Err
                 panic_with_felt252('Recursive list not supported');
-                // return Result::Err('Recursive list not supported');
             }
         }
         i += decoded_len;

@@ -8,6 +8,7 @@ use result::Result;
 use array::{ArrayTrait, SpanTrait};
 use option::OptionTrait;
 
+// @notice Merkle Mountatin Range struct
 #[derive(Drop, Clone, Serde, starknet::Store)]
 struct MMR {
     root: felt252,
@@ -16,6 +17,7 @@ struct MMR {
 
 impl MMRDefault of Default<MMR> {
     #[inline(always)]
+    // @return MMR with last_pos 0 and root poseidon(0, 0)
     fn default() -> MMR {
         MMR {
             root: PoseidonHasher::hash_double(0, 0),
@@ -26,6 +28,10 @@ impl MMRDefault of Default<MMR> {
 
 #[generate_trait]
 impl MMRImpl of MMRTrait {
+    // @notice Creates a new MMR
+    // @param root The root of the MMR
+    // @param last_pos The last position in the MMR
+    // @return MMR with the given root and last_pos
     fn new(root: felt252, last_pos: usize) -> MMR {
         MMR {
             root,
@@ -33,7 +39,10 @@ impl MMRImpl of MMRTrait {
         }
     }
 
-    // returns the new MMR root or an error
+    // @notice Appends an element to the MMR
+    // @param element The element to append
+    // @param peaks The peaks of the MMR
+    // @return Result with the new root of the MMR
     fn append(ref self: MMR, element: felt252, peaks: Peaks) -> Result<felt252, felt252> {
         if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
@@ -94,6 +103,12 @@ impl MMRImpl of MMRTrait {
         return Result::Ok(new_root);
     }
 
+    // @notice Verifies a proof for an element in the MMR
+    // @param index The index of the element in the MMR
+    // @param value The value of the element
+    // @param peaks The peaks of the MMR
+    // @param proof The proof for the element
+    // @return Result with true if the proof is valid, false otherwise
     fn verify_proof(self: @MMR, index: usize, value: felt252, peaks: Peaks, proof: Proof) -> Result<bool, felt252> {
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');

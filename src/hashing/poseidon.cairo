@@ -3,6 +3,7 @@ use poseidon::{poseidon_hash_span, hades_permutation};
 
 struct Poseidon {}
 
+// Permutation params: https://docs.starknet.io/documentation/architecture_and_concepts/Cryptography/hash-functions/#poseidon_hash
 impl PoseidonHasher of Hasher<felt252, felt252> {
     fn hash_single(a: felt252) -> felt252 {
         let (single, _, _) = hades_permutation(a, 0, 1);

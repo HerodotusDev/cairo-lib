@@ -1,5 +1,9 @@
 use array::{Span, SpanTrait};
 
+// @notice Check if a span contains a given value
+// @param arr The span to search
+// @param val The value to search for
+// @return True if the span contains the value, false otherwise
 fn span_contains<
     T, 
     impl TDrop: Drop<T>,

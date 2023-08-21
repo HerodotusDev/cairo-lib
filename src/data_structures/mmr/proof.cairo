@@ -8,6 +8,10 @@ type Proof = Span<felt252>;
 
 #[generate_trait]
 impl ProofImpl of ProofTrait {
+    // @notice Computes a peak of the Merkle Mountain Range (root of a subtree)
+    // @param index Index of the element to start from
+    // @param value Value of the element to start from
+    // @return The root of the subtree
     fn compute_peak(self: Proof, index: usize, value: felt252) -> felt252 {
         let mut hash = PoseidonHasher::hash_double(index.into(), value); 
 
