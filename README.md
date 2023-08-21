@@ -8,20 +8,9 @@ Welcome to `cairo-lib` – a comprehensive library for the Cairo language. This 
 ## Features
 
 - [**Data Structures**](./src/data_structures/):
-  - Merkle Mountain Range
-  - Ethereum Merkle Patricia Tree
-
 - [**Encoding**](./src/encoding/):
-  - RLP
-
 - [**Hashers**](./src/hashing/):
-  - Unified interface for hashing (includes Ethereum-compatible keccak256)
-
 - [**Utilities**](./src/utils/):
-  - Array tools
-  - Bitwise
-  - Math
-  - Types (Byte & Bytes)
 
 ## Getting Started
 
