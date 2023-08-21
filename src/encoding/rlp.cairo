@@ -71,7 +71,7 @@ fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
 
             // Bytes => u256 => u32
             let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
-            let res = input.slice(1 + len_len, len); 
+            let res = input.slice(1 + len_len, len);
 
             Result::Ok((RLPItem::Bytes(res), 1 + len_len + len))
         },
@@ -115,7 +115,6 @@ fn rlp_decode_list(ref input: Bytes) -> Span<Bytes> {
             }
         }
         i += decoded_len;
-
     };
     output.span()
 }

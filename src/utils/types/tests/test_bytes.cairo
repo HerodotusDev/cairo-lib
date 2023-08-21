@@ -15,7 +15,7 @@ fn test_bytes_try_into_u256() {
     let mut arr = ArrayTrait::new();
     // Empty
     helper_test_bytes_try_into_u256(arr.span(), 0);
-    
+
     arr.append(1);
     helper_test_bytes_try_into_u256(arr.span(), 1);
 
@@ -27,7 +27,7 @@ fn test_bytes_try_into_u256() {
 
     arr.append(0);
     helper_test_bytes_try_into_u256(arr.span(), 16777216);
-    
+
     let mut arr = ArrayTrait::new();
     let mut i: usize = 0;
     loop {
@@ -38,7 +38,9 @@ fn test_bytes_try_into_u256() {
         i += 1;
     };
     // Max value
-    helper_test_bytes_try_into_u256(arr.span(), 115792089237316195423570985008687907853269984665640564039457584007913129639935);
+    helper_test_bytes_try_into_u256(
+        arr.span(), 115792089237316195423570985008687907853269984665640564039457584007913129639935
+    );
 
     let mut arr = array![1, 2, 3, 4, 5, 6];
     helper_test_bytes_try_into_u256(arr.span(), 1108152157446);

@@ -34,7 +34,9 @@ fn test_bag_peaks_3() {
     let peaks = array![peak0, peak1, peak2];
 
     let bag = peaks.span().bag();
-    let expected_bag = PoseidonHasher::hash_double(peak0, PoseidonHasher::hash_double(peak1, peak2));
+    let expected_bag = PoseidonHasher::hash_double(
+        peak0, PoseidonHasher::hash_double(peak1, peak2)
+    );
     assert(bag == expected_bag, 'Bag 3 peaks')
 }
 

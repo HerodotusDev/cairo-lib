@@ -14,7 +14,9 @@ fn pow<
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
->(base: T, mut exp: T) -> T {
+>(
+    base: T, mut exp: T
+) -> T {
     if exp.is_zero() {
         TOneable::one()
     } else {

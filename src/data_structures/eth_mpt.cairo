@@ -28,11 +28,9 @@ enum MPTNode {
     // @param 16 hashes of children
     // @param Value of the node
     Branch: (Span<u256>, Bytes),
-
     // @param shared nibbles
     // @param next node
     Extension: (Bytes, u256),
-
     // @param key end
     // @param value of the node
     Leaf: (Bytes, Bytes)
@@ -74,7 +72,9 @@ impl MPTImpl of MPTTrait {
 
             let decoded = MPTTrait::decode_rlp_node(node)?;
             match decoded {
-                MPTNode::Branch((nibbles, value)) => {
+                MPTNode::Branch((
+                    nibbles, value
+                )) => {
                     if key_index >= key.len() {
                         break Result::Ok(value);
                     } else {
@@ -82,7 +82,9 @@ impl MPTImpl of MPTTrait {
                     }
                     key_index += 1;
                 },
-                MPTNode::Extension((shared_nibbles, next_node)) => {
+                MPTNode::Extension((
+                    shared_nibbles, next_node
+                )) => {
                     let expected_shared_nibbles = key.slice(key_index, shared_nibbles.len());
                     if expected_shared_nibbles == shared_nibbles {
                         current_hash = next_node;
@@ -91,7 +93,9 @@ impl MPTImpl of MPTTrait {
                     }
                     key_index += shared_nibbles.len();
                 },
-                MPTNode::Leaf((key_end, value)) => {
+                MPTNode::Leaf((
+                    key_end, value
+                )) => {
                     let expected_end = key.slice(key_index, key.len() - key_index);
                     if expected_end == key_end {
                         break Result::Ok(value);
@@ -126,7 +130,7 @@ impl MPTImpl of MPTTrait {
                         i += 1;
                     };
                     let value = *l.at(16);
-                    
+
                     Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)))
                 } else if len == 2 {
                     let (prefix, nibble) = (*(*l.at(0)).at(0)).extract_nibbles();
@@ -228,9 +232,13 @@ impl MPTImpl of MPTTrait {
 impl MPTNodePartialEq of PartialEq<MPTNode> {
     fn eq(lhs: @MPTNode, rhs: @MPTNode) -> bool {
         match lhs {
-            MPTNode::Branch((lhs_nibbles, lhs_value)) => {
+            MPTNode::Branch((
+                lhs_nibbles, lhs_value
+            )) => {
                 match rhs {
-                    MPTNode::Branch((rhs_nibbles, rhs_value)) => {
+                    MPTNode::Branch((
+                        rhs_nibbles, rhs_value
+                    )) => {
                         if (*lhs_nibbles).len() != (*rhs_nibbles).len() {
                             return false;
                         }
@@ -249,20 +257,28 @@ impl MPTNodePartialEq of PartialEq<MPTNode> {
                     MPTNode::Leaf(_) => false
                 }
             },
-            MPTNode::Extension((lhs_shared_nibbles, lhs_next_node)) => {
+            MPTNode::Extension((
+                lhs_shared_nibbles, lhs_next_node
+            )) => {
                 match rhs {
                     MPTNode::Branch(_) => false,
-                    MPTNode::Extension((rhs_shared_nibbles, rhs_next_node)) => {
+                    MPTNode::Extension((
+                        rhs_shared_nibbles, rhs_next_node
+                    )) => {
                         lhs_shared_nibbles == rhs_shared_nibbles && lhs_next_node == rhs_next_node
                     },
                     MPTNode::Leaf(_) => false
                 }
             },
-            MPTNode::Leaf((lhs_key_end, lhs_value)) => {
+            MPTNode::Leaf((
+                lhs_key_end, lhs_value
+            )) => {
                 match rhs {
                     MPTNode::Branch(_) => false,
                     MPTNode::Extension(_) => false,
-                    MPTNode::Leaf((rhs_key_end, rhs_value)) => {
+                    MPTNode::Leaf((
+                        rhs_key_end, rhs_value
+                    )) => {
                         lhs_key_end == rhs_key_end && lhs_value == rhs_value
                     }
                 }

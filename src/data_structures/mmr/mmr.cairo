@@ -19,10 +19,7 @@ impl MMRDefault of Default<MMR> {
     #[inline(always)]
     // @return MMR with last_pos 0 and root poseidon(0, 0)
     fn default() -> MMR {
-        MMR {
-            root: PoseidonHasher::hash_double(0, 0),
-            last_pos: 0
-        }
+        MMR { root: PoseidonHasher::hash_double(0, 0), last_pos: 0 }
     }
 }
 
@@ -33,10 +30,7 @@ impl MMRImpl of MMRTrait {
     // @param last_pos The last position in the MMR
     // @return MMR with the given root and last_pos
     fn new(root: felt252, last_pos: usize) -> MMR {
-        MMR {
-            root,
-            last_pos
-        }
+        MMR { root, last_pos }
     }
 
     // @notice Appends an element to the MMR
@@ -109,7 +103,9 @@ impl MMRImpl of MMRTrait {
     // @param peaks The peaks of the MMR
     // @param proof The proof for the element
     // @return Result with true if the proof is valid, false otherwise
-    fn verify_proof(self: @MMR, index: usize, value: felt252, peaks: Peaks, proof: Proof) -> Result<bool, felt252> {
+    fn verify_proof(
+        self: @MMR, index: usize, value: felt252, peaks: Peaks, proof: Proof
+    ) -> Result<bool, felt252> {
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');
         }

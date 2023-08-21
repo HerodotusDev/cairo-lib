@@ -2,7 +2,7 @@ use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use array::{ArrayTrait, SpanTrait};
 
-fn helper_test_get_elements() -> Span<felt252>{
+fn helper_test_get_elements() -> Span<felt252> {
     let elem1 = PoseidonHasher::hash_double(1, 1);
     let elem2 = PoseidonHasher::hash_double(2, 2);
     let elem3 = PoseidonHasher::hash_double(3, PoseidonHasher::hash_double(elem1, elem2));

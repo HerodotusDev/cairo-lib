@@ -27,15 +27,14 @@ impl KeccakHasher of KeccakTrait {
                 break ();
             }
 
-            let val =
-                (*bytes.at(8*i)).into() + 
-                (*bytes.at(8*i+1)).into() * 256 + 
-                (*bytes.at(8*i+2)).into() * 65536 + 
-                (*bytes.at(8*i+3)).into() * 16777216 +
-                (*bytes.at(8*i+4)).into() * 4294967296 +
-                (*bytes.at(8*i+5)).into() * 1099511627776 + 
-                (*bytes.at(8*i+6)).into() * 281474976710656 + 
-                (*bytes.at(8*i+7)).into() * 72057594037927936;
+            let val = (*bytes.at(8 * i)).into()
+                + (*bytes.at(8 * i + 1)).into() * 256
+                + (*bytes.at(8 * i + 2)).into() * 65536
+                + (*bytes.at(8 * i + 3)).into() * 16777216
+                + (*bytes.at(8 * i + 4)).into() * 4294967296
+                + (*bytes.at(8 * i + 5)).into() * 1099511627776
+                + (*bytes.at(8 * i + 6)).into() * 281474976710656
+                + (*bytes.at(8 * i + 7)).into() * 72057594037927936;
 
             keccak_input.append(val);
 
@@ -48,8 +47,8 @@ impl KeccakHasher of KeccakTrait {
             if k >= r {
                 break ();
             }
-           
-            let current: u64 = (*bytes.at(8*q+k)).into();
+
+            let current: u64 = (*bytes.at(8 * q + k)).into();
             last_word += current * pow(256, k.into());
 
             k += 1;
@@ -132,7 +131,7 @@ impl KeccakHasherSpanU8 of Hasher<Span<u8>, u256> {
                 arr.append(current.into());
                 j += 1;
             };
-            i+=1;
+            i += 1;
         };
 
         keccak_u256s_le_inputs(arr.span())

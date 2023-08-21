@@ -13,7 +13,7 @@ impl ProofImpl of ProofTrait {
     // @param value Value of the element to start from
     // @return The root of the subtree
     fn compute_peak(self: Proof, index: usize, value: felt252) -> felt252 {
-        let mut hash = PoseidonHasher::hash_double(index.into(), value); 
+        let mut hash = PoseidonHasher::hash_double(index.into(), value);
 
         let mut current_index = index;
         let mut i: usize = 0;
