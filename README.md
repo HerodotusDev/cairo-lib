@@ -1,4 +1,5 @@
 # `cairo-lib`: Comprehensive Library for Cairo 🐺
+[![CI](https://github.com/HerodotusDev/cairo-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/HerodotusDev/cairo-lib/actions/workflows/ci.yml)
 
 Welcome to `cairo-lib` – a comprehensive library for the Cairo language. This library provides a suite of tools to supercharge your Cairo development experience.
 
