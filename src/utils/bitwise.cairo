@@ -1,4 +1,4 @@
-use cairo_lib::utils::math::{pow, pow_felt252};
+use cairo_lib::utils::math::{Exponentiation};
 use math::Oneable;
 use zeroable::Zeroable;
 
@@ -14,17 +14,17 @@ fn left_shift<
     impl TMul: Mul<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    impl TDrop: Drop<T>,
 // TODO refactor shift type from T to usize
 >(
     num: T, shift: T
 ) -> T {
     let two = TOneable::one() + TOneable::one();
-    num * pow(two, shift)
+    num * two.pow(shift)
 }
 
 fn left_shift_felt252(num: felt252, shift: felt252) -> felt252 {
-    num * pow_felt252(2, shift)
+    num * 2.pow(shift)
 }
 
 // @notice Bitwise right shift
@@ -40,13 +40,13 @@ fn right_shift<
     impl TDiv: Div<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    impl TDrop: Drop<T>,
 // TODO refactor shift type from T to usize
 >(
     num: T, shift: T
 ) -> T {
     let two = TOneable::one() + TOneable::one();
-    num / pow(two, shift)
+    num / two.pow(shift)
 }
 
 // @notice Bit length of a number
@@ -61,7 +61,7 @@ fn bit_length<
     impl TMul: Mul<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    impl TDrop: Drop<T>,
 >(
     num: T
 ) -> T {

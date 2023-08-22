@@ -1,5 +1,5 @@
 use cairo_lib::hashing::hasher::Hasher;
-use cairo_lib::utils::math::pow;
+use cairo_lib::utils::math::Exponentiation;
 use cairo_lib::utils::types::bytes::Bytes;
 use array::{ArrayTrait, SpanTrait};
 use keccak::{keccak_u256s_le_inputs, cairo_keccak};
@@ -49,7 +49,7 @@ impl KeccakHasher of KeccakTrait {
             }
 
             let current: u64 = (*bytes.at(8 * q + k)).into();
-            last_word += current * pow(256, k.into());
+            last_word += current * 256.pow(k.into());
 
             k += 1;
         };

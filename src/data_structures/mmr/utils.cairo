@@ -1,5 +1,5 @@
 use cairo_lib::utils::bitwise::{bit_length, left_shift};
-use cairo_lib::utils::math::pow;
+use cairo_lib::utils::math::Exponentiation;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 
@@ -8,7 +8,7 @@ use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 // @return The height of the node
 fn get_height(index: usize) -> usize {
     let bits = bit_length(index);
-    let ones = pow(2, bits) - 1;
+    let ones = 2.pow(bits) - 1;
 
     if index != ones {
         let shifted = left_shift(1, bits - 1);
