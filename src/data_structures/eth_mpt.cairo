@@ -1,7 +1,7 @@
 use array::{ArrayTrait, SpanTrait};
 use cairo_lib::hashing::keccak::KeccakTrait;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
-use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256, BytesPartialEq};
+use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::ByteTrait;
 use traits::{TryInto, Into};
 use option::OptionTrait;
@@ -70,7 +70,13 @@ impl MPTImpl of MPTTrait {
                 assert(hash == current_hash, 'Element not matching');
             }
 
-            let decoded = MPTTrait::decode_rlp_node(node)?;
+            let decoded = match MPTTrait::decode_rlp_node(node) {
+                Result::Ok(decoded) => decoded,
+                Result::Err(e) => {
+                    break Result::Err(e);
+                },
+            };
+
             match decoded {
                 MPTNode::Branch((
                     nibbles, value

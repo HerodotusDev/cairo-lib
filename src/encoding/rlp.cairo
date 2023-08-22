@@ -3,7 +3,7 @@ use option::OptionTrait;
 use array::{Array, ArrayTrait, Span, SpanTrait};
 use clone::Clone;
 use traits::{Into, TryInto};
-use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
+use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::Byte;
 
 // @notice Enum with all possible RLP types
