@@ -1,5 +1,6 @@
 use cairo_lib::hashing::hasher::Hasher;
 use cairo_lib::utils::math::pow;
+use cairo_lib::utils::bitwise::bytes_used;
 use cairo_lib::utils::types::bytes::Bytes;
 use array::{ArrayTrait, SpanTrait};
 use keccak::{keccak_u256s_le_inputs, cairo_keccak};
@@ -81,32 +82,6 @@ impl KeccakHasher of KeccakTrait {
         }
 
         cairo_keccak(ref keccak_input, last, last_word_bytes)
-    }
-}
-
-fn bytes_used(val: u64) -> usize {
-    if val < 4294967296 { // 256^4
-        if val < 65536 { // 256^2
-            if val < 256 { // 256^1
-                if val == 0 { return 0; } else { return 1; };
-            }
-            return 2;
-        }
-        if val < 16777216 { // 256^3
-            return 3;
-        }
-        return 4;
-    } else {
-        if val < 281474976710656 { // 256^6
-            if val < 1099511627776 { // 256^5
-                return 5;
-            }
-            return 6;
-        }
-        if val < 72057594037927936 { // 256^7
-            return 7;
-        }
-        return 8;
     }
 }
 

@@ -1,6 +1,9 @@
 use cairo_lib::utils::math::{pow, pow_felt252};
+use cairo_lib::utils::types::byte::Byte;
 use math::Oneable;
 use zeroable::Zeroable;
+use option::OptionTrait;
+use traits::{TryInto, Into};
 
 // @notice Bitwise left shift
 // @param num The number to be shifted
@@ -75,4 +78,61 @@ fn bit_length<
         cur_n = left_shift(cur_n, TOneable::one());
     };
     bit_position
+}
+
+fn bytes_used(val: u64) -> usize {
+    if val < 4294967296 { // 256^4
+        if val < 65536 { // 256^2
+            if val < 256 { // 256^1
+                if val == 0 { return 0; } else { return 1; };
+            }
+            return 2;
+        }
+        if val < 16777216 { // 256^3
+            return 3;
+        }
+        return 4;
+    } else {
+        if val < 281474976710656 { // 256^6
+            if val < 1099511627776 { // 256^5
+                return 5;
+            }
+            return 6;
+        }
+        if val < 72057594037927936 { // 256^7
+            return 7;
+        }
+        return 8;
+    }
+}
+
+fn extract_byte_at(input: u64, index: u64) -> Byte {
+    let shift = right_shift(input, (56 - (index * 8)));
+    (shift & 0xff).try_into().unwrap()
+}
+
+fn remove_bytes_from_start(input: u64, num_bytes: u64) -> u64 {
+    left_shift(input, (num_bytes * 8))
+}
+
+fn add_bytes_to_start(input: u64, bytes: u64, num_bytes: u64) -> u64 {
+    let shift = left_shift(input, (num_bytes * 8));
+    let mask = left_shift(1, (num_bytes * 8)) - 1;
+
+    shift | (bytes & mask)
+}
+
+fn reverse_endianness(input: u64) -> u64 {
+    let mut reverse = 0;
+    let mut i = 0;
+    loop {
+        if i == 8 {
+            break reverse;
+        }
+
+        let r_shift = right_shift(input, (i * 8)) & 0xff;
+        reverse = reverse | left_shift(r_shift, (56 - (i * 8)));
+
+        i += 1;
+    }
 }
