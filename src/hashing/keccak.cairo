@@ -56,6 +56,58 @@ impl KeccakHasher of KeccakTrait {
 
         cairo_keccak(ref keccak_input, last_word, r)
     }
+
+    fn keccak_cairo_word64(words: Span<u64>) -> u256 {
+        let n = words.len();
+
+        let mut keccak_input = ArrayTrait::new();
+        let mut i: usize = 0;
+        if n > 1 {
+            loop {
+                if i >= n-1 {
+                    break ();
+                }
+                keccak_input.append(*words.at(i));
+                i += 1;
+            };
+        }
+
+        let mut last = *words.at(n-1);
+        let mut last_word_bytes = bytes_used(last);
+        if last_word_bytes == 8 {
+            keccak_input.append(last);
+            last = 0;
+            last_word_bytes = 0;
+        }
+
+        cairo_keccak(ref keccak_input, last, last_word_bytes)
+    }
+}
+
+fn bytes_used(val: u64) -> usize {
+    if val < 4294967296 { // 256^4
+        if val < 65536 { // 256^2
+            if val < 256 { // 256^1
+                if val == 0 { return 0; } else { return 1; };
+            }
+            return 2;
+        }
+        if val < 16777216 { // 256^3
+            return 3;
+        }
+        return 4;
+    } else {
+        if val < 281474976710656 { // 256^6
+            if val < 1099511627776 { // 256^5
+                return 5;
+            }
+            return 6;
+        }
+        if val < 72057594037927936 { // 256^7
+            return 7;
+        }
+        return 8;
+    }
 }
 
 impl KeccakHasherU256 of Hasher<u256, u256> {
