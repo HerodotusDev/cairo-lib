@@ -5,7 +5,7 @@ use clone::Clone;
 use traits::{Into, TryInto};
 use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::Byte;
-use cairo_lib::utils::bitwise::{right_shift, bytes_used, extract_byte_at};
+use cairo_lib::utils::bitwise::{right_shift, bytes_used};
 use debug::PrintTrait;
 
 // @notice Enum with all possible RLP types
@@ -52,8 +52,8 @@ enum RLPItemWord64 {
 // @param input RLP encoded bytes
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252> {
-    let first = *input.at(0);
-    let prefix = extract_byte_at(first, 8 - bytes_used(first).into());
+    //let prefix = extract_byte_at(*input.at(0), 7);
+    let prefix: u8 = (*input.at(0) & 0xff).try_into().unwrap();
 
     // Unwrap is impossible to panic here
     let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
@@ -149,23 +149,7 @@ impl SpanU64PartialEq of PartialEq<Span<u64>> {
     }
 
     fn ne(lhs: @Span<u64>, rhs: @Span<u64>) -> bool {
-        let len_lhs = (*lhs).len();
-        if len_lhs != (*rhs).len() {
-            return true;
-        }
-
-        let mut i: usize = 0;
-        loop {
-            if i >= len_lhs {
-                break false;
-            }
-
-            if (*lhs).at(i) != (*rhs).at(i) {
-                break true;
-            }
-
-            i += 1;
-        }
+        !(lhs == rhs)
     }
 }
 

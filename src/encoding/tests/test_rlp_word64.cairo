@@ -1,5 +1,4 @@
 use cairo_lib::encoding::rlp_word64::{RLPItemWord64, rlp_decode_word64};
-use cairo_lib::utils::bitwise::reverse_endianness;
 use array::ArrayTrait;
 use result::ResultTrait;
 use debug::PrintTrait;

@@ -1,4 +1,7 @@
-use cairo_lib::utils::bitwise::{left_shift, right_shift, bit_length};
+use cairo_lib::utils::bitwise::{left_shift, right_shift, bit_length, slice_words64};
+use array::{ArrayTrait, SpanTrait};
+use debug::PrintTrait;
+use option::OptionTrait;
 
 #[test]
 #[available_gas(999999)]
@@ -31,4 +34,66 @@ fn test_bit_length() {
     assert(bit_length(5_u8) == 3, 'bit length of 5 is 3');
     assert(bit_length(7_u128) == 3, 'bit length of 7 is 3');
     assert(bit_length(8_u32) == 4, 'bit length of 8 is 4');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_slice_words64_multiple_words_not_full() {
+    let val = array![
+        0xabcdef1234567890, 
+        0x7584934785943295, 
+        0x48542576
+    ].span();
+
+    let res = slice_words64(val, 5, 17);
+    assert(res.len() == 3, 'Wrong len');
+    assert(*res.at(0) == 0x3295abcdef123456, 'Wrong value at 0');
+    assert(*res.at(1) == 0x2576758493478594, 'Wrong value at 1');
+    assert(*res.at(2) == 0x54, 'Wrong value at 2');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_slice_words64_multiple_words_full() {
+    let val = array![
+        0xabcdef1234567890, 
+        0x7584934785943295, 
+        0x48542576
+    ].span();
+
+
+    let res = slice_words64(val, 4, 16);
+    assert(res.len() == 2, 'Wrong len');
+    assert(*res.at(0) == 0x943295abcdef1234, 'Wrong value at 0');
+    assert(*res.at(1) == 0x5425767584934785, 'Wrong value at 1');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_slice_words64_single_word_not_full() {
+    let val = array![
+        0xabcdef1234567890, 
+        0x7584934785943295, 
+        0x48542576
+    ].span();
+
+
+    let res = slice_words64(val, 1, 5);
+    assert(res.len() == 1, 'Wrong len');
+    assert(*res.at(0) == 0x943295abcd, 'Wrong value at 0');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_slice_words64_single_word_full() {
+    let val = array![
+        0xabcdef1234567890, 
+        0x7584934785943295, 
+        0x48542576
+    ].span();
+
+
+    let res = slice_words64(val, 15, 8);
+    assert(res.len() == 1, 'Wrong len');
+    assert(*res.at(0) == 0x7584934785943295, 'Wrong value at 0');
 }
