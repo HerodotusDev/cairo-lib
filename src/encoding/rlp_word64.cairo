@@ -52,7 +52,6 @@ enum RLPItemWord64 {
 // @param input RLP encoded bytes
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252> {
-    //let prefix = extract_byte_at(*input.at(0), 7);
     let prefix: u8 = (*input.at(0) & 0xff).try_into().unwrap();
 
     // Unwrap is impossible to panic here
@@ -87,15 +86,17 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
             Result::Ok((RLPItemWord64::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
-            //let len_len = prefix.into() - 0xf7;
-            //let len_span = input.slice(1, len_len);
+            let len_len = prefix.into() - 0xf7;
+            let len_span = slice_words64_le(input, 6, len_len);
+            // Enough to store 4.29 GB (fits in u32)
+            assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
-            //// Bytes => u256 => u32
-            //let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
-            //let mut in = input.slice(1 + len_len, len);
-            //let res = rlp_decode_list_word64(ref in);
-            //Result::Ok((RLPItemWord64::List(res), 1 + len_len + len))
-            Result::Err('Not implemented')
+            // len fits in 32 bits, confirmed by previous assertion
+            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into())).try_into().unwrap();
+            let mut in = slice_words64_le(input, 6 - len_len, len);
+            let res = rlp_decode_list_word64(ref in, len);
+
+            Result::Ok((RLPItemWord64::List(res), 1 + len_len + len))
         }
     }
 }
@@ -143,6 +144,9 @@ impl SpanU64PartialEq of PartialEq<Span<u64>> {
             if i >= len_lhs {
                 break true;
             }
+            i.print();
+            (*(*lhs).at(i)).print();
+            (*(*rhs).at(i)).print();
 
             if (*lhs).at(i) != (*rhs).at(i) {
                 break false;
@@ -178,6 +182,8 @@ impl RLPItemWord64PartialEq of PartialEq<RLPItemWord64> {
                         }
                         let mut i: usize = 0;
                         loop {
+                            'Outer'.print();
+                            i.print();
                             if i >= len_l {
                                 break true;
                             }
