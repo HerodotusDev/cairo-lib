@@ -5,7 +5,7 @@ use clone::Clone;
 use traits::{Into, TryInto};
 use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::Byte;
-use cairo_lib::utils::bitwise::{right_shift, bytes_used};
+use cairo_lib::utils::bitwise::{right_shift, bytes_used, slice_words64_le};
 use debug::PrintTrait;
 
 // @notice Enum with all possible RLP types
@@ -64,11 +64,11 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
             Result::Ok((RLPItemWord64::Bytes(arr.span()), 1))
         },
         RLPType::StringShort(()) => {
-            //let len = prefix.into();
-            //let res = input.slice(1, len);
+            let len = prefix.into();
+            //let res = input.slice_wor(1, len);
+            let res = slice_words64_le(input, 6, len);
 
-            //Result::Ok((RLPItemWord64::Bytes(res), 1 + len))
-            Result::Err('Not implemented')
+            Result::Ok((RLPItemWord64::Bytes(res), 1 + len))
         },
         RLPType::StringLong(()) => {
             //let len_len = prefix.into() - 0xb7;

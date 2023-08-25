@@ -23,22 +23,25 @@ fn test_rlp_decode_word64_string() {
     };
 }
 
-//#[test]
-//#[available_gas(99999999)]
-//fn test_rlp_decode_word64_short_string() {
-    //let mut arr = 0x9b5a806cf634c0398d8f2d89fd49a91ef33da474cd8494
-        //0xbb,
-        //0xa8,
-        //0xda,
-        //0x3b,
-        //0xf7
-    //];
+#[test]
+#[available_gas(99999999)]
+fn test_rlp_decode_word64_short_string() {
+    let mut arr = array![
+        0x39c034f66c805a9b,
+        0x1ea949fd892d8f8d,
+        0xbb9484cd74a43df3,
+        0xa8da3bf7
+    ];
 
-    //let (res, len) = rlp_decode(arr.span()).unwrap();
-    //assert(len == 1 + (0x9b - 0x80), 'Wrong len');
+    let (res, len) = rlp_decode_word64(arr.span()).unwrap();
+    assert(len == 1 + (0x9b - 0x80), 'Wrong len');
 
-    //arr.pop_front();
-    //let expected_item = RLPItem::Bytes(arr.span());
-
-    //assert(res == expected_item, 'Wrong value');
-//}
+    let mut expected_res = array![
+        0x8d39c034f66c805a,
+        0xf31ea949fd892d8f,
+        0xf7bb9484cd74a43d,
+        0xa8da3b
+    ];
+    let expected_item = RLPItemWord64::Bytes(arr.span());
+    assert(res == expected_item, 'Wrong value');
+}
