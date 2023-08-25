@@ -144,9 +144,6 @@ impl SpanU64PartialEq of PartialEq<Span<u64>> {
             if i >= len_lhs {
                 break true;
             }
-            i.print();
-            (*(*lhs).at(i)).print();
-            (*(*rhs).at(i)).print();
 
             if (*lhs).at(i) != (*rhs).at(i) {
                 break false;
@@ -182,8 +179,6 @@ impl RLPItemWord64PartialEq of PartialEq<RLPItemWord64> {
                         }
                         let mut i: usize = 0;
                         loop {
-                            'Outer'.print();
-                            i.print();
                             if i >= len_l {
                                 break true;
                             }

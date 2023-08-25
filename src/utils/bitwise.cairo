@@ -167,7 +167,7 @@ fn reverse_endianness(input: u64, significant_bytes: Option<u64>) -> u64 {
 // len in bytes, words in le
 fn slice_words64_le(input: Span<u64>, start: usize, len: usize) -> Span<u64> {
     if len == 0 {
-        return input;
+        return ArrayTrait::new().span();
     }
 
     let first_word_index = start / 8;
