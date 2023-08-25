@@ -144,20 +144,25 @@ fn bytes_used(val: u64) -> usize {
     //shift | (bytes & mask)
 //}
 
-//fn reverse_endianness(input: u64) -> u64 {
-    //let mut reverse = 0;
-    //let mut i = 0;
-    //loop {
-        //if i == 8 {
-            //break reverse;
-        //}
+fn reverse_endianness(input: u64, significant_bytes: Option<u64>) -> u64 {
+    let sb = match significant_bytes {
+        Option::Some(x) => x,
+        Option::None(()) => 56
+    };
 
-        //let r_shift = right_shift(input, (i * 8)) & 0xff;
-        //reverse = reverse | left_shift(r_shift, (56 - (i * 8)));
+    let mut reverse = 0;
+    let mut i = 0;
+    loop {
+        if i == sb {
+            break reverse;
+        }
 
-        //i += 1;
-    //}
-//}
+        let r_shift = right_shift(input, (i * 8)) & 0xff;
+        reverse = reverse | left_shift(r_shift, (sb - i - 1) * 8);
+
+        i += 1;
+    }
+}
 
 // len in bytes, words in le
 fn slice_words64_le(input: Span<u64>, start: usize, len: usize) -> Span<u64> {

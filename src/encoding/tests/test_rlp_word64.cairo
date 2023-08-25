@@ -45,3 +45,34 @@ fn test_rlp_decode_word64_short_string() {
     let expected_item = RLPItemWord64::Bytes(expected_res.span());
     assert(res == expected_item, 'Wrong value');
 }
+
+#[test]
+#[available_gas(99999999)]
+fn test_rlp_decode_word64_long_string_len_1() {
+    let mut arr = array![
+        0xd459f97ea1f73cb8,
+        0x103a7b34dc8d3888,
+        0x6a98370c1d4385dd,
+        0xa4b18da3ba18bd63,
+        0x6e16ecc3de246f81,
+        0x0479f7c4c4acb2b3,
+        0xda53d0c6673c76ba,
+        0xd97d198610ea
+    ];
+
+    let (res, len) = rlp_decode_word64(arr.span()).unwrap();
+    assert(len == 1 + (0xb8 - 0xb7) + 0x3c, 'Wrong len');
+
+    let mut expected_res = array![
+        0x3888d459f97ea1f7,
+        0x85dd103a7b34dc8d,
+        0xbd636a98370c1d43,
+        0x6f81a4b18da3ba18,
+        0xb2b36e16ecc3de24,
+        0x76ba0479f7c4c4ac,
+        0x10eada53d0c6673c,
+        0xd97d1986
+    ];
+    let expected_item = RLPItemWord64::Bytes(expected_res.span());
+    assert(res == expected_item, 'Wrong value');
+}

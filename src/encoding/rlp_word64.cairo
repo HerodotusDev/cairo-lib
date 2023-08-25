@@ -5,7 +5,7 @@ use clone::Clone;
 use traits::{Into, TryInto};
 use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
 use cairo_lib::utils::types::byte::Byte;
-use cairo_lib::utils::bitwise::{right_shift, bytes_used, slice_words64_le};
+use cairo_lib::utils::bitwise::{right_shift, bytes_used, slice_words64_le, reverse_endianness};
 use debug::PrintTrait;
 
 // @notice Enum with all possible RLP types
@@ -69,15 +69,16 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len))
         },
         RLPType::StringLong(()) => {
-            //let len_len = prefix.into() - 0xb7;
-            //let len_span = input.slice(1, len_len);
+            let len_len = prefix.into() - 0xb7;
+            let len_span = slice_words64_le(input, 6, len_len);
+            // Enough to store 4.29 GB (fits in u32)
+            assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
-            //// Bytes => u256 => u32
-            //let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
-            //let res = input.slice(1 + len_len, len);
+            // len fits in 32 bits, confirmed by previous assertion
+            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into())).try_into().unwrap();
+            let res = slice_words64_le(input, 6 - len_len, len);
 
-            //Result::Ok((RLPItemWord64::Bytes(res), 1 + len_len + len))
-            Result::Err('Not implemented')
+            Result::Ok((RLPItemWord64::Bytes(res), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
             //let len = prefix.into() - 0xc0;
@@ -151,7 +152,7 @@ impl SpanU64PartialEq of PartialEq<Span<u64>> {
     }
 }
 
-impl RLPItemPartialEq of PartialEq<RLPItemWord64> {
+impl RLPItemWord64PartialEq of PartialEq<RLPItemWord64> {
     fn eq(lhs: @RLPItemWord64, rhs: @RLPItemWord64) -> bool {
         match lhs {
             RLPItemWord64::Bytes(b) => {
