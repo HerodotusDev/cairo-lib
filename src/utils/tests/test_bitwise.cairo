@@ -1,4 +1,4 @@
-use cairo_lib::utils::bitwise::{left_shift, right_shift, bit_length, slice_words64};
+use cairo_lib::utils::bitwise::{left_shift, right_shift, bit_length, slice_words64_le};
 use array::{ArrayTrait, SpanTrait};
 use debug::PrintTrait;
 use option::OptionTrait;
@@ -38,14 +38,14 @@ fn test_bit_length() {
 
 #[test]
 #[available_gas(99999999)]
-fn test_slice_words64_multiple_words_not_full() {
+fn test_slice_words64_le_multiple_words_not_full() {
     let val = array![
         0xabcdef1234567890, 
         0x7584934785943295, 
         0x48542576
     ].span();
 
-    let res = slice_words64(val, 5, 17);
+    let res = slice_words64_le(val, 5, 17);
     assert(res.len() == 3, 'Wrong len');
     assert(*res.at(0) == 0x3295abcdef123456, 'Wrong value at 0');
     assert(*res.at(1) == 0x2576758493478594, 'Wrong value at 1');
@@ -54,7 +54,7 @@ fn test_slice_words64_multiple_words_not_full() {
 
 #[test]
 #[available_gas(99999999)]
-fn test_slice_words64_multiple_words_full() {
+fn test_slice_words64_le_multiple_words_full() {
     let val = array![
         0xabcdef1234567890, 
         0x7584934785943295, 
@@ -62,7 +62,8 @@ fn test_slice_words64_multiple_words_full() {
     ].span();
 
 
-    let res = slice_words64(val, 4, 16);
+let gas = testing::get_available_gas();
+    let res = slice_words64_le(val, 4, 16);
     assert(res.len() == 2, 'Wrong len');
     assert(*res.at(0) == 0x943295abcdef1234, 'Wrong value at 0');
     assert(*res.at(1) == 0x5425767584934785, 'Wrong value at 1');
@@ -70,7 +71,7 @@ fn test_slice_words64_multiple_words_full() {
 
 #[test]
 #[available_gas(99999999)]
-fn test_slice_words64_single_word_not_full() {
+fn test_slice_words64_le_single_word_not_full() {
     let val = array![
         0xabcdef1234567890, 
         0x7584934785943295, 
@@ -78,14 +79,14 @@ fn test_slice_words64_single_word_not_full() {
     ].span();
 
 
-    let res = slice_words64(val, 1, 5);
+    let res = slice_words64_le(val, 1, 5);
     assert(res.len() == 1, 'Wrong len');
     assert(*res.at(0) == 0x943295abcd, 'Wrong value at 0');
 }
 
 #[test]
 #[available_gas(99999999)]
-fn test_slice_words64_single_word_full() {
+fn test_slice_words64_le_single_word_full() {
     let val = array![
         0xabcdef1234567890, 
         0x7584934785943295, 
@@ -93,7 +94,7 @@ fn test_slice_words64_single_word_full() {
     ].span();
 
 
-    let res = slice_words64(val, 15, 8);
+    let res = slice_words64_le(val, 15, 8);
     assert(res.len() == 1, 'Wrong len');
     assert(*res.at(0) == 0x7584934785943295, 'Wrong value at 0');
 }

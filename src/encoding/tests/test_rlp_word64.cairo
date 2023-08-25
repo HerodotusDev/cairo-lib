@@ -26,30 +26,7 @@ fn test_rlp_decode_word64_string() {
 //#[test]
 //#[available_gas(99999999)]
 //fn test_rlp_decode_word64_short_string() {
-    //let mut arr = array![
-        //0x9b,
-        //0x5a,
-        //0x80,
-        //0x6c,
-        //0xf6,
-        //0x34,
-        //0xc0,
-        //0x39,
-        //0x8d,
-        //0x8f,
-        //0x2d,
-        //0x89,
-        //0xfd,
-        //0x49,
-        //0xa9,
-        //0x1e,
-        //0xf3,
-        //0x3d,
-        //0xa4,
-        //0x74,
-        //0xcd,
-        //0x84,
-        //0x94,
+    //let mut arr = 0x9b5a806cf634c0398d8f2d89fd49a91ef33da474cd8494
         //0xbb,
         //0xa8,
         //0xda,

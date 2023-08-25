@@ -7,6 +7,19 @@ use traits::{TryInto, Into};
 use array::{SpanTrait, ArrayTrait};
 use debug::PrintTrait;
 
+fn pow2(pow: u32) -> u64 {
+    let powers = array![0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000, 0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000, 0x100000000, 0x200000000, 0x400000000, 0x800000000, 0x1000000000, 0x2000000000, 0x4000000000, 0x8000000000, 0x10000000000, 0x20000000000, 0x40000000000, 0x80000000000, 0x100000000000, 0x200000000000, 0x400000000000, 0x800000000000, 0x1000000000000, 0x2000000000000, 0x4000000000000, 0x8000000000000, 0x10000000000000, 0x20000000000000, 0x40000000000000, 0x80000000000000, 0x100000000000000, 0x200000000000000, 0x400000000000000, 0x800000000000000, 0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000];
+    *powers.at(pow)
+}
+
+fn left_shift_u64(num: u64, shift: usize) -> u64 {
+    num * pow2(shift)
+}
+
+fn right_shift_u64(num: u64, shift: usize) -> u64 {
+    num / pow2(shift)
+}
+
 // @notice Bitwise left shift
 // @param num The number to be shifted
 // @param shift The number of bits to shift
@@ -147,7 +160,7 @@ fn bytes_used(val: u64) -> usize {
 //}
 
 // len in bytes, words in le
-fn slice_words64(input: Span<u64>, start: usize, len: usize) -> Span<u64> {
+fn slice_words64_le(input: Span<u64>, start: usize, len: usize) -> Span<u64> {
     let first_word_index = start / 8;
     // number of right bytes to remove
     let mut word_offset = 8 - ((start+1) % 8);
@@ -170,14 +183,14 @@ fn slice_words64(input: Span<u64>, start: usize, len: usize) -> Span<u64> {
         let next = *input.at(i+1);
 
         // remove lsb bytes from the first word
-        let shifted = right_shift(word, word_offset.into() * 8);
+        let shifted = right_shift_u64(word, word_offset.into() * 8);
 
         // get lsb bytes from the second word
-        let mask_second_word = left_shift(1, word_offset * 8) - 1;
+        let mask_second_word = left_shift_u64(1, word_offset * 8) - 1;
         let bytes_to_append = next & mask_second_word.into();
 
         // apend bytes to msb first word
-        let mask_first_word = left_shift(bytes_to_append, (8 - word_offset.into()) * 8);
+        let mask_first_word = left_shift_u64(bytes_to_append, (8 - word_offset.into()) * 8);
         let new_word = shifted | mask_first_word;
 
         output.append(new_word);
@@ -186,7 +199,7 @@ fn slice_words64(input: Span<u64>, start: usize, len: usize) -> Span<u64> {
 
 
     let last_word = *input.at(i);
-    let shifted = right_shift(last_word, word_offset.into() * 8);
+    let shifted = right_shift_u64(last_word, word_offset.into() * 8);
 
     let mut len_last_word = len % 8;
     if len_last_word == 0 {
@@ -204,11 +217,11 @@ fn slice_words64(input: Span<u64>, start: usize, len: usize) -> Span<u64> {
         let next = *input.at(i+1);
 
         // get lsb bytes from the second word
-        let mask_second_word = left_shift(1, missing_bytes * 8) - 1;
+        let mask_second_word = left_shift_u64(1, missing_bytes * 8) - 1;
         let bytes_to_append = next & mask_second_word.into();
 
         // apend bytes to msb first word
-        let mask_first_word = left_shift(bytes_to_append, (8 - word_offset.into()) * 8);
+        let mask_first_word = left_shift_u64(bytes_to_append, (8 - word_offset.into()) * 8);
         let new_word = shifted | mask_first_word;
 
         output.append(new_word);
