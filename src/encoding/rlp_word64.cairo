@@ -81,11 +81,10 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
-            //let len = prefix.into() - 0xc0;
-            //let mut in = input.slice(1, len);
-            //let res = rlp_decode_list_word64(ref in);
-            //Result::Ok((RLPItemWord64::List(res), 1 + len))
-            Result::Err('Not implemented')
+            let mut len = prefix.into() - 0xc0;
+            let mut in = slice_words64_le(input, 6, len);
+            let res = rlp_decode_list_word64(ref in, len);
+            Result::Ok((RLPItemWord64::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
             //let len_len = prefix.into() - 0xf7;
@@ -101,30 +100,36 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
     }
 }
 
-//fn rlp_decode_list_word64(ref input: Bytes) -> Span<Bytes> {
-    //let mut i = 0;
-    //let len = input.len();
-    //let mut output = ArrayTrait::new();
+fn rlp_decode_list_word64(ref input: Span<u64>, len: usize) -> Span<Span<u64>> {
+    let mut i = 0;
+    let mut output = ArrayTrait::new();
+    let mut total_len = len;
 
-    //loop {
-        //if i >= len {
-            //break ();
-        //}
+    loop {
+        if i >= len {
+            break ();
+        }
 
-        //let (decoded, decoded_len) = rlp_decode_word64(input).unwrap();
-        //match decoded {
-            //RLPItemWord64::Bytes(b) => {
-                //output.append(b);
-                //input = input.slice(decoded_len, input.len() - decoded_len);
-            //},
-            //RLPItemWord64::List(_) => {
-                //panic_with_felt252('Recursive list not supported');
-            //}
-        //}
-        //i += decoded_len;
-    //};
-    //output.span()
-//}
+        let (decoded, decoded_len) = rlp_decode_word64(input).unwrap();
+        match decoded {
+            RLPItemWord64::Bytes(b) => {
+                output.append(b);
+                let word = decoded_len / 8;
+                let reversed = 7 - (decoded_len % 8);
+                let next_start = word * 8 + reversed;
+                if (total_len - decoded_len != 0) {
+                    input = slice_words64_le(input, next_start, total_len - decoded_len);
+                }
+                total_len -= decoded_len;
+            },
+            RLPItemWord64::List(_) => {
+                panic_with_felt252('Recursive list not supported');
+            }
+        }
+        i += decoded_len;
+    };
+    output.span()
+}
 
 impl SpanU64PartialEq of PartialEq<Span<u64>> {
     fn eq(lhs: @Span<u64>, rhs: @Span<u64>) -> bool {

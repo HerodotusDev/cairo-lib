@@ -157,3 +157,23 @@ fn test_rlp_decode_word64_long_string_len_2() {
     let expected_item = RLPItemWord64::Bytes(expected_res.span());
     assert(res == expected_item, 'Wrong value');
 }
+
+#[test]
+#[available_gas(99999999)]
+fn test_rlp_decode_word64_short_list() {
+    let mut arr = array![
+        0x45834289353583c9,
+        0x9238
+    ];
+
+    let (res, len) = rlp_decode_word64(arr.span()).unwrap();
+    assert(len == 1 + (0xc9 - 0xc0), 'Wrong len');
+
+    let mut expected_res = array![
+        array![0x893535].span(),
+        array![0x42].span(),
+        array![0x923845].span()
+    ];
+    let expected_item = RLPItemWord64::List(expected_res.span());
+    assert(res == expected_item, 'Wrong value');
+}
