@@ -42,6 +42,6 @@ fn test_rlp_decode_word64_short_string() {
         0xf7bb9484cd74a43d,
         0xa8da3b
     ];
-    let expected_item = RLPItemWord64::Bytes(arr.span());
+    let expected_item = RLPItemWord64::Bytes(expected_res.span());
     assert(res == expected_item, 'Wrong value');
 }

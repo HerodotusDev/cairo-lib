@@ -60,12 +60,10 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
     match rlp_type {
         RLPType::String(()) => {
             let mut arr = array![prefix.into()];
-            //prefix.print();
             Result::Ok((RLPItemWord64::Bytes(arr.span()), 1))
         },
         RLPType::StringShort(()) => {
-            let len = prefix.into();
-            //let res = input.slice_wor(1, len);
+            let len = prefix.into() - 0x80;
             let res = slice_words64_le(input, 6, len);
 
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len))
