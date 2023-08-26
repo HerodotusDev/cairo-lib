@@ -3,9 +3,8 @@ use option::OptionTrait;
 use array::{Array, ArrayTrait, Span, SpanTrait};
 use clone::Clone;
 use traits::{Into, TryInto};
-use cairo_lib::utils::types::words64::{Words64, Words64Trait};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness};
 use cairo_lib::utils::types::byte::Byte;
-use cairo_lib::utils::bitwise::{right_shift, bytes_used, reverse_endianness};
 use debug::PrintTrait;
 
 // @notice Enum with all possible RLP types

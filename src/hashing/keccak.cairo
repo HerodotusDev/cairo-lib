@@ -1,7 +1,7 @@
 use cairo_lib::hashing::hasher::Hasher;
 use cairo_lib::utils::math::pow;
-use cairo_lib::utils::bitwise::bytes_used;
 use cairo_lib::utils::types::bytes::Bytes;
+use cairo_lib::utils::types::words64::{Words64, bytes_used};
 use array::{ArrayTrait, SpanTrait};
 use keccak::{keccak_u256s_le_inputs, cairo_keccak};
 use traits::{Into, TryInto};
@@ -58,7 +58,7 @@ impl KeccakHasher of KeccakTrait {
         cairo_keccak(ref keccak_input, last_word, r)
     }
 
-    fn keccak_cairo_word64(words: Span<u64>) -> u256 {
+    fn keccak_cairo_word64(words: Words64) -> u256 {
         let n = words.len();
 
         let mut keccak_input = ArrayTrait::new();
