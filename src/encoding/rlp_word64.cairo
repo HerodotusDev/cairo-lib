@@ -3,9 +3,9 @@ use option::OptionTrait;
 use array::{Array, ArrayTrait, Span, SpanTrait};
 use clone::Clone;
 use traits::{Into, TryInto};
-use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait};
 use cairo_lib::utils::types::byte::Byte;
-use cairo_lib::utils::bitwise::{right_shift, bytes_used, slice_words64_le, reverse_endianness};
+use cairo_lib::utils::bitwise::{right_shift, bytes_used, reverse_endianness};
 use debug::PrintTrait;
 
 // @notice Enum with all possible RLP types
@@ -43,15 +43,15 @@ impl RLPTypeImpl of RLPTypeTrait {
 // @notice Represent a RLP item
 #[derive(Drop)]
 enum RLPItemWord64 {
-    Bytes: Span<u64>,
+    Bytes: Words64,
     // Should be Span<RLPItem> to allow for any depth/recursion, not yet supported by the compiler
-    List: Span<Span<u64>>
+    List: Span<Words64>
 }
 
 // @notice RLP decodes a rlp encoded byte array
 // @param input RLP encoded bytes
 // @return Result with RLPItem and size of the decoded item
-fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252> {
+fn rlp_decode_word64(input: Words64) -> Result<(RLPItemWord64, usize), felt252> {
     let prefix: u8 = (*input.at(0) & 0xff).try_into().unwrap();
 
     // Unwrap is impossible to panic here
@@ -63,37 +63,37 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
         },
         RLPType::StringShort(()) => {
             let len = prefix.into() - 0x80;
-            let res = slice_words64_le(input, 6, len);
+            let res = input.slice_le(6, len);
 
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len))
         },
         RLPType::StringLong(()) => {
             let len_len = prefix.into() - 0xb7;
-            let len_span = slice_words64_le(input, 6, len_len);
+            let len_span = input.slice_le(6, len_len);
             // Enough to store 4.29 GB (fits in u32)
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
             // len fits in 32 bits, confirmed by previous assertion
             let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into())).try_into().unwrap();
-            let res = slice_words64_le(input, 6 - len_len, len);
+            let res = input.slice_le(6 - len_len, len);
 
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
             let mut len = prefix.into() - 0xc0;
-            let mut in = slice_words64_le(input, 6, len);
+            let mut in = input.slice_le(6, len);
             let res = rlp_decode_list_word64(ref in, len);
             Result::Ok((RLPItemWord64::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
             let len_len = prefix.into() - 0xf7;
-            let len_span = slice_words64_le(input, 6, len_len);
+            let len_span = input.slice_le(6, len_len);
             // Enough to store 4.29 GB (fits in u32)
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
             // len fits in 32 bits, confirmed by previous assertion
             let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into())).try_into().unwrap();
-            let mut in = slice_words64_le(input, 6 - len_len, len);
+            let mut in = input.slice_le(6 - len_len, len);
             let res = rlp_decode_list_word64(ref in, len);
 
             Result::Ok((RLPItemWord64::List(res), 1 + len_len + len))
@@ -101,7 +101,7 @@ fn rlp_decode_word64(input: Span<u64>) -> Result<(RLPItemWord64, usize), felt252
     }
 }
 
-fn rlp_decode_list_word64(ref input: Span<u64>, len: usize) -> Span<Span<u64>> {
+fn rlp_decode_list_word64(ref input: Words64, len: usize) -> Span<Words64> {
     let mut i = 0;
     let mut output = ArrayTrait::new();
     let mut total_len = len;
@@ -119,7 +119,7 @@ fn rlp_decode_list_word64(ref input: Span<u64>, len: usize) -> Span<Span<u64>> {
                 let reversed = 7 - (decoded_len % 8);
                 let next_start = word * 8 + reversed;
                 if (total_len - decoded_len != 0) {
-                    input = slice_words64_le(input, next_start, total_len - decoded_len);
+                    input = input.slice_le(next_start, total_len - decoded_len);
                 }
                 total_len -= decoded_len;
             },
@@ -132,8 +132,8 @@ fn rlp_decode_list_word64(ref input: Span<u64>, len: usize) -> Span<Span<u64>> {
     output.span()
 }
 
-impl SpanU64PartialEq of PartialEq<Span<u64>> {
-    fn eq(lhs: @Span<u64>, rhs: @Span<u64>) -> bool {
+impl SpanU64PartialEq of PartialEq<Words64> {
+    fn eq(lhs: @Words64, rhs: @Words64) -> bool {
         let len_lhs = (*lhs).len();
         if len_lhs != (*rhs).len() {
             return false;
@@ -153,7 +153,7 @@ impl SpanU64PartialEq of PartialEq<Span<u64>> {
         }
     }
 
-    fn ne(lhs: @Span<u64>, rhs: @Span<u64>) -> bool {
+    fn ne(lhs: @Words64, rhs: @Words64) -> bool {
         !(lhs == rhs)
     }
 }
