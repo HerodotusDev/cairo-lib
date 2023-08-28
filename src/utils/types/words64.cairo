@@ -2,6 +2,7 @@ use array::{ArrayTrait, SpanTrait};
 use cairo_lib::utils::bitwise::{left_shift, right_shift};
 use traits::{Into, TryInto};
 use option::OptionTrait;
+use debug::PrintTrait;
 
 type Words64 = Span<u64>;
 
@@ -20,8 +21,14 @@ impl Words64Impl of Words64Trait {
         }
 
         let word_offset_bits = word_offset_bytes * 8;
+        let pow2_word_offset_bits = pow2(word_offset_bits);
         let mask_second_word = left_shift_u64(1, word_offset_bits) - 1;
         let reverse_words_offset_bits = 64 - word_offset_bits;
+
+        let mut pow2_reverse_words_offset_bits = 0;
+        if word_offset_bytes != 0 {
+            pow2_reverse_words_offset_bits = pow2(reverse_words_offset_bits);
+        }
 
         let mut output_words = len / 8;
         if len % 8 != 0 {
@@ -38,13 +45,13 @@ impl Words64Impl of Words64Trait {
             let next = *self.at(i+1);
 
             // remove bytes from the right
-            let shifted = right_shift_u64(word, word_offset_bits);
+            let shifted = word / pow2_word_offset_bits;
 
             // get right bytes from the next word
             let bytes_to_append = next & mask_second_word;
 
             // apend bytes to the left of first word
-            let mask_first_word = left_shift_u64(bytes_to_append, reverse_words_offset_bits);
+            let mask_first_word = bytes_to_append * pow2_reverse_words_offset_bits;
             let new_word = shifted | mask_first_word;
 
             output.append(new_word);
@@ -53,7 +60,7 @@ impl Words64Impl of Words64Trait {
 
 
         let last_word = *self.at(i);
-        let shifted = right_shift_u64(last_word, word_offset_bits);
+        let shifted = last_word / pow2_word_offset_bits;
 
         let mut len_last_word = len % 8;
         if len_last_word == 0 {
@@ -75,7 +82,7 @@ impl Words64Impl of Words64Trait {
             let bytes_to_append = next & mask_second_word;
 
             // apend bytes to the left of first word
-            let mask_first_word = left_shift_u64(bytes_to_append, reverse_words_offset_bits);
+            let mask_first_word = bytes_to_append * pow2_reverse_words_offset_bits;
             let new_word = shifted | mask_first_word;
 
             output.append(new_word);
@@ -85,7 +92,7 @@ impl Words64Impl of Words64Trait {
     }
 }
 
-fn pow2(pow: u32) -> u64 {
+fn pow2(pow: usize) -> u64 {
     let powers = array![0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000, 0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000, 0x100000000, 0x200000000, 0x400000000, 0x800000000, 0x1000000000, 0x2000000000, 0x4000000000, 0x8000000000, 0x10000000000, 0x20000000000, 0x40000000000, 0x80000000000, 0x100000000000, 0x200000000000, 0x400000000000, 0x800000000000, 0x1000000000000, 0x2000000000000, 0x4000000000000, 0x8000000000000, 0x10000000000000, 0x20000000000000, 0x40000000000000, 0x80000000000000, 0x100000000000000, 0x200000000000000, 0x400000000000000, 0x800000000000000, 0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000];
     *powers.at(pow)
 }
