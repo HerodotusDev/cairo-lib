@@ -14,10 +14,14 @@ impl Words64Impl of Words64Trait {
 
         let first_word_index = start / 8;
         // number of right bytes to remove
-        let mut word_offset = 8 - ((start+1) % 8);
-        if word_offset == 8 {
-            word_offset = 0;
+        let mut word_offset_bytes = 8 - ((start+1) % 8);
+        if word_offset_bytes == 8 {
+            word_offset_bytes = 0;
         }
+
+        let word_offset_bits = word_offset_bytes * 8;
+        let mask_second_word = left_shift_u64(1, word_offset_bits) - 1;
+        let reverse_words_offset_bits = 64 - word_offset_bits;
 
         let mut output_words = len / 8;
         if len % 8 != 0 {
@@ -33,15 +37,14 @@ impl Words64Impl of Words64Trait {
             let word = *self.at(i);
             let next = *self.at(i+1);
 
-            // remove lsb bytes from the first word
-            let shifted = right_shift_u64(word, word_offset.into() * 8);
+            // remove bytes from the right
+            let shifted = right_shift_u64(word, word_offset_bits);
 
-            // get lsb bytes from the second word
-            let mask_second_word = left_shift_u64(1, word_offset * 8) - 1;
-            let bytes_to_append = next & mask_second_word.into();
+            // get right bytes from the next word
+            let bytes_to_append = next & mask_second_word;
 
-            // apend bytes to msb first word
-            let mask_first_word = left_shift_u64(bytes_to_append, (8 - word_offset.into()) * 8);
+            // apend bytes to the left of first word
+            let mask_first_word = left_shift_u64(bytes_to_append, reverse_words_offset_bits);
             let new_word = shifted | mask_first_word;
 
             output.append(new_word);
@@ -50,29 +53,29 @@ impl Words64Impl of Words64Trait {
 
 
         let last_word = *self.at(i);
-        let shifted = right_shift_u64(last_word, word_offset.into() * 8);
+        let shifted = right_shift_u64(last_word, word_offset_bits);
 
         let mut len_last_word = len % 8;
         if len_last_word == 0 {
             len_last_word = 8;
         }
 
-        if len_last_word <= 8 - word_offset {
+        if len_last_word <= 8 - word_offset_bytes {
             // using u128 because if len_last_word == 8 left_shift might overflow by 1
             // after subtracting 1 it's safe to unwrap
             let mask: u128 = left_shift(1_u128, len_last_word.into() * 8) - 1;
             let last_word_masked = shifted & mask.try_into().unwrap();
             output.append(last_word_masked);
         } else {
-            let missing_bytes = len_last_word - (8 - word_offset);
+            let missing_bytes = len_last_word - (8 - word_offset_bytes);
             let next = *self.at(i+1);
 
-            // get lsb bytes from the second word
+            // get right bytes from the next word
             let mask_second_word = left_shift_u64(1, missing_bytes * 8) - 1;
-            let bytes_to_append = next & mask_second_word.into();
+            let bytes_to_append = next & mask_second_word;
 
-            // apend bytes to msb first word
-            let mask_first_word = left_shift_u64(bytes_to_append, (8 - word_offset.into()) * 8);
+            // apend bytes to the left of first word
+            let mask_first_word = left_shift_u64(bytes_to_append, reverse_words_offset_bits);
             let new_word = shifted | mask_first_word;
 
             output.append(new_word);
