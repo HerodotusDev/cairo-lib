@@ -65,7 +65,7 @@ impl KeccakHasher of KeccakTrait {
         let mut i: usize = 0;
         if n > 1 {
             loop {
-                if i >= n-1 {
+                if i >= n - 1 {
                     break ();
                 }
                 keccak_input.append(*words.at(i));
@@ -73,7 +73,7 @@ impl KeccakHasher of KeccakTrait {
             };
         }
 
-        let mut last = *words.at(n-1);
+        let mut last = *words.at(n - 1);
         let mut last_word_bytes = bytes_used(last);
         if last_word_bytes == 8 {
             keccak_input.append(last);

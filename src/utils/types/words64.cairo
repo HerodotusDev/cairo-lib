@@ -15,7 +15,7 @@ impl Words64Impl of Words64Trait {
 
         let first_word_index = start / 8;
         // number of right bytes to remove
-        let mut word_offset_bytes = 8 - ((start+1) % 8);
+        let mut word_offset_bytes = 8 - ((start + 1) % 8);
         if word_offset_bytes == 8 {
             word_offset_bytes = 0;
         }
@@ -42,7 +42,7 @@ impl Words64Impl of Words64Trait {
                 break ();
             }
             let word = *self.at(i);
-            let next = *self.at(i+1);
+            let next = *self.at(i + 1);
 
             // remove bytes from the right
             let shifted = word / pow2_word_offset_bits;
@@ -57,7 +57,6 @@ impl Words64Impl of Words64Trait {
             output.append(new_word);
             i += 1;
         };
-
 
         let last_word = *self.at(i);
         let shifted = last_word / pow2_word_offset_bits;
@@ -75,7 +74,7 @@ impl Words64Impl of Words64Trait {
             output.append(last_word_masked);
         } else {
             let missing_bytes = len_last_word - (8 - word_offset_bytes);
-            let next = *self.at(i+1);
+            let next = *self.at(i + 1);
 
             // get right bytes from the next word
             let mask_second_word = left_shift_u64(1, missing_bytes * 8) - 1;
@@ -93,8 +92,137 @@ impl Words64Impl of Words64Trait {
 }
 
 fn pow2(pow: usize) -> u64 {
-    let powers = array![0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000, 0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000, 0x100000000, 0x200000000, 0x400000000, 0x800000000, 0x1000000000, 0x2000000000, 0x4000000000, 0x8000000000, 0x10000000000, 0x20000000000, 0x40000000000, 0x80000000000, 0x100000000000, 0x200000000000, 0x400000000000, 0x800000000000, 0x1000000000000, 0x2000000000000, 0x4000000000000, 0x8000000000000, 0x10000000000000, 0x20000000000000, 0x40000000000000, 0x80000000000000, 0x100000000000000, 0x200000000000000, 0x400000000000000, 0x800000000000000, 0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000];
-    *powers.at(pow)
+    if pow == 0 {
+        return 0x1;
+    } else if pow == 1 {
+        return 0x2;
+    } else if pow == 2 {
+        return 0x4;
+    } else if pow == 3 {
+        return 0x8;
+    } else if pow == 4 {
+        return 0x10;
+    } else if pow == 5 {
+        return 0x20;
+    } else if pow == 6 {
+        return 0x40;
+    } else if pow == 7 {
+        return 0x80;
+    } else if pow == 8 {
+        return 0x100;
+    } else if pow == 9 {
+        return 0x200;
+    } else if pow == 10 {
+        return 0x400;
+    } else if pow == 11 {
+        return 0x800;
+    } else if pow == 12 {
+        return 0x1000;
+    } else if pow == 13 {
+        return 0x2000;
+    } else if pow == 14 {
+        return 0x4000;
+    } else if pow == 15 {
+        return 0x8000;
+    } else if pow == 16 {
+        return 0x10000;
+    } else if pow == 17 {
+        return 0x20000;
+    } else if pow == 18 {
+        return 0x40000;
+    } else if pow == 19 {
+        return 0x80000;
+    } else if pow == 20 {
+        return 0x100000;
+    } else if pow == 21 {
+        return 0x200000;
+    } else if pow == 22 {
+        return 0x400000;
+    } else if pow == 23 {
+        return 0x800000;
+    } else if pow == 24 {
+        return 0x1000000;
+    } else if pow == 25 {
+        return 0x2000000;
+    } else if pow == 26 {
+        return 0x4000000;
+    } else if pow == 27 {
+        return 0x8000000;
+    } else if pow == 28 {
+        return 0x10000000;
+    } else if pow == 29 {
+        return 0x20000000;
+    } else if pow == 30 {
+        return 0x40000000;
+    } else if pow == 31 {
+        return 0x80000000;
+    } else if pow == 32 {
+        return 0x100000000;
+    } else if pow == 33 {
+        return 0x200000000;
+    } else if pow == 34 {
+        return 0x400000000;
+    } else if pow == 35 {
+        return 0x800000000;
+    } else if pow == 36 {
+        return 0x1000000000;
+    } else if pow == 37 {
+        return 0x2000000000;
+    } else if pow == 38 {
+        return 0x4000000000;
+    } else if pow == 39 {
+        return 0x8000000000;
+    } else if pow == 40 {
+        return 0x10000000000;
+    } else if pow == 41 {
+        return 0x20000000000;
+    } else if pow == 42 {
+        return 0x40000000000;
+    } else if pow == 43 {
+        return 0x80000000000;
+    } else if pow == 44 {
+        return 0x100000000000;
+    } else if pow == 45 {
+        return 0x200000000000;
+    } else if pow == 46 {
+        return 0x400000000000;
+    } else if pow == 47 {
+        return 0x800000000000;
+    } else if pow == 48 {
+        return 0x1000000000000;
+    } else if pow == 49 {
+        return 0x2000000000000;
+    } else if pow == 50 {
+        return 0x4000000000000;
+    } else if pow == 51 {
+        return 0x8000000000000;
+    } else if pow == 52 {
+        return 0x10000000000000;
+    } else if pow == 53 {
+        return 0x20000000000000;
+    } else if pow == 54 {
+        return 0x40000000000000;
+    } else if pow == 55 {
+        return 0x80000000000000;
+    } else if pow == 56 {
+        return 0x100000000000000;
+    } else if pow == 57 {
+        return 0x200000000000000;
+    } else if pow == 58 {
+        return 0x400000000000000;
+    } else if pow == 59 {
+        return 0x800000000000000;
+    } else if pow == 60 {
+        return 0x1000000000000000;
+    } else if pow == 61 {
+        return 0x2000000000000000;
+    } else if pow == 62 {
+        return 0x4000000000000000;
+    } else if pow == 63 {
+        return 0x80000000000000;
+    } else {
+        return 0;
+    }
 }
 
 fn left_shift_u64(num: u64, shift: usize) -> u64 {
@@ -109,7 +237,11 @@ fn bytes_used(val: u64) -> usize {
     if val < 4294967296 { // 256^4
         if val < 65536 { // 256^2
             if val < 256 { // 256^1
-                if val == 0 { return 0; } else { return 1; };
+                if val == 0 {
+                    return 0;
+                } else {
+                    return 1;
+                };
             }
             return 2;
         }

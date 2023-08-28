@@ -26,21 +26,13 @@ fn test_rlp_decode_word64_string() {
 #[test]
 #[available_gas(99999999)]
 fn test_rlp_decode_word64_short_string() {
-    let mut arr = array![
-        0x39c034f66c805a9b,
-        0x1ea949fd892d8f8d,
-        0xbb9484cd74a43df3,
-        0xa8da3bf7
-    ];
+    let mut arr = array![0x39c034f66c805a9b, 0x1ea949fd892d8f8d, 0xbb9484cd74a43df3, 0xa8da3bf7];
 
     let (res, len) = rlp_decode_word64(arr.span()).unwrap();
     assert(len == 1 + (0x9b - 0x80), 'Wrong len');
 
     let mut expected_res = array![
-        0x8d39c034f66c805a,
-        0xf31ea949fd892d8f,
-        0xf7bb9484cd74a43d,
-        0xa8da3b
+        0x8d39c034f66c805a, 0xf31ea949fd892d8f, 0xf7bb9484cd74a43d, 0xa8da3b
     ];
     let expected_item = RLPItemWord64::Bytes(expected_res.span());
     assert(res == expected_item, 'Wrong value');
@@ -161,18 +153,13 @@ fn test_rlp_decode_word64_long_string_len_2() {
 #[test]
 #[available_gas(99999999)]
 fn test_rlp_decode_word64_short_list() {
-    let mut arr = array![
-        0x45834289353583c9,
-        0x9238
-    ];
+    let mut arr = array![0x45834289353583c9, 0x9238];
 
     let (res, len) = rlp_decode_word64(arr.span()).unwrap();
     assert(len == 1 + (0xc9 - 0xc0), 'Wrong len');
 
     let mut expected_res = array![
-        array![0x893535].span(),
-        array![0x42].span(),
-        array![0x923845].span()
+        array![0x893535].span(), array![0x42].span(), array![0x923845].span()
     ];
     let expected_item = RLPItemWord64::List(expected_res.span());
     assert(res == expected_item, 'Wrong value');
@@ -255,103 +242,39 @@ fn test_rlp_decode_word64_long_list() {
     assert(len == 1 + (0xf9 - 0xf7) + 0x0211, 'Wrong len');
 
     let mut expected_res = array![
-        array![
-            0x1b7a06b509cf7077,
-            0x75818924a962df35,
-            0xb4cd681fadecaece,
-            0xf44ac1730c4044a8
-        ].span(),
-        array![
-            0x4661b25ad085a31e,
-            0x344568fe87045c6d,
-            0xdc184b5c4b1a9fc1,
-            0xb47150026035361a
-        ].span(),
-        array![
-            0xd1d34035ce044c2c,
-            0xe5a5533c30721846,
-            0xa8368d4f30c18366,
-            0xeecd3ffaf56a0c80
-        ].span(),
-        array![
-            0xd37d4bc58d77dca9,
-            0xfe61d139e72282c4,
-            0x17d5dcb2ceeec0b0,
-            0x5138a6378e5bf037
-        ].span(),
-        array![
-            0xdd62df56554d5fa9,
-            0x9b56ae97049962c2,
-            0x9307207bdafd8ecd,
-            0xd71897db4cded3f8
-        ].span(),
-        array![
-        // 5
-            0x6e2238146d06d439,
-            0xa974a843e9c94aaf,
-            0x86b91dd8b05fc2a9,
-            0x4c03e2b336138c1d
-        ].span(),
-        array![
-            0x18a46ab4637ccc7a,
-            0xcb6b25a141a0c9b3,
-            0x5ada7a396b316173,
-            0x300113bb1b496788
-        ].span(),
-        array![
-            0x93c42e25818a3515,
-            0xb74680c736fe1371,
-            0x29bb913497a1fb11,
-            0xae52f85f78007a18
-        ].span(),
-        array![
-            0xa7faab16d3429168,
-            0xdb1d2049dfce8b1c,
-            0xc490dc0a254e10b2,
-            0x58964a531f2256e8
-        ].span(),
-        array![
-            0xa8fd3425995036dc,
-            0xa83baeb0dba714a3,
-            0x2ace690c55b59dc7,
-            0xa3c1c4ad07c06024
-        ].span(),
-        array![
-            0x05b055663b68b020,
-            0x6b504b4ed003e19e,
-            0xdab792630039c1cb,
-            0xe7420366c27811b1
-        ].span(),
-        array![
-            0x1c0f63fb45ebed8e,
-            0x17225718eb3697d9,
-            0xe21bb715f3d5c6cb,
-            0x14269bd9e83cb003
-        ].span(),
-        array![
-            0x6f985af63da32379,
-            0x69b9c2e4e6f9e7d5,
-            0x3999be4e94086b73,
-            0xf309e62f6114864a
-        ].span(),
-        array![
-            0x4a71201ad0d73465,
-            0x64ce46b9552afba4,
-            0xd1a22aadff2d22c3,
-            0xfdb12ac97334928a
-        ].span(),
-        array![
-            0x2dbfb8fe8bc2f9bf,
-            0xe86fb0c3c818b6a9,
-            0xf7384714bdc0b10c,
-            0x2f50e229ff6121c4
-        ].span(),
-        array![
-            0xa54e703c6961147f,
-            0x02c5725ea3bb1b02,
-            0x2e24988f459e43f6,
-            0x5fb3e28fea4837d0
-        ].span(),
+        array![0x1b7a06b509cf7077, 0x75818924a962df35, 0xb4cd681fadecaece, 0xf44ac1730c4044a8]
+            .span(),
+        array![0x4661b25ad085a31e, 0x344568fe87045c6d, 0xdc184b5c4b1a9fc1, 0xb47150026035361a]
+            .span(),
+        array![0xd1d34035ce044c2c, 0xe5a5533c30721846, 0xa8368d4f30c18366, 0xeecd3ffaf56a0c80]
+            .span(),
+        array![0xd37d4bc58d77dca9, 0xfe61d139e72282c4, 0x17d5dcb2ceeec0b0, 0x5138a6378e5bf037]
+            .span(),
+        array![0xdd62df56554d5fa9, 0x9b56ae97049962c2, 0x9307207bdafd8ecd, 0xd71897db4cded3f8]
+            .span(),
+        array![// 5
+        0x6e2238146d06d439, 0xa974a843e9c94aaf, 0x86b91dd8b05fc2a9, 0x4c03e2b336138c1d]
+            .span(),
+        array![0x18a46ab4637ccc7a, 0xcb6b25a141a0c9b3, 0x5ada7a396b316173, 0x300113bb1b496788]
+            .span(),
+        array![0x93c42e25818a3515, 0xb74680c736fe1371, 0x29bb913497a1fb11, 0xae52f85f78007a18]
+            .span(),
+        array![0xa7faab16d3429168, 0xdb1d2049dfce8b1c, 0xc490dc0a254e10b2, 0x58964a531f2256e8]
+            .span(),
+        array![0xa8fd3425995036dc, 0xa83baeb0dba714a3, 0x2ace690c55b59dc7, 0xa3c1c4ad07c06024]
+            .span(),
+        array![0x05b055663b68b020, 0x6b504b4ed003e19e, 0xdab792630039c1cb, 0xe7420366c27811b1]
+            .span(),
+        array![0x1c0f63fb45ebed8e, 0x17225718eb3697d9, 0xe21bb715f3d5c6cb, 0x14269bd9e83cb003]
+            .span(),
+        array![0x6f985af63da32379, 0x69b9c2e4e6f9e7d5, 0x3999be4e94086b73, 0xf309e62f6114864a]
+            .span(),
+        array![0x4a71201ad0d73465, 0x64ce46b9552afba4, 0xd1a22aadff2d22c3, 0xfdb12ac97334928a]
+            .span(),
+        array![0x2dbfb8fe8bc2f9bf, 0xe86fb0c3c818b6a9, 0xf7384714bdc0b10c, 0x2f50e229ff6121c4]
+            .span(),
+        array![0xa54e703c6961147f, 0x02c5725ea3bb1b02, 0x2e24988f459e43f6, 0x5fb3e28fea4837d0]
+            .span(),
         array![].span()
     ];
     let expected_item = RLPItemWord64::List(expected_res.span());

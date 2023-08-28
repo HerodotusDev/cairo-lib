@@ -73,7 +73,9 @@ fn rlp_decode_word64(input: Words64) -> Result<(RLPItemWord64, usize), felt252> 
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
             // len fits in 32 bits, confirmed by previous assertion
-            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into())).try_into().unwrap();
+            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into()))
+                .try_into()
+                .unwrap();
             let res = input.slice_le(6 - len_len, len);
 
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len_len + len))
@@ -91,7 +93,9 @@ fn rlp_decode_word64(input: Words64) -> Result<(RLPItemWord64, usize), felt252> 
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
             // len fits in 32 bits, confirmed by previous assertion
-            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into())).try_into().unwrap();
+            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into()))
+                .try_into()
+                .unwrap();
             let mut in = input.slice_le(6 - len_len, len);
             let res = rlp_decode_list_word64(ref in, len);
 
