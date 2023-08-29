@@ -51,10 +51,10 @@ enum RLPItemWord64 {
 // @param input RLP encoded bytes
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode_word64(input: Words64) -> Result<(RLPItemWord64, usize), felt252> {
-    let prefix: u8 = (*input.at(0) & 0xff).try_into().unwrap();
+    let prefix: u32  = (*input.at(0) & 0xff).try_into().unwrap();
 
     // Unwrap is impossible to panic here
-    let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
+    let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
     match rlp_type {
         RLPType::String(()) => {
             let mut arr = array![prefix.into()];
@@ -67,7 +67,7 @@ fn rlp_decode_word64(input: Words64) -> Result<(RLPItemWord64, usize), felt252> 
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len))
         },
         RLPType::StringLong(()) => {
-            let len_len = prefix.into() - 0xb7;
+            let len_len = prefix - 0xb7;
             let len_span = input.slice_le(6, len_len);
             // Enough to store 4.29 GB (fits in u32)
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
@@ -81,13 +81,13 @@ fn rlp_decode_word64(input: Words64) -> Result<(RLPItemWord64, usize), felt252> 
             Result::Ok((RLPItemWord64::Bytes(res), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
-            let mut len = prefix.into() - 0xc0;
+            let mut len = prefix - 0xc0;
             let mut in = input.slice_le(6, len);
             let res = rlp_decode_list_word64(ref in, len);
             Result::Ok((RLPItemWord64::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
-            let len_len = prefix.into() - 0xf7;
+            let len_len = prefix - 0xf7;
             let len_span = input.slice_le(6, len_len);
             // Enough to store 4.29 GB (fits in u32)
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');

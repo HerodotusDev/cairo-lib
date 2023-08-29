@@ -22,7 +22,7 @@ impl Words64Impl of Words64Trait {
 
         let word_offset_bits = word_offset_bytes * 8;
         let pow2_word_offset_bits = pow2(word_offset_bits);
-        let mask_second_word = left_shift_u64(1, word_offset_bits) - 1;
+        let mask_second_word = pow2_word_offset_bits - 1;
         let reverse_words_offset_bits = 64 - word_offset_bits;
 
         let mut pow2_reverse_words_offset_bits = 0;
@@ -88,6 +88,64 @@ impl Words64Impl of Words64Trait {
         }
 
         output.span()
+    }
+}
+
+fn left_shift_u64(num: u64, shift: usize) -> u64 {
+    num * pow2(shift)
+}
+
+fn right_shift_u64(num: u64, shift: usize) -> u64 {
+    num / pow2(shift)
+}
+
+fn bytes_used(val: u64) -> usize {
+    if val < 4294967296 { // 256^4
+        if val < 65536 { // 256^2
+            if val < 256 { // 256^1
+                if val == 0 {
+                    return 0;
+                } else {
+                    return 1;
+                };
+            }
+            return 2;
+        }
+        if val < 16777216 { // 256^3
+            return 3;
+        }
+        return 4;
+    } else {
+        if val < 281474976710656 { // 256^6
+            if val < 1099511627776 { // 256^5
+                return 5;
+            }
+            return 6;
+        }
+        if val < 72057594037927936 { // 256^7
+            return 7;
+        }
+        return 8;
+    }
+}
+
+fn reverse_endianness(input: u64, significant_bytes: Option<u64>) -> u64 {
+    let sb = match significant_bytes {
+        Option::Some(x) => x,
+        Option::None(()) => 56
+    };
+
+    let mut reverse = 0;
+    let mut i = 0;
+    loop {
+        if i == sb {
+            break reverse;
+        }
+
+        let r_shift = right_shift(input, (i * 8)) & 0xff;
+        reverse = reverse | left_shift(r_shift, (sb - i - 1) * 8);
+
+        i += 1;
     }
 }
 
@@ -222,64 +280,6 @@ fn pow2(pow: usize) -> u64 {
         return 0x80000000000000;
     } else {
         return 0;
-    }
-}
-
-fn left_shift_u64(num: u64, shift: usize) -> u64 {
-    num * pow2(shift)
-}
-
-fn right_shift_u64(num: u64, shift: usize) -> u64 {
-    num / pow2(shift)
-}
-
-fn bytes_used(val: u64) -> usize {
-    if val < 4294967296 { // 256^4
-        if val < 65536 { // 256^2
-            if val < 256 { // 256^1
-                if val == 0 {
-                    return 0;
-                } else {
-                    return 1;
-                };
-            }
-            return 2;
-        }
-        if val < 16777216 { // 256^3
-            return 3;
-        }
-        return 4;
-    } else {
-        if val < 281474976710656 { // 256^6
-            if val < 1099511627776 { // 256^5
-                return 5;
-            }
-            return 6;
-        }
-        if val < 72057594037927936 { // 256^7
-            return 7;
-        }
-        return 8;
-    }
-}
-
-fn reverse_endianness(input: u64, significant_bytes: Option<u64>) -> u64 {
-    let sb = match significant_bytes {
-        Option::Some(x) => x,
-        Option::None(()) => 56
-    };
-
-    let mut reverse = 0;
-    let mut i = 0;
-    loop {
-        if i == sb {
-            break reverse;
-        }
-
-        let r_shift = right_shift(input, (i * 8)) & 0xff;
-        reverse = reverse | left_shift(r_shift, (sb - i - 1) * 8);
-
-        i += 1;
     }
 }
 
