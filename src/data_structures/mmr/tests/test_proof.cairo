@@ -1,7 +1,6 @@
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use array::{ArrayTrait, SpanTrait};
-use debug::PrintTrait;
 
 fn helper_test_get_elements() -> Span<felt252> {
     let elem1 = PoseidonHasher::hash_single(1);
