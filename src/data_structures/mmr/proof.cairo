@@ -3,7 +3,6 @@ use cairo_lib::data_structures::mmr::utils::get_height;
 use cairo_lib::utils::bitwise::left_shift;
 use array::SpanTrait;
 use traits::Into;
-use debug::PrintTrait;
 
 type Proof = Span<felt252>;
 
