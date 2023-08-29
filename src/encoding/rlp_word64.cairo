@@ -1,7 +1,6 @@
 use result::ResultTrait;
 use option::OptionTrait;
 use array::{Array, ArrayTrait, Span, SpanTrait};
-use clone::Clone;
 use traits::{Into, TryInto};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness};
 use cairo_lib::utils::types::byte::Byte;
