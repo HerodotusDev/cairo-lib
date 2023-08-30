@@ -2,9 +2,26 @@ use array::{ArrayTrait, SpanTrait};
 use cairo_lib::utils::bitwise::{left_shift, right_shift};
 use traits::{Into, TryInto};
 use option::OptionTrait;
-use debug::PrintTrait;
 
 type Words64 = Span<u64>;
+
+impl Words64TryIntoU256LE of TryInto<Words64, u256> {
+    fn try_into(self: Words64) -> Option<u256> {
+        if self.len() != 4 {
+            return Option::None(());
+        }
+
+        let pow2_64 = 0x10000000000000000;
+        let pow2_128 = 0x100000000000000000000000000000000;
+        let pow2_192 = 0x1000000000000000000000000000000000000000000000000;
+
+        let mut output: u256 = (*self.at(0)).into();
+        output = output | (*self.at(1)).into() * pow2_64;
+        output = output | (*self.at(2)).into() * pow2_128;
+        output = output | (*self.at(3)).into() * pow2_192;
+        Option::Some(output)
+    }
+}
 
 #[generate_trait]
 impl Words64Impl of Words64Trait {
