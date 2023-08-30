@@ -36,8 +36,8 @@ impl MMRImpl of MMRTrait {
     // @notice Appends an element to the MMR
     // @param hash The hashed element to append
     // @param peaks The peaks of the MMR
-    // @return Result with the new root of the MMR
-    fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<felt252, felt252> {
+    // @return Result with the new root and new peaks of the MMR
+    fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
         if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
         }
@@ -92,7 +92,7 @@ impl MMRImpl of MMRTrait {
         let new_root = compute_root(self.last_pos.into(), peaks_arr.span());
         self.root = new_root;
 
-        Result::Ok(new_root)
+        Result::Ok((new_root, peaks_arr.span()))
     }
 
     // @notice Verifies a proof for an element in the MMR
