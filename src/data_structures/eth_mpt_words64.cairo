@@ -2,12 +2,13 @@ use array::{ArrayTrait, SpanTrait};
 use cairo_lib::hashing::keccak::KeccakTrait;
 use cairo_lib::encoding::rlp_word64::{RLPItemWord64, rlp_decode_word64};
 use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256, BytesPartialEq};
-use cairo_lib::utils::types::byte::ByteTrait;
+use cairo_lib::utils::types::byte::{Byte, ByteTrait};
 use traits::{TryInto, Into};
 use option::OptionTrait;
 use cairo_lib::utils::bitwise::right_shift;
 use keccak::u128_split;
-use cairo_lib::utils::types::words64::{Words64, Words64Trait};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE, Words64PartialEq, bytes_used};
+use debug::PrintTrait;
 
 
 // @notice Ethereum Merkle Patricia Trie struct
@@ -28,13 +29,13 @@ impl MPTWords64Default of Default<MPTWords64> {
 enum MPTWords64Node {
     // @param 16 hashes of children
     // @param Value of the node
-    Branch: (Span<u256>, Bytes),
+    Branch: (Span<u256>, Words64),
     // @param shared nibbles
     // @param next node
-    Extension: (Bytes, u256),
+    Extension: (Words64, u256),
     // @param key end
     // @param value of the node
-    Leaf: (Bytes, Bytes)
+    Leaf: (Words64, Words64)
 }
 
 #[generate_trait]
@@ -118,27 +119,30 @@ impl MPTWords64Impl of MPTWords64Trait {
             RLPItemWord64::List(l) => {
                 let len = l.len();
                 if len == 17 {
-                    //let nibble_hashes_bytes = l.slice(0, 16);
-                    //let mut nibble_hashes = ArrayTrait::new();
-                    //let mut i: usize = 0;
-                    //loop {
-                        //if i >= nibble_hashes_bytes.len() {
-                            //break ();
-                        //}
+                    let nibble_hashes_bytes = l.slice(0, 16);
+                    let mut nibble_hashes = ArrayTrait::new();
+                    let mut i: usize = 0;
+                    loop {
+                        if i >= nibble_hashes_bytes.len() {
+                            break ();
+                        }
 
-                        //let hash = (*nibble_hashes_bytes.at(i)).try_into().unwrap();
-                        //nibble_hashes.append(hash);
-                        //i += 1;
-                    //};
-                    //let value = *l.at(16);
+                        let hash = (*nibble_hashes_bytes.at(i)).try_into().unwrap();
+                        nibble_hashes.append(hash);
+                        i += 1;
+                    };
+                    let value = *l.at(16);
 
-                    //Result::Ok(MPTWords64Node::Branch((nibble_hashes.span(), value)))
-                    Result::Err('Not implemented')
+                    Result::Ok(MPTWords64Node::Branch((nibble_hashes.span(), value)))
                 } else if len == 2 {
-                    Result::Err('Not implemented')
-                    //let (prefix, nibble) = (*(*l.at(0)).at(0)).extract_nibbles();
+                    let first = *l.at(0);
+                    let prefix_nibble: Byte = (*first.at(0) & 0xff).try_into().unwrap();
+                    let (prefix, nibble) = prefix_nibble.extract_nibbles();
 
-                    //if prefix == 0 {
+                    let first_last_word_bytes = bytes_used(*first.at(first.len() - 1));
+                    let first_no_prefix = first.slice_le(6, (first.len() - 1) * 8 + first_last_word_bytes - 1);
+
+                    if prefix == 0 {
                         //let mut shared_nibbles = *l.at(0);
                         //let mut i: usize = 1;
                         //let mut shared_nibbles_nibbles = ArrayTrait::new();
@@ -157,7 +161,8 @@ impl MPTWords64Impl of MPTWords64Trait {
 
                         //let next_node = (*l.at(1)).try_into().unwrap();
                         //Result::Ok(MPTWords64Node::Extension((shared_nibbles_nibbles.span(), next_node)))
-                    //} else if prefix == 1 {
+                        Result::Err('Not implemented')
+                    } else if prefix == 1 {
                         //let mut shared_nibbles = *l.at(0);
                         //let mut i: usize = 1;
                         //let mut shared_nibbles_nibbles = ArrayTrait::new();
@@ -175,8 +180,8 @@ impl MPTWords64Impl of MPTWords64Trait {
 
                         //let next_node = (*l.at(1)).try_into().unwrap();
                         //Result::Ok(MPTWords64Node::Extension((shared_nibbles_nibbles.span(), next_node)))
-                    //} else if prefix == 2 {
-                        //let key_end = *l.at(0);
+                        Result::Err('Not implemented')
+                    } else if prefix == 2 {
                         //let mut i: usize = 1;
                         //let mut key_end_nibbles = ArrayTrait::new();
                         //loop {
@@ -191,9 +196,11 @@ impl MPTWords64Impl of MPTWords64Trait {
                             //i += 1;
                         //};
 
-                        //let value = *l.at(1);
+                        // Right shift 8
+                        let value = *l.at(1);
+                        Result::Ok(MPTWords64Node::Leaf((first_no_prefix, value)))
                         //Result::Ok(MPTWords64Node::Leaf((key_end_nibbles.span(), value)))
-                    //} else if prefix == 3 {
+                    } else if prefix == 3 {
                         //let key_end = *l.at(0);
                         //let mut i: usize = 1;
                         //let mut key_end_nibbles = ArrayTrait::new();
@@ -211,9 +218,10 @@ impl MPTWords64Impl of MPTWords64Trait {
 
                         //let value = *l.at(1);
                         //Result::Ok(MPTWords64Node::Leaf((key_end_nibbles.span(), value)))
-                    //} else {
-                        //Result::Err('Invalid RLP prefix')
-                    //}
+                        Result::Err('Not implemented')
+                    } else {
+                        Result::Err('Invalid RLP prefix')
+                    }
                 } else {
                     Result::Err('Invalid RLP list len')
                 }

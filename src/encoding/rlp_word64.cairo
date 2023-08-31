@@ -2,7 +2,7 @@ use result::ResultTrait;
 use option::OptionTrait;
 use array::{Array, ArrayTrait, Span, SpanTrait};
 use traits::{Into, TryInto};
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness, Words64PartialEq};
 use cairo_lib::utils::types::byte::Byte;
 use debug::PrintTrait;
 
@@ -132,32 +132,6 @@ fn rlp_decode_list_word64(ref input: Words64, len: usize) -> Span<Words64> {
         i += decoded_len;
     };
     output.span()
-}
-
-impl SpanU64PartialEq of PartialEq<Words64> {
-    fn eq(lhs: @Words64, rhs: @Words64) -> bool {
-        let len_lhs = (*lhs).len();
-        if len_lhs != (*rhs).len() {
-            return false;
-        }
-
-        let mut i: usize = 0;
-        loop {
-            if i >= len_lhs {
-                break true;
-            }
-
-            if (*lhs).at(i) != (*rhs).at(i) {
-                break false;
-            }
-
-            i += 1;
-        }
-    }
-
-    fn ne(lhs: @Words64, rhs: @Words64) -> bool {
-        !(lhs == rhs)
-    }
 }
 
 impl RLPItemWord64PartialEq of PartialEq<RLPItemWord64> {

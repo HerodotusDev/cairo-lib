@@ -166,6 +166,33 @@ fn reverse_endianness(input: u64, significant_bytes: Option<u64>) -> u64 {
     }
 }
 
+impl Words64PartialEq of PartialEq<Words64> {
+    fn eq(lhs: @Words64, rhs: @Words64) -> bool {
+        let len_lhs = (*lhs).len();
+        if len_lhs != (*rhs).len() {
+            return false;
+        }
+
+        let mut i: usize = 0;
+        loop {
+            if i >= len_lhs {
+                break true;
+            }
+
+            if (*lhs).at(i) != (*rhs).at(i) {
+                break false;
+            }
+
+            i += 1;
+        }
+    }
+
+    fn ne(lhs: @Words64, rhs: @Words64) -> bool {
+        !(lhs == rhs)
+    }
+}
+
+
 fn pow2(pow: usize) -> u64 {
     if pow == 0 {
         return 0x1;
