@@ -143,25 +143,7 @@ impl MPTWords64Impl of MPTWords64Trait {
                     let first_no_prefix = first.slice_le(6, (first.len() - 1) * 8 + first_last_word_bytes - 1);
 
                     if prefix == 0 {
-                        //let mut shared_nibbles = *l.at(0);
-                        //let mut i: usize = 1;
-                        //let mut shared_nibbles_nibbles = ArrayTrait::new();
-                        //shared_nibbles_nibbles.append(nibble);
-                        //loop {
-                            //if i >= shared_nibbles.len() {
-                                //break ();
-                            //}
-
-                            //let (high, low) = (*shared_nibbles.at(i)).extract_nibbles();
-                            //shared_nibbles_nibbles.append(high);
-                            //shared_nibbles_nibbles.append(low);
-
-                            //i += 1;
-                        //};
-
-                        //let next_node = (*l.at(1)).try_into().unwrap();
-                        //Result::Ok(MPTWords64Node::Extension((shared_nibbles_nibbles.span(), next_node)))
-                        Result::Err('Not implemented')
+                        Result::Ok(MPTWords64Node::Leaf((first_no_prefix, *l.at(1))))
                     } else if prefix == 1 {
                         //let mut shared_nibbles = *l.at(0);
                         //let mut i: usize = 1;
@@ -182,24 +164,7 @@ impl MPTWords64Impl of MPTWords64Trait {
                         //Result::Ok(MPTWords64Node::Extension((shared_nibbles_nibbles.span(), next_node)))
                         Result::Err('Not implemented')
                     } else if prefix == 2 {
-                        //let mut i: usize = 1;
-                        //let mut key_end_nibbles = ArrayTrait::new();
-                        //loop {
-                            //if i >= key_end.len() {
-                                //break ();
-                            //}
-
-                            //let (high, low) = (*key_end.at(i)).extract_nibbles();
-                            //key_end_nibbles.append(high);
-                            //key_end_nibbles.append(low);
-
-                            //i += 1;
-                        //};
-
-                        // Right shift 8
-                        let value = *l.at(1);
-                        Result::Ok(MPTWords64Node::Leaf((first_no_prefix, value)))
-                        //Result::Ok(MPTWords64Node::Leaf((key_end_nibbles.span(), value)))
+                        Result::Ok(MPTWords64Node::Leaf((first_no_prefix, *l.at(1))))
                     } else if prefix == 3 {
                         //let key_end = *l.at(0);
                         //let mut i: usize = 1;
@@ -232,11 +197,8 @@ impl MPTWords64Impl of MPTWords64Trait {
     // @notice keccak256 hashes an RLP encoded node
     // @param rlp RLP encoded node
     // @return keccak256 hash of the node
-    fn hash_rlp_node(rlp: Bytes) -> u256 {
-        let keccak_res = KeccakTrait::keccak_cairo(rlp);
-        let high = integer::u128_byte_reverse(keccak_res.high);
-        let low = integer::u128_byte_reverse(keccak_res.low);
-        u256 { low: high, high: low }
+    fn hash_rlp_node(rlp: Words64) -> u256 {
+        KeccakTrait::keccak_cairo_word64(rlp)
     }
 }
 
