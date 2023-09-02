@@ -48,45 +48,60 @@ impl MPTWords64Impl of MPTWords64Trait {
     }
 
     // @notice Verify that a key exists in the MPTWords64
-    // @param key Key to verify, must be a nibble collection (Ex: array![0xf, 0x2, 0xa].span())
+    // @param key Key to verify in little endian
     // @param proof Merkle proof, collection of rlp encoded nodes
     // @return Result with the value associated with the key if it exists
-    //fn verify(self: @MPTWords64, key: Bytes, proof: Span<Bytes>) -> Result<Bytes, felt252> {
-        //let mut current_hash = 0;
-        //let mut proof_index: usize = 0;
+    fn verify(self: @MPTWords64, key: Words64, proof: Span<Words64>) -> Result<Words64, felt252> {
+        let mut current_hash = 0;
+        let mut proof_index: usize = 0;
         //let mut key_index: usize = 0;
+        let mut current_key = key;
+        let mut in_byte = false;
+        let mut current_nibble = 0;
 
-        //loop {
-            //if proof_index >= proof.len() {
-                //break Result::Err('Proof reached end');
-            //}
+        loop {
+            if proof_index == proof.len() {
+                break Result::Err('Proof reached end');
+            }
 
-            //let node = *proof.at(proof_index);
-            //proof_index += 1;
+            let node = *proof.at(proof_index);
 
-            //let hash = MPTWords64Trait::hash_rlp_node(node);
-            //if key_index == 0 {
-                //assert(hash == *self.root, 'Root not matching');
-            //} else {
-                //// TODO handle edge case where RLP is less than 32 bytes
-                //assert(hash == current_hash, 'Element not matching');
-            //}
+            let hash = MPTWords64Trait::hash_rlp_node(node);
+            if proof_index == 0 {
+                assert(hash == *self.root, 'Root not matching');
+            } else {
+                // TODO handle edge case where RLP is less than 32 bytes
+                assert(hash == current_hash, 'Element not matching');
+            }
 
-            //let decoded = MPTWords64Trait::decode_rlp_node(node)?;
-            //match decoded {
-                //MPTWords64Node::Branch((
-                    //nibbles, value
-                //)) => {
+            let decoded = MPTWords64Trait::decode_rlp_node(node)?;
+            match decoded {
+                MPTWords64Node::Branch((
+                    nibbles, value
+                )) => {
                     //if key_index >= key.len() {
                         //break Result::Ok(value);
                     //} else {
                         //current_hash = *nibbles.at((*key.at(key_index)).into());
                     //}
                     //key_index += 1;
-                //},
-                //MPTWords64Node::Extension((
-                    //shared_nibbles, next_node
-                //)) => {
+
+                    // TODO return value if key is over
+                    // Safe unwrap (max value is 0xf)
+                    if in_byte {
+                        current_nibble = *current_key.at(0) & 0x0f;
+                        let last_words_bytes = bytes_used(*current_key.at(current_key.len() - 1));
+                        current_key.slice_le(6, (current_key.len() - 1) * 8 + last_words_bytes - 1);
+                    } else {
+                        current_nibble = *current_key.at(0) & 0xf0;
+                    }
+
+                    in_byte = !in_byte;
+                    current_hash = *nibbles.at(current_nibble.try_into().unwrap());
+                },
+                MPTWords64Node::Extension((
+                    shared_nibbles, next_node
+                )) => {
                     //let expected_shared_nibbles = key.slice(key_index, shared_nibbles.len());
                     //if expected_shared_nibbles == shared_nibbles {
                         //current_hash = next_node;
@@ -94,20 +109,29 @@ impl MPTWords64Impl of MPTWords64Trait {
                         //break Result::Err('Shared nibbles not matching');
                     //}
                     //key_index += shared_nibbles.len();
-                //},
-                //MPTWords64Node::Leaf((
-                    //key_end, value
-                //)) => {
+                    break Result::Err('Not implemented');
+                },
+                MPTWords64Node::Leaf((
+                    key_end, value
+                )) => {
                     //let expected_end = key.slice(key_index, key.len() - key_index);
                     //if expected_end == key_end {
                         //break Result::Ok(value);
                     //} else {
                         //break Result::Err('Key not matching in leaf node');
                     //}
-                //}
-            //};
-        //}
-    //}
+
+                    if key_end == current_key {
+                        break Result::Ok(value);
+                    } else {
+                        break Result::Err('Key not matching in leaf node');
+                    }
+                }
+            };
+
+            proof_index += 1;
+        }
+    }
 
     // @notice Decodes an RLP encoded node
     // @param rlp RLP encoded node
