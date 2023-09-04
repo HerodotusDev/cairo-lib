@@ -17,12 +17,14 @@ impl ProofImpl of ProofTrait {
     fn compute_peak(self: Proof, index: usize, value: felt252) -> felt252 {
         let mut hash = PoseidonHasher::hash_double(index.into(), value);
 
+        // calculate direction array
+        // direction[i] - whether the i-th node from the root is a left or a right child of its parent
         let mut bits = bit_length(index);
         if self.len() + 1 > bits {
             bits = self.len() + 1;
         };
 
-        let mut path = ArrayTrait::new();
+        let mut direction: Array<bool> = ArrayTrait::new();
         let mut p: usize = 1;
         let mut q: usize = pow(2, bits) - 1;
 
@@ -34,14 +36,15 @@ impl ProofImpl of ProofTrait {
 
             if index < m {
                 q = m - 1;
-                path.append(0); // TODO: probably use booleans to save space
+                direction.append(false);
             } else {
                 p = m;
                 q = q - 1;
-                path.append(1);
+                direction.append(true);
             };
         };
 
+        // find the root hash, starting from the leaf
         let mut current_index = index;
         let mut i: usize = 0;
         loop {
