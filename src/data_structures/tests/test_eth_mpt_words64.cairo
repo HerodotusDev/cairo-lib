@@ -128,10 +128,10 @@ fn test_decode_rlp_node_leaf_even() {
     ];
 
     let expected_key_end = array![
-        0x672125827a99fc8c,
-        0x0373d98065a125ac,
-        0x0ebf6b0c9f1beb53,
-        0xd0c4824c
+        0x2125827a99fc8c23,
+        0x73d98065a125ac67,
+        0xbf6b0c9f1beb5303,
+        0xd0c4824c0e
     ];
     let expected_value = array![
         0xbdc496a0800144f8,
@@ -146,7 +146,7 @@ fn test_decode_rlp_node_leaf_even() {
     ];
 
     let decoded = MPTWords64Trait::decode_rlp_node(rlp_node.span()).unwrap();
-    let expected_node = MPTWords64Node::Leaf((expected_key_end.span(), expected_value.span()));
+    let expected_node = MPTWords64Node::Leaf((expected_key_end.span(), expected_value.span(), 2));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
 

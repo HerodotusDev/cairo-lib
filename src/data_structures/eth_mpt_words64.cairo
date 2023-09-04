@@ -30,12 +30,14 @@ enum MPTWords64Node {
     // @param 16 hashes of children
     // @param Value of the node
     Branch: (Span<u256>, Words64),
-    // @param shared nibbles
+    // @param shared_nibbles
     // @param next node
-    Extension: (Words64, u256),
-    // @param key end
+    // @param nibbles_skip Number of nibbles to skip in shared nibbles
+    Extension: (Words64, u256, usize),
+    // @param key_end
     // @param value of the node
-    Leaf: (Words64, Words64)
+    // param nibbles_skip Number of nibbles to skip in the key end
+    Leaf: (Words64, Words64, usize)
 }
 
 #[generate_trait]
@@ -49,9 +51,10 @@ impl MPTWords64Impl of MPTWords64Trait {
 
     // @notice Verify that a key exists in the MPTWords64
     // @param key Key to verify in little endian
+    // @param key_len Length of the key in nibbles
     // @param proof Merkle proof, collection of rlp encoded nodes
     // @return Result with the value associated with the key if it exists
-    fn verify(self: @MPTWords64, key: Words64, proof: Span<Words64>) -> Result<Words64, felt252> {
+    fn verify(self: @MPTWords64, key: Words64, key_len: usize, proof: Span<Words64>) -> Result<Words64, felt252> {
         let mut current_hash = 0;
         let mut proof_index: usize = 0;
         //let mut key_index: usize = 0;
@@ -100,7 +103,7 @@ impl MPTWords64Impl of MPTWords64Trait {
                     current_hash = *nibbles.at(current_nibble.try_into().unwrap());
                 },
                 MPTWords64Node::Extension((
-                    shared_nibbles, next_node
+                    shared_nibbles, next_node, nibbles_skip
                 )) => {
                     //let expected_shared_nibbles = key.slice(key_index, shared_nibbles.len());
                     //if expected_shared_nibbles == shared_nibbles {
@@ -112,7 +115,7 @@ impl MPTWords64Impl of MPTWords64Trait {
                     break Result::Err('Not implemented');
                 },
                 MPTWords64Node::Leaf((
-                    key_end, value
+                    key_end, value, nibbles_skip
                 )) => {
                     //let expected_end = key.slice(key_index, key.len() - key_index);
                     //if expected_end == key_end {
@@ -160,54 +163,17 @@ impl MPTWords64Impl of MPTWords64Trait {
                     Result::Ok(MPTWords64Node::Branch((nibble_hashes.span(), value)))
                 } else if len == 2 {
                     let first = *l.at(0);
-                    let prefix_nibble: Byte = (*first.at(0) & 0xff).try_into().unwrap();
-                    let (prefix, nibble) = prefix_nibble.extract_nibbles();
-
-                    let first_last_word_bytes = bytes_used(*first.at(first.len() - 1));
-                    let first_no_prefix = first.slice_le(6, (first.len() - 1) * 8 + first_last_word_bytes - 1);
+                    let prefix_byte: Byte = (*first.at(0) & 0xff).try_into().unwrap();
+                    let (prefix, _) = prefix_byte.extract_nibbles();
 
                     if prefix == 0 {
-                        Result::Ok(MPTWords64Node::Leaf((first_no_prefix, *l.at(1))))
+                        Result::Ok(MPTWords64Node::Extension((first, (*l.at(1)).try_into().unwrap(), 2)))
                     } else if prefix == 1 {
-                        //let mut shared_nibbles = *l.at(0);
-                        //let mut i: usize = 1;
-                        //let mut shared_nibbles_nibbles = ArrayTrait::new();
-                        //loop {
-                            //if i >= shared_nibbles.len() {
-                                //break ();
-                            //}
-
-                            //let (high, low) = (*shared_nibbles.at(i)).extract_nibbles();
-                            //shared_nibbles_nibbles.append(high);
-                            //shared_nibbles_nibbles.append(low);
-
-                            //i += 1;
-                        //};
-
-                        //let next_node = (*l.at(1)).try_into().unwrap();
-                        //Result::Ok(MPTWords64Node::Extension((shared_nibbles_nibbles.span(), next_node)))
-                        Result::Err('Not implemented')
+                        Result::Ok(MPTWords64Node::Extension((first, (*l.at(1)).try_into().unwrap(), 1)))
                     } else if prefix == 2 {
-                        Result::Ok(MPTWords64Node::Leaf((first_no_prefix, *l.at(1))))
+                        Result::Ok(MPTWords64Node::Leaf((first, *l.at(1), 2)))
                     } else if prefix == 3 {
-                        //let key_end = *l.at(0);
-                        //let mut i: usize = 1;
-                        //let mut key_end_nibbles = ArrayTrait::new();
-                        //key_end_nibbles.append(nibble);
-                        //loop {
-                            //if i >= key_end.len() {
-                                //break ();
-                            //}
-                            //let (high, low) = (*key_end.at(i)).extract_nibbles();
-                            //key_end_nibbles.append(high);
-                            //key_end_nibbles.append(low);
-
-                            //i += 1;
-                        //};
-
-                        //let value = *l.at(1);
-                        //Result::Ok(MPTWords64Node::Leaf((key_end_nibbles.span(), value)))
-                        Result::Err('Not implemented')
+                        Result::Ok(MPTWords64Node::Leaf((first, *l.at(1), 1)))
                     } else {
                         Result::Err('Invalid RLP prefix')
                     }
@@ -255,28 +221,28 @@ impl MPTWords64NodePartialEq of PartialEq<MPTWords64Node> {
                 }
             },
             MPTWords64Node::Extension((
-                lhs_shared_nibbles, lhs_next_node
+                lhs_shared_nibbles, lhs_next_node, lhs_nibbles_skip
             )) => {
                 match rhs {
                     MPTWords64Node::Branch(_) => false,
                     MPTWords64Node::Extension((
-                        rhs_shared_nibbles, rhs_next_node
+                        rhs_shared_nibbles, rhs_next_node, rhs_nibbles_skip
                     )) => {
-                        lhs_shared_nibbles == rhs_shared_nibbles && lhs_next_node == rhs_next_node
+                        lhs_shared_nibbles == rhs_shared_nibbles && lhs_next_node == rhs_next_node && lhs_nibbles_skip == rhs_nibbles_skip
                     },
                     MPTWords64Node::Leaf(_) => false
                 }
             },
             MPTWords64Node::Leaf((
-                lhs_key_end, lhs_value
+                lhs_key_end, lhs_value, lhs_nibbles_skip
             )) => {
                 match rhs {
                     MPTWords64Node::Branch(_) => false,
                     MPTWords64Node::Extension(_) => false,
                     MPTWords64Node::Leaf((
-                        rhs_key_end, rhs_value
+                        rhs_key_end, rhs_value, rhs_nibbles_skip
                     )) => {
-                        lhs_key_end == rhs_key_end && lhs_value == rhs_value
+                        lhs_key_end == rhs_key_end && lhs_value == rhs_value && lhs_nibbles_skip == rhs_nibbles_skip
                     }
                 }
             }
