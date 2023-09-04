@@ -34,16 +34,15 @@ impl MMRImpl of MMRTrait {
     }
 
     // @notice Appends an element to the MMR
-    // @param element The element to append
+    // @param hash The hashed element to append
     // @param peaks The peaks of the MMR
     // @return Result with the new root of the MMR
-    fn append(ref self: MMR, element: felt252, peaks: Peaks) -> Result<felt252, felt252> {
+    fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<felt252, felt252> {
         if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
         }
 
         self.last_pos += 1;
-        let hash = PoseidonHasher::hash_double(element, self.last_pos.into());
 
         // TODO refactor this logic
         let mut peaks_arr = ArrayTrait::new();
@@ -84,8 +83,7 @@ impl MMRImpl of MMRTrait {
             };
 
             let hash = PoseidonHasher::hash_double(*left, *right);
-            let hash_index = PoseidonHasher::hash_double(self.last_pos.into(), hash);
-            new_peaks.append(hash_index);
+            new_peaks.append(hash);
             peaks_arr = new_peaks;
 
             height += 1;
@@ -94,23 +92,23 @@ impl MMRImpl of MMRTrait {
         let new_root = compute_root(self.last_pos.into(), peaks_arr.span());
         self.root = new_root;
 
-        return Result::Ok(new_root);
+        Result::Ok(new_root)
     }
 
     // @notice Verifies a proof for an element in the MMR
     // @param index The index of the element in the MMR
-    // @param value The value of the element
+    // @param hash The hash of the element
     // @param peaks The peaks of the MMR
     // @param proof The proof for the element
     // @return Result with true if the proof is valid, false otherwise
     fn verify_proof(
-        self: @MMR, index: usize, value: felt252, peaks: Peaks, proof: Proof
+        self: @MMR, index: usize, hash: felt252, peaks: Peaks, proof: Proof
     ) -> Result<bool, felt252> {
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');
         }
 
-        let peak = proof.compute_peak(index, value);
+        let peak = proof.compute_peak(index, hash);
         Result::Ok(peaks.contains_peak(peak))
     }
 }
