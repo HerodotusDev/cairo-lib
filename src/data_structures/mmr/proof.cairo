@@ -47,12 +47,13 @@ impl ProofImpl of ProofTrait {
         // find the root hash, starting from the leaf
         let mut current_index = index;
         let mut i: usize = 0;
+        let mut two_pow_i: usize = 2;
         loop {
             if i == self.len() {
                 break hash;
             }
 
-            if *path.at(path.len() - i - 1) == 1 {
+            if *direction.at(direction.len() - i - 1) {
                 // right child
                 let hashed = PoseidonHasher::hash_double(*self.at(i), hash);
 
@@ -62,11 +63,12 @@ impl ProofImpl of ProofTrait {
                 // left child
                 let hashed = PoseidonHasher::hash_double(hash, *self.at(i));
 
-                current_index += left_shift(2, i);
+                current_index += two_pow_i;
                 hash = PoseidonHasher::hash_double(current_index.into(), hashed);
             }
 
             i += 1;
+            two_pow_i *= 2;
         }
     }
 }
