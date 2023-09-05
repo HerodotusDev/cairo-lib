@@ -91,7 +91,45 @@ impl MPTWords64Impl of MPTWords64Trait {
                 MPTWords64Node::Leaf((
                     key_end, value, nibbles_skip
                 )) => {
-                    break Result::Err('Not implemented');
+                    let mut key_end_pow2 = pow(2, nibbles_skip.into() * 4);
+
+                    let mut in_byte = false;
+                    if nibbles_skip % 2 == 1 {
+                        key_end_pow2 = key_end_pow2 / 16;
+                        in_byte = true;
+                    } else {
+                        key_end_pow2 = key_end_pow2 * 16
+                    }
+
+                    let mut key_end_word_idx = nibbles_skip / 16;
+                    let mut key_end_word = *key_end.at(key_end_word_idx);
+                    let v = loop {
+                        if key_pow2 == 0 {
+                            break Result::Ok(value);
+                        }
+
+                        let current_nibble_key_end = (key_end_word / key_end_pow2) & 0xf;
+                        let current_nibble_key = (key / key_pow2) & 0xf;
+                        if current_nibble_key_end.into() != current_nibble_key {
+                            break Result::Err('Key not matching');
+                        }
+
+                        if key_end_pow2 == 0x100000000000000 {
+                            key_end_pow2 = 16;
+                            key_end_word_idx += 1;
+                            key_end_word = *key_end.at(key_end_word_idx);
+                        } else {
+                            if in_byte {
+                                key_end_pow2 = key_end_pow2 * 0x1000;
+                            } else {
+                                key_end_pow2 = key_end_pow2 / 0x10;
+                            }
+                        };
+
+                        in_byte = !in_byte;
+                        key_pow2 = key_pow2 / 16;
+                    };
+                    break v;
                 }
             };
 
@@ -109,15 +147,19 @@ impl MPTWords64Impl of MPTWords64Trait {
             RLPItemWord64::List(l) => {
                 let len = l.len();
                 if len == 17 {
-                    let nibble_hashes_bytes = l.slice(0, 16);
                     let mut nibble_hashes = ArrayTrait::new();
                     let mut i: usize = 0;
                     loop {
-                        if i >= nibble_hashes_bytes.len() {
+                        if i == 16 {
                             break ();
                         }
-
-                        let hash = (*nibble_hashes_bytes.at(i)).try_into().unwrap();
+                            
+                        let current = *l.at(i);
+                        let hash = if current.len() == 0 {
+                            0
+                        } else {
+                            current.try_into().unwrap()
+                        };
                         nibble_hashes.append(hash);
                         i += 1;
                     };

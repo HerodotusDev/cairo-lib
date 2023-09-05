@@ -1,7 +1,7 @@
 use cairo_lib::data_structures::eth_mpt_words64::{MPTWords64Node, MPTWords64Trait};
 use array::{ArrayTrait, SpanTrait};
 use result::ResultTrait;
-use cairo_lib::utils::types::bytes::BytesPartialEq;
+use cairo_lib::utils::types::words64::Words64PartialEq;
 use debug::PrintTrait;
 
 #[test]
@@ -622,12 +622,40 @@ fn test_full_verify() {
             0xb8da675cdeac2b44,
             0xd3324a5674fcb20b,
             0x804319a3,
+        ].span(),
+        array![
+            0x5393deb209e67f8,
+            0x13cab8fbb76c52f6,
+            0x48e3adef639c8ddf,
+            0xf378f505aa6500e7,
+            0xa0800144f846b815,
+            0xeb17a8964daa6869,
+            0x840d6d094daa244d,
+            0xa74cbc7bed529c1f,
+            0x7155c66fba1b95d7,
+            0x2d011e4adeb189a0,
+            0x9884d16a8bb1626a,
+            0xe10adaf15b54575d,
+            0x9af4da3cef418c2,
+            0x9b,
         ].span()
+    ];
+
+    let expected_res = array![
+        0xaa6869a0800144f8,
+        0xaa244deb17a8964d,
+        0x529c1f840d6d094d,
+        0x1b95d7a74cbc7bed,
+        0xb189a07155c66fba,
+        0xb1626a2d011e4ade,
+        0x54575d9884d16a8b,
+        0xf418c2e10adaf15b,
+        0x9b09af4da3ce,
     ];
 
     let key = 0x6464aaeb3d3905f6526cb7fbb8ca13df8d9c63efade348e70065aa05f578f315;
 
     let mpt = MPTWords64Trait::new(0x2BBF8BB05C4F3446F14BEBAD306B4D0FDD7A53CE5D373A5A8729F0679E18B5C2);
     let res = mpt.verify(key, 64, proof.span()).unwrap();
-    //assert(res == expected_res.span(), 'Result not matching');
+    assert(res == expected_res.span(), 'Result not matching');
 }
