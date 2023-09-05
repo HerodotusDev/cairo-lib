@@ -51,7 +51,7 @@ fn test_slice_words64_le_single_word_full() {
 #[should_panic]
 #[available_gas(99999999)]
 fn test_into_u256_le_wrong_num_words() {
-    let words = array![0x83498349, 0x83479735927498, 0x234987].span();
+    let words = array![0x83498349, 0x83479735927498, 0x12345623ff458695, 0xabcd344, 0xabcdef3345].span();
     let res: u256 = words.try_into().unwrap();
 }
 
