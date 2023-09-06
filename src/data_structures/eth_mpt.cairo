@@ -7,7 +7,9 @@ use traits::{TryInto, Into};
 use option::OptionTrait;
 use cairo_lib::utils::bitwise::{right_shift, left_shift};
 use keccak::u128_split;
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE, Words64PartialEq, bytes_used, left_shift_u64};
+use cairo_lib::utils::types::words64::{
+    Words64, Words64Trait, Words64TryIntoU256LE, Words64PartialEq, bytes_used, left_shift_u64
+};
 use cairo_lib::utils::math::pow;
 use debug::PrintTrait;
 
@@ -55,10 +57,12 @@ impl MPTImpl of MPTTrait {
     // @param key_len Length of they key in nibbles
     // @param proof Merkle proof, collection of rlp encoded nodes
     // @return Result with the value associated with the key if it exists
-    fn verify(self: @MPT, key: u256, key_len: usize, proof: Span<Words64>) -> Result<Words64, felt252> {
+    fn verify(
+        self: @MPT, key: u256, key_len: usize, proof: Span<Words64>
+    ) -> Result<Words64, felt252> {
         let mut current_hash = *self.root;
         let mut proof_index: usize = 0;
-        let mut key_pow2: u256 = pow(2, (key_len.into() -1) * 4);
+        let mut key_pow2: u256 = pow(2, (key_len.into() - 1) * 4);
 
         loop {
             if proof_index == proof.len() {
@@ -153,7 +157,7 @@ impl MPTImpl of MPTTrait {
                         if i == 16 {
                             break ();
                         }
-                            
+
                         let current = *l.at(i);
                         let hash = if current.len() == 0 {
                             0
@@ -233,7 +237,9 @@ impl MPTNodePartialEq of PartialEq<MPTNode> {
                     MPTNode::Extension((
                         rhs_shared_nibbles, rhs_next_node, rhs_nibbles_skip
                     )) => {
-                        lhs_shared_nibbles == rhs_shared_nibbles && lhs_next_node == rhs_next_node && lhs_nibbles_skip == rhs_nibbles_skip
+                        lhs_shared_nibbles == rhs_shared_nibbles
+                            && lhs_next_node == rhs_next_node
+                            && lhs_nibbles_skip == rhs_nibbles_skip
                     },
                     MPTNode::Leaf(_) => false
                 }
@@ -247,7 +253,9 @@ impl MPTNodePartialEq of PartialEq<MPTNode> {
                     MPTNode::Leaf((
                         rhs_key_end, rhs_value, rhs_nibbles_skip
                     )) => {
-                        lhs_key_end == rhs_key_end && lhs_value == rhs_value && lhs_nibbles_skip == rhs_nibbles_skip
+                        lhs_key_end == rhs_key_end
+                            && lhs_value == rhs_value
+                            && lhs_nibbles_skip == rhs_nibbles_skip
                     }
                 }
             }

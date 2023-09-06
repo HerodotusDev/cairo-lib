@@ -50,7 +50,7 @@ enum RLPItem {
 // @param input RLP encoded bytes
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
-    let prefix: u32  = (*input.at(0) & 0xff).try_into().unwrap();
+    let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
 
     // Unwrap is impossible to panic here
     let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();

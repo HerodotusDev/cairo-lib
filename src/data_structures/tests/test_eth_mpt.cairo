@@ -122,10 +122,7 @@ fn test_decode_rlp_node_leaf_odd() {
     ];
 
     let expected_key_end = array![
-        0x2125827a99fc8c33,
-        0x73d98065a125ac67,
-        0xbf6b0c9f1beb5303,
-        0xd0c4824c0e
+        0x2125827a99fc8c33, 0x73d98065a125ac67, 0xbf6b0c9f1beb5303, 0xd0c4824c0e
     ];
     let expected_value = array![
         0xbdc496a0800144f8,
@@ -164,10 +161,7 @@ fn test_decode_rlp_node_leaf_even() {
     ];
 
     let expected_key_end = array![
-        0x2125827a99fc8c23,
-        0x73d98065a125ac67,
-        0xbf6b0c9f1beb5303,
-        0xd0c4824c0e
+        0x2125827a99fc8c23, 0x73d98065a125ac67, 0xbf6b0c9f1beb5303, 0xd0c4824c0e
     ];
     let expected_value = array![
         0xbdc496a0800144f8,
@@ -293,7 +287,8 @@ fn test_full_verify() {
             0x63c4ea976d933fc9,
             0x63ebac1b3c2fd327,
             0x809d4d93,
-        ].span(),
+        ]
+            .span(),
         array![
             0x1fc49e67a01102f9,
             0xf1eded7ef5e13022,
@@ -362,7 +357,8 @@ fn test_full_verify() {
             0xc4e809bca25794,
             0xf35bf77f99b79cca,
             0x80ec3746,
-        ].span(),
+        ]
+            .span(),
         array![
             0xf3ee866ca01102f9,
             0x3251262a954d75a8,
@@ -431,7 +427,8 @@ fn test_full_verify() {
             0x488adf4c531620e3,
             0xfcc8ba421390a07,
             0x801cb1d4,
-        ].span(),
+        ]
+            .span(),
         array![
             0x8bd30bb7a01102f9,
             0xbcbd4de0c9827819,
@@ -500,7 +497,8 @@ fn test_full_verify() {
             0x128c371c4163c4bf,
             0xba979f47c1062570,
             0x80ceff5b,
-        ].span(),
+        ]
+            .span(),
         array![
             0xa808198a01102f9,
             0x59aea299b58112f8,
@@ -569,7 +567,8 @@ fn test_full_verify() {
             0x7716aa935ec4ee86,
             0xa5fc95d380047d4c,
             0x808dcf82,
-        ].span(),
+        ]
+            .span(),
         array![
             0xc7ea8ea0809101f9,
             0x28b359f6aacec8be,
@@ -622,7 +621,8 @@ fn test_full_verify() {
             0xb8da675cdeac2b44,
             0xd3324a5674fcb20b,
             0x804319a3,
-        ].span(),
+        ]
+            .span(),
         array![
             0x5393deb209e67f8,
             0x13cab8fbb76c52f6,
@@ -638,7 +638,8 @@ fn test_full_verify() {
             0xe10adaf15b54575d,
             0x9af4da3cef418c2,
             0x9b,
-        ].span()
+        ]
+            .span()
     ];
 
     let expected_res = array![

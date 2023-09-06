@@ -252,7 +252,7 @@ fn test_rlp_decode_long_list() {
             .span(),
         array![0xdd62df56554d5fa9, 0x9b56ae97049962c2, 0x9307207bdafd8ecd, 0xd71897db4cded3f8]
             .span(),
-        array![// 5
+        array![ // 5
         0x6e2238146d06d439, 0xa974a843e9c94aaf, 0x86b91dd8b05fc2a9, 0x4c03e2b336138c1d]
             .span(),
         array![0x18a46ab4637ccc7a, 0xcb6b25a141a0c9b3, 0x5ada7a396b316173, 0x300113bb1b496788]
