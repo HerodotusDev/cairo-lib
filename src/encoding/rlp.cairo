@@ -1,4 +1,4 @@
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64};
 use cairo_lib::utils::types::byte::Byte;
 
 // @notice Enum with all possible RLP types
@@ -67,7 +67,7 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
             // len fits in 32 bits, confirmed by previous assertion
-            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into()))
+            let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.into()))
                 .try_into()
                 .unwrap();
             let res = input.slice_le(6 - len_len, len);
@@ -87,7 +87,7 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
             assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
             // len fits in 32 bits, confirmed by previous assertion
-            let len: u32 = reverse_endianness(*len_span.at(0), Option::Some(len_len.into()))
+            let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.into()))
                 .try_into()
                 .unwrap();
             let mut in = input.slice_le(6 - len_len, len);

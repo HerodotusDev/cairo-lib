@@ -1,4 +1,4 @@
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE, reverse_endianness_u64, bytes_used_u64};
 
 #[test]
 #[available_gas(99999999)]
@@ -63,4 +63,51 @@ fn test_into_u256_le() {
 
     let expected = 0x09898DA43A5D35F4B6F239256FF310F9480829EBCEE54BC42E8B632605E21673;
     assert(words.try_into().unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_into_u256_le_not_full() {
+    let words = array![
+        0x2e8b632605e21673, 0x4bc4, 0, 0,
+    ]
+        .span();
+
+    let expected = 0x4BC42E8B632605E21673;
+    assert(words.try_into().unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_reverse_endianness_u64() {
+    let val = 0x1234567890abcdef;
+    let expected = 0xefcdab9078563412;
+    assert(reverse_endianness_u64(val, Option::None(())) == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_reverse_endianness_not_full() {
+    let val = 0xabcdef;
+    let expected = 0xefcdab;
+    assert(reverse_endianness_u64(val, Option::Some(3)) == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_bytes_used() {
+    let mut num = 0x1234567890abcdef;
+    let pow2 = 0x100;
+
+    let mut i = 8;
+    loop {
+        assert(bytes_used_u64(num) == i, 'Wrong value');
+        num = num / pow2;
+
+        if i == 0 {
+            break ();
+        }
+
+        i -= 1;
+    }
 }

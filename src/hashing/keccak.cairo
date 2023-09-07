@@ -1,4 +1,4 @@
-use cairo_lib::utils::types::words64::{Words64, bytes_used};
+use cairo_lib::utils::types::words64::{Words64, bytes_used_u64};
 use keccak::cairo_keccak;
 
 fn keccak_cairo_words64(words: Words64) -> u256 {
@@ -17,7 +17,7 @@ fn keccak_cairo_words64(words: Words64) -> u256 {
     }
 
     let mut last = *words.at(n - 1);
-    let mut last_word_bytes = bytes_used(last);
+    let mut last_word_bytes = bytes_used_u64(last);
     if last_word_bytes == 8 {
         keccak_input.append(last);
         last = 0;

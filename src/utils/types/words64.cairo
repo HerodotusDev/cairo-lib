@@ -99,7 +99,7 @@ impl Words64Impl of Words64Trait {
             let next = *self.at(i + 1);
 
             // get right bytes from the next word
-            let mask_second_word = left_shift_u64(1, missing_bytes * 8) - 1;
+            let mask_second_word = pow2(missing_bytes * 8) - 1;
             let bytes_to_append = next & mask_second_word;
 
             // apend bytes to the left of first word
@@ -113,15 +113,7 @@ impl Words64Impl of Words64Trait {
     }
 }
 
-fn left_shift_u64(num: u64, shift: usize) -> u64 {
-    num * pow2(shift)
-}
-
-fn right_shift_u64(num: u64, shift: usize) -> u64 {
-    num / pow2(shift)
-}
-
-fn bytes_used(val: u64) -> usize {
+fn bytes_used_u64(val: u64) -> usize {
     if val < 4294967296 { // 256^4
         if val < 65536 { // 256^2
             if val < 256 { // 256^1
@@ -151,10 +143,10 @@ fn bytes_used(val: u64) -> usize {
     }
 }
 
-fn reverse_endianness(input: u64, significant_bytes: Option<u64>) -> u64 {
+fn reverse_endianness_u64(input: u64, significant_bytes: Option<u64>) -> u64 {
     let sb = match significant_bytes {
         Option::Some(x) => x,
-        Option::None(()) => 56
+        Option::None(()) => 8
     };
 
     let mut reverse = 0;
