@@ -1,7 +1,4 @@
 use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
-use array::{ArrayTrait, SpanTrait};
-use traits::{TryInto};
-use option::OptionTrait;
 
 #[test]
 #[available_gas(99999999)]
@@ -60,7 +57,7 @@ fn test_into_u256_le_wrong_num_words() {
 #[available_gas(99999999)]
 fn test_into_u256_le() {
     let words = array![
-        0x2e8b632605e21673, 0x480829ebcee54bc4, 0xb6f239256ff310f9, 0x09898da43a5d35f4, 
+        0x2e8b632605e21673, 0x480829ebcee54bc4, 0xb6f239256ff310f9, 0x09898da43a5d35f4,
     ]
         .span();
 

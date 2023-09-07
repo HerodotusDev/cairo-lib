@@ -1,5 +1,3 @@
-use array::SpanTrait;
-use traits::Into;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use cairo_lib::data_structures::mmr::utils::compute_root;
 use cairo_lib::utils::array::span_contains;

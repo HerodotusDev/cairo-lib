@@ -1,10 +1,5 @@
-use result::ResultTrait;
-use option::OptionTrait;
-use array::{Array, ArrayTrait, Span, SpanTrait};
-use traits::{Into, TryInto};
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness, Words64PartialEq};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness};
 use cairo_lib::utils::types::byte::Byte;
-use debug::PrintTrait;
 
 // @notice Enum with all possible RLP types
 #[derive(Drop, PartialEq)]

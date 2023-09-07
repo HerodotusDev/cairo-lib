@@ -1,11 +1,6 @@
 use cairo_lib::utils::math::{pow, pow_felt252};
 use cairo_lib::utils::types::byte::Byte;
 use math::Oneable;
-use zeroable::Zeroable;
-use option::OptionTrait;
-use traits::{TryInto, Into};
-use array::{SpanTrait, ArrayTrait};
-use debug::PrintTrait;
 
 // @notice Bitwise left shift
 // @param num The number to be shifted

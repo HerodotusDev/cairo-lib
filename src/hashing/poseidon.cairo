@@ -1,8 +1,6 @@
 use cairo_lib::hashing::hasher::Hasher;
 use cairo_lib::utils::types::words64::Words64;
 use poseidon::{poseidon_hash_span, hades_permutation};
-use traits::Into;
-use array::{ArrayTrait, SpanTrait};
 
 struct Poseidon {}
 

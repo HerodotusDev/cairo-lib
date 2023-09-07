@@ -1,6 +1,4 @@
-use zeroable::Zeroable;
 use math::Oneable;
-use traits::{Sub, Mul};
 
 // @notice Computes `base ^ exp`
 // @param base The base of the exponentiation

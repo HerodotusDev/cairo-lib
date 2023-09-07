@@ -1,17 +1,9 @@
-use array::{ArrayTrait, SpanTrait};
 use cairo_lib::hashing::keccak::KeccakTrait;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
-use cairo_lib::utils::types::bytes::{Bytes, BytesTryIntoU256, BytesPartialEq};
 use cairo_lib::utils::types::byte::{Byte, ByteTrait};
-use traits::{TryInto, Into};
-use option::OptionTrait;
 use cairo_lib::utils::bitwise::{right_shift, left_shift};
-use keccak::u128_split;
-use cairo_lib::utils::types::words64::{
-    Words64, Words64Trait, Words64TryIntoU256LE, Words64PartialEq, bytes_used, left_shift_u64
-};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
 use cairo_lib::utils::math::pow;
-use debug::PrintTrait;
 
 
 // @notice Ethereum Merkle Patricia Trie struct
@@ -74,7 +66,7 @@ impl MPTImpl of MPTTrait {
             let hash = MPTTrait::hash_rlp_node(node);
             assert(hash == current_hash, 'Element not matching');
 
-            let decoded = MPTTrait::decode_rlp_node(node)?;
+            let decoded = MPTTrait::decode_rlp_node(node).unwrap();
             match decoded {
                 MPTNode::Branch((
                     nibbles, value

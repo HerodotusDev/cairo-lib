@@ -1,7 +1,6 @@
 use cairo_lib::data_structures::mmr::utils::{get_height, compute_root};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
-use array::ArrayTrait;
+use cairo_lib::data_structures::mmr::peaks::PeaksTrait;
 
 #[test]
 #[available_gas(99999999)]

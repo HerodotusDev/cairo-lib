@@ -1,7 +1,4 @@
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
-use array::ArrayTrait;
-use result::ResultTrait;
-use debug::PrintTrait;
 
 #[test]
 #[available_gas(99999999)]

@@ -1,7 +1,4 @@
 use cairo_lib::utils::bitwise::{left_shift, right_shift, bit_length};
-use array::{ArrayTrait, SpanTrait};
-use debug::PrintTrait;
-use option::OptionTrait;
 
 #[test]
 #[available_gas(999999)]

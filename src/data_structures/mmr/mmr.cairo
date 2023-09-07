@@ -2,11 +2,6 @@ use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use traits::{Into, Default};
-use clone::Clone;
-use result::Result;
-use array::{ArrayTrait, SpanTrait};
-use option::OptionTrait;
 
 // @notice Merkle Mountatin Range struct
 #[derive(Drop, Clone, Serde, starknet::Store)]

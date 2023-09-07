@@ -1,8 +1,4 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
-use array::{ArrayTrait, SpanTrait};
-use result::ResultTrait;
-use cairo_lib::utils::types::words64::Words64PartialEq;
-use debug::PrintTrait;
 
 #[test]
 #[available_gas(9999999999)]
