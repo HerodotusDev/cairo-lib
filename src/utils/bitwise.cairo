@@ -23,10 +23,6 @@ fn left_shift<
     num * pow(two, shift)
 }
 
-fn left_shift_felt252(num: felt252, shift: felt252) -> felt252 {
-    num * pow_felt252(2, shift)
-}
-
 // @notice Bitwise right shift
 // @param num The number to be shifted
 // @param shift The number of bits to shift
