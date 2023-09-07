@@ -2,22 +2,17 @@ use cairo_lib::hashing::hasher::Hasher;
 use cairo_lib::utils::types::words64::Words64;
 use poseidon::{poseidon_hash_span, hades_permutation};
 
-struct Poseidon {}
-
-#[generate_trait]
-impl PoseidonHasherWords64 of PoseidonTrait {
-    fn hash_words64(words: Words64) -> felt252 {
-        let mut arr = ArrayTrait::new();
-        let mut i: usize = 0;
-        loop {
-            if i == words.len() {
-                break poseidon_hash_span(arr.span());
-            }
-
-            arr.append((*words.at(i)).into());
-
-            i += 1;
+fn hash_words64(words: Words64) -> felt252 {
+    let mut arr = ArrayTrait::new();
+    let mut i: usize = 0;
+    loop {
+        if i == words.len() {
+            break poseidon_hash_span(arr.span());
         }
+
+        arr.append((*words.at(i)).into());
+
+        i += 1;
     }
 }
 

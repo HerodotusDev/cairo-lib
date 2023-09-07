@@ -1,4 +1,4 @@
-use cairo_lib::hashing::keccak::KeccakTrait;
+use cairo_lib::hashing::keccak::keccak_cairo_words64;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
 use cairo_lib::utils::types::byte::{Byte, ByteTrait};
 use cairo_lib::utils::bitwise::{right_shift, left_shift};
@@ -189,7 +189,7 @@ impl MPTImpl of MPTTrait {
     // @param rlp RLP encoded node
     // @return keccak256 hash of the node
     fn hash_rlp_node(rlp: Words64) -> u256 {
-        KeccakTrait::keccak_cairo_word64(rlp)
+        keccak_cairo_words64(rlp)
     }
 }
 
