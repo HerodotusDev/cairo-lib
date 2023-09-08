@@ -76,7 +76,7 @@ impl MPTImpl of MPTTrait {
                 MPTNode::Branch((
                     nibbles, value
                 )) => {
-                    if key_pow2 == 1 {
+                    if key_pow2 == 0 {
                         break Result::Ok(value);
                     }
 
