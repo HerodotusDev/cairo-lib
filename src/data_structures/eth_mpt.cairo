@@ -26,12 +26,12 @@ enum MPTNode {
     // @param Value of the node
     Branch: (Span<u256>, Words64),
     // @param shared_nibbles
-    // @param next node
+    // @param next_node
     // @param nibbles_skip Number of nibbles to skip in shared nibbles
     Extension: (Words64, u256, usize),
     // @param key_end
     // @param value of the node
-    // param nibbles_skip Number of nibbles to skip in the key end
+    // @param nibbles_skip Number of nibbles to skip in the key end
     Leaf: (Words64, Words64, usize)
 }
 
@@ -66,7 +66,12 @@ impl MPTImpl of MPTTrait {
             let hash = MPTTrait::hash_rlp_node(node);
             assert(hash == current_hash, 'Element not matching');
 
-            let decoded = MPTTrait::decode_rlp_node(node).unwrap();
+            let decoded = match MPTTrait::decode_rlp_node(node) {
+                Result::Ok(decoded) => decoded,
+                Result::Err(e) => {
+                    break Result::Err(e);
+                }
+            };
             match decoded {
                 MPTNode::Branch((
                     nibbles, value
@@ -76,6 +81,7 @@ impl MPTImpl of MPTTrait {
                     }
 
                     let current_nibble = (key / key_pow2) & 0xf;
+                    // Unwrap impossible to fail
                     current_hash = *nibbles.at(current_nibble.try_into().unwrap());
                     key_pow2 = key_pow2 / 16;
                 },
@@ -91,15 +97,18 @@ impl MPTImpl of MPTTrait {
 
                     let mut in_byte = false;
                     if nibbles_skip % 2 == 1 {
+                        // Right shift 1 nibble
                         key_end_pow2 = key_end_pow2 / 16;
                         in_byte = true;
                     } else {
+                        // Left shift 1 nibble
                         key_end_pow2 = key_end_pow2 * 16
                     }
 
+                    // Right shift 1 nibble
                     let mut key_end_word_idx = nibbles_skip / 16;
                     let mut key_end_word = *key_end.at(key_end_word_idx);
-                    let v = loop {
+                    break loop {
                         if key_pow2 == 0 {
                             break Result::Ok(value);
                         }
@@ -125,7 +134,6 @@ impl MPTImpl of MPTTrait {
                         in_byte = !in_byte;
                         key_pow2 = key_pow2 / 16;
                     };
-                    break v;
                 }
             };
 
@@ -147,30 +155,40 @@ impl MPTImpl of MPTTrait {
                     let mut i: usize = 0;
                     loop {
                         if i == 16 {
-                            break ();
+                            let value = *l.at(16);
+                            break Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)));
                         }
 
                         let current = *l.at(i);
                         let hash = if current.len() == 0 {
                             0
                         } else {
-                            current.try_into().unwrap()
+                            match current.try_into() {
+                                Option::Some(h) => h,
+                                Option::None(_) => {
+                                    break Result::Err('Invalid hash');
+                                }
+                            }
                         };
                         nibble_hashes.append(hash);
                         i += 1;
-                    };
-                    let value = *l.at(16);
-
-                    Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)))
+                    }
                 } else if len == 2 {
                     let first = *l.at(0);
+                    // Unwrap impossible to fail
                     let prefix_byte: Byte = (*first.at(0) & 0xff).try_into().unwrap();
                     let (prefix, _) = prefix_byte.extract_nibbles();
 
                     if prefix == 0 {
-                        Result::Ok(MPTNode::Extension((first, (*l.at(1)).try_into().unwrap(), 2)))
+                        match (*l.at(1)).try_into() {
+                            Option::Some(n) => Result::Ok(MPTNode::Extension((first, n, 2))),
+                            Option::None(_) => Result::Err('Invalid next node')
+                        }
                     } else if prefix == 1 {
-                        Result::Ok(MPTNode::Extension((first, (*l.at(1)).try_into().unwrap(), 1)))
+                        match (*l.at(1)).try_into() {
+                            Option::Some(n) => Result::Ok(MPTNode::Extension((first, n, 1))),
+                            Option::None(_) => Result::Err('Invalid next node')
+                        }
                     } else if prefix == 2 {
                         Result::Ok(MPTNode::Leaf((first, *l.at(1), 2)))
                     } else if prefix == 3 {
@@ -255,7 +273,6 @@ impl MPTNodePartialEq of PartialEq<MPTNode> {
     }
 
     fn ne(lhs: @MPTNode, rhs: @MPTNode) -> bool {
-        // TODO optimize
         !(lhs == rhs)
     }
 }

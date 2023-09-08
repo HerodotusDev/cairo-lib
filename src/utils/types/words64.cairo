@@ -1,17 +1,21 @@
 use cairo_lib::utils::bitwise::{left_shift, right_shift};
 
+// @notice Represents a span of 64 bit words
+// @dev In many cases it's expected that the words are in little endian, but the overall order is big endian
+// Example: 0x34957c6d8a83f9cff74578dea9 is represented as [0xcff9838a6d7c9534, 0xa9de7845f7]
 type Words64 = Span<u64>;
 
 impl Words64TryIntoU256LE of TryInto<Words64, u256> {
+    // @notice Converts a span of 64 bit little endian words into a little endian u256
     fn try_into(self: Words64) -> Option<u256> {
         if self.len() > 4 {
             return Option::None(());
         }
 
         let pows = array![
-            0x10000000000000000,
-            0x100000000000000000000000000000000,
-            0x1000000000000000000000000000000000000000000000000
+            0x10000000000000000, // 2 ** 64
+            0x100000000000000000000000000000000, // 2 ** 128
+            0x1000000000000000000000000000000000000000000000000 // 2 ** 192
         ];
 
         let mut output: u256 = (*self.at(0)).into();
@@ -21,6 +25,7 @@ impl Words64TryIntoU256LE of TryInto<Words64, u256> {
                 break Option::Some(output);
             }
 
+            // left shift and add
             output = output | (*self.at(i)).into() * *pows.at(i - 1);
 
             i += 1;
@@ -30,7 +35,16 @@ impl Words64TryIntoU256LE of TryInto<Words64, u256> {
 
 #[generate_trait]
 impl Words64Impl of Words64Trait {
-    fn slice_le(self: Words64, start: usize, len: usize) -> Span<u64> {
+    // @notice Slices 64 bit little endian words from a starting byte and a length
+    // @param start The starting byte
+    // The starting byte is counted from the left. Example: 0xabcdef -> byte 0 is 0xab, byte 1 is 0xcd...
+    // @param len The number of bytes to slice
+    // @return A span of 64 bit little endian words
+    // Example: 
+    // words: [0xabcdef1234567890, 0x7584934785943295, 0x48542576]
+    // start: 5 | len: 17
+    // output: [0x3295abcdef123456, 0x2576758493478594, 0x54]
+    fn slice_le(self: Words64, start: usize, len: usize) -> Words64 {
         if len == 0 {
             return ArrayTrait::new().span();
         }
@@ -113,6 +127,10 @@ impl Words64Impl of Words64Trait {
     }
 }
 
+// @notice The number of bytes used to represent a u64
+// @param val The value to check
+// @return The number of bytes used to represent the value
+// Example: 0xabcd -> 2
 fn bytes_used_u64(val: u64) -> usize {
     if val < 4294967296 { // 256^4
         if val < 65536 { // 256^2
@@ -143,7 +161,11 @@ fn bytes_used_u64(val: u64) -> usize {
     }
 }
 
-fn reverse_endianness_u64(input: u64, significant_bytes: Option<u64>) -> u64 {
+// @notice Reverses the endianness of a u64
+// @param input The value to reverse
+// @param significant_bytes The number of bytes to reverse
+// @return The reversed value
+fn reverse_endianness_u64(input: u64, significant_bytes: Option<u32>) -> u64 {
     let sb = match significant_bytes {
         Option::Some(x) => x,
         Option::None(()) => 8
@@ -156,13 +178,14 @@ fn reverse_endianness_u64(input: u64, significant_bytes: Option<u64>) -> u64 {
             break reverse;
         }
 
-        let r_shift = right_shift(input, (i * 8)) & 0xff;
-        reverse = reverse | left_shift(r_shift, (sb - i - 1) * 8);
+        let r_shift = (input / pow2(i * 8)) & 0xff;
+        reverse = reverse | (r_shift * pow2((sb - i - 1) * 8));
 
         i += 1;
     }
 }
 
+// This should be replaced with a "dw" equivalent when the compiler supports it
 fn pow2(pow: usize) -> u64 {
     if pow == 0 {
         return 0x1;

@@ -1,6 +1,9 @@
 use cairo_lib::utils::types::words64::{Words64, bytes_used_u64};
 use keccak::cairo_keccak;
 
+// @notice Wrapper arround cairo_keccak that format the input for compatibility with EVM
+// @param words The input data, as a list of 64-bit little-endian words
+// @return The keccak hash of the input, matching the output of the EVM's keccak256 opcode
 fn keccak_cairo_words64(words: Words64) -> u256 {
     let n = words.len();
 

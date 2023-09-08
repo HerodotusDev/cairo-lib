@@ -2,6 +2,7 @@ use cairo_lib::hashing::poseidon::PoseidonHasher;
 use cairo_lib::data_structures::mmr::utils::get_height;
 use cairo_lib::utils::bitwise::left_shift;
 
+// @notice Represents a proof of inclusion in a MMR
 type Proof = Span<felt252>;
 
 #[generate_trait]

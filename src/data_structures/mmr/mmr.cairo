@@ -11,8 +11,8 @@ struct MMR {
 }
 
 impl MMRDefault of Default<MMR> {
-    #[inline(always)]
     // @return MMR with last_pos 0 and root poseidon(0, 0)
+    #[inline(always)]
     fn default() -> MMR {
         MMR { root: PoseidonHasher::hash_double(0, 0), last_pos: 0 }
     }
@@ -24,6 +24,7 @@ impl MMRImpl of MMRTrait {
     // @param root The root of the MMR
     // @param last_pos The last position in the MMR
     // @return MMR with the given root and last_pos
+    #[inline(always)]
     fn new(root: felt252, last_pos: usize) -> MMR {
         MMR { root, last_pos }
     }
@@ -39,7 +40,6 @@ impl MMRImpl of MMRTrait {
 
         self.last_pos += 1;
 
-        // TODO refactor this logic
         let mut peaks_arr = ArrayTrait::new();
         let mut i: usize = 0;
         loop {
@@ -64,7 +64,6 @@ impl MMRImpl of MMRTrait {
             let right = peaks_span.pop_back().unwrap();
             let left = peaks_span.pop_back().unwrap();
 
-            // TODO refactor this logic
             let mut new_peaks = ArrayTrait::new();
             i = 0;
             loop {

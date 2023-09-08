@@ -42,7 +42,7 @@ enum RLPItem {
 }
 
 // @notice RLP decodes a rlp encoded byte array
-// @param input RLP encoded bytes
+// @param input RLP encoded input, in little endian 64 bits words
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
     let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
@@ -77,7 +77,7 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
         RLPType::ListShort(()) => {
             let mut len = prefix - 0xc0;
             let mut in = input.slice_le(6, len);
-            let res = rlp_decode_list(ref in, len);
+            let res = rlp_decode_list(ref in, len)?;
             Result::Ok((RLPItem::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
@@ -91,24 +91,33 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
                 .try_into()
                 .unwrap();
             let mut in = input.slice_le(6 - len_len, len);
-            let res = rlp_decode_list(ref in, len);
+            let res = rlp_decode_list(ref in, len)?;
 
             Result::Ok((RLPItem::List(res), 1 + len_len + len))
         }
     }
 }
 
-fn rlp_decode_list(ref input: Words64, len: usize) -> Span<Words64> {
+// @notice RLP decodes into RLPItem::List
+// @param input RLP encoded input, in little endian 64 bits words
+// @param len Length of the input
+// @return Result with RLPItem::List
+fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt252> {
     let mut i = 0;
     let mut output = ArrayTrait::new();
     let mut total_len = len;
 
     loop {
         if i >= len {
-            break ();
+            break Result::Ok(output.span());
         }
 
-        let (decoded, decoded_len) = rlp_decode(input).unwrap();
+        let (decoded, decoded_len) = match rlp_decode(input) {
+            Result::Ok((d, dl)) => (d, dl),
+            Result::Err(e) => {
+                break Result::Err(e);
+            }
+        };
         match decoded {
             RLPItem::Bytes(b) => {
                 output.append(b);
@@ -125,8 +134,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Span<Words64> {
             }
         }
         i += decoded_len;
-    };
-    output.span()
+    }
 }
 
 impl RLPItemPartialEq of PartialEq<RLPItem> {
@@ -165,7 +173,6 @@ impl RLPItemPartialEq of PartialEq<RLPItem> {
     }
 
     fn ne(lhs: @RLPItem, rhs: @RLPItem) -> bool {
-        // TODO optimize
         !(lhs == rhs)
     }
 }

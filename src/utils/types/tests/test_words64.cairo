@@ -1,4 +1,6 @@
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE, reverse_endianness_u64, bytes_used_u64};
+use cairo_lib::utils::types::words64::{
+    Words64, Words64Trait, Words64TryIntoU256LE, reverse_endianness_u64, bytes_used_u64
+};
 
 #[test]
 #[available_gas(99999999)]
@@ -68,10 +70,7 @@ fn test_into_u256_le() {
 #[test]
 #[available_gas(99999999)]
 fn test_into_u256_le_not_full() {
-    let words = array![
-        0x2e8b632605e21673, 0x4bc4, 0, 0,
-    ]
-        .span();
+    let words = array![0x2e8b632605e21673, 0x4bc4, 0, 0,].span();
 
     let expected = 0x4BC42E8B632605E21673;
     assert(words.try_into().unwrap() == expected, 'Wrong value');

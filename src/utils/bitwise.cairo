@@ -1,4 +1,4 @@
-use cairo_lib::utils::math::{pow, pow_felt252};
+use cairo_lib::utils::math::pow;
 use cairo_lib::utils::types::byte::Byte;
 use math::Oneable;
 
@@ -15,7 +15,6 @@ fn left_shift<
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
-// TODO refactor shift type from T to usize
 >(
     num: T, shift: T
 ) -> T {
@@ -37,7 +36,6 @@ fn right_shift<
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
-// TODO refactor shift type from T to usize
 >(
     num: T, shift: T
 ) -> T {
@@ -73,6 +71,9 @@ fn bit_length<
     bit_position
 }
 
+// @notice Reverse the endianness of a u256
+// @param num The number to be reversed
+// @return The reversed number
 fn reverse_endianness_u256(num: u256) -> u256 {
     let pow2_8 = 0x100;
     let pow2_16 = 0x10000;
