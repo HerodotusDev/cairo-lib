@@ -91,11 +91,14 @@ fn test_decode_rlp_node_branch() {
         0xFDB12AC97334928AD1A22AADFF2D22C364CE46B9552AFBA44A71201AD0D73465,
         0x2F50E229FF6121C4F7384714BDC0B10CE86FB0C3C818B6A92DBFB8FE8BC2F9BF,
         0x5FB3E28FEA4837D02E24988F459E43F602C5725EA3BB1B02A54E703C6961147F
-    ].span();
+    ]
+        .span();
 
     let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
     match decoded {
-        MPTNode::Branch((hashes, value)) => {
+        MPTNode::Branch((
+            hashes, value
+        )) => {
             assert(value.is_empty(), 'Wrong value');
 
             let mut i = 0;

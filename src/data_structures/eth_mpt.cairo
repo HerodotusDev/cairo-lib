@@ -82,16 +82,17 @@ impl MPTImpl of MPTTrait {
                     let current_nibble = (key / key_pow2) & 0xf;
                     // Unwrap impossible to fail
                     let current_hash_words = *nibbles.at(current_nibble.try_into().unwrap());
-                    current_hash = if current_hash_words.len() == 0 {
-                        0
-                    } else {
-                        match current_hash_words.try_into() {
-                            Option::Some(h) => h,
-                            Option::None(_) => {
-                                break Result::Err('Invalid hash');
+                    current_hash =
+                        if current_hash_words.len() == 0 {
+                            0
+                        } else {
+                            match current_hash_words.try_into() {
+                                Option::Some(h) => h,
+                                Option::None(_) => {
+                                    break Result::Err('Invalid hash');
+                                }
                             }
-                        }
-                    };
+                        };
                     key_pow2 = key_pow2 / 16;
                 },
                 MPTNode::Extension((
