@@ -94,8 +94,6 @@ impl Words64Impl of Words64Trait {
             i += 1;
         };
 
-        // Handling remainder (last word)
-
         let last_word = *self.at(i);
         let shifted = last_word / pow2_word_offset_bits;
 

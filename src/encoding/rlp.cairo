@@ -2,7 +2,6 @@ use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness
 use cairo_lib::utils::types::byte::Byte;
 
 // @notice Enum with all possible RLP types
-// For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 #[derive(Drop, PartialEq)]
 enum RLPType {
     String: (),
@@ -15,7 +14,6 @@ enum RLPType {
 #[generate_trait]
 impl RLPTypeImpl of RLPTypeTrait {
     // @notice Returns RLPType from the leading byte
-    // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
     // @param byte Leading byte
     // @return Result with RLPType
     fn from_byte(byte: Byte) -> Result<RLPType, felt252> {
@@ -44,14 +42,12 @@ enum RLPItem {
 }
 
 // @notice RLP decodes a rlp encoded byte array
-// For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 // @param input RLP encoded input, in little endian 64 bits words
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
-    // It's guaranteed to fid in 32 bits, as we are masking with 0xff
     let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
 
-    // It's guaranteed to be a valid RLPType, as we are masking with 0xff
+    // Unwrap is impossible to panic here
     let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
     match rlp_type {
         RLPType::String(()) => {

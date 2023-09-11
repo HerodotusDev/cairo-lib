@@ -42,7 +42,7 @@ cairo_lib = { git = "https://github.com/HerodotusDev/cairo-lib.git" }
 ### Usage
 For example, to utilize a specific tool from the library:
 ```cairo
-use cairo_lib::utils::types::words64::{Words64, Words64Trait};
+use cairo_lib::utils::types::bytes::Bytes;
 ```
 
 ## License

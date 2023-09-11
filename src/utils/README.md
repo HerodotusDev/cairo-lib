@@ -14,5 +14,6 @@ Mathematical functions handling complex operations seamlessly.
 ### Byte
 Byte-centric functions offer ease in handling byte-level operations, making data processing more efficient.
 
-### Words64
-64 bit words that are used as input in many other functions in the lib.
+### Bytes
+The Bytes utility simplifies byte array manipulations.
+
