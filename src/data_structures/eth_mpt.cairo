@@ -75,12 +75,13 @@ impl MPTImpl of MPTTrait {
                 MPTNode::Branch((
                     nibbles, value
                 )) => {
+                    // If we reached the end of the key, return the value
                     if key_pow2 == 0 {
                         break Result::Ok(value);
                     }
 
                     let current_nibble = (key / key_pow2) & 0xf;
-                    // Unwrap impossible to fail
+                    // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
                     let current_hash_words = *nibbles.at(current_nibble.try_into().unwrap());
                     current_hash =
                         if current_hash_words.len() == 0 {
@@ -174,7 +175,7 @@ impl MPTImpl of MPTTrait {
                     }
                 } else if len == 2 {
                     let first = *l.at(0);
-                    // Unwrap impossible to fail
+                    // Unwrap impossible to fail, as we are making with 0xff, meaning the result always fits in a byte
                     let prefix_byte: Byte = (*first.at(0) & 0xff).try_into().unwrap();
                     let (prefix, _) = prefix_byte.extract_nibbles();
 

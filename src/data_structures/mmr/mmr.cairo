@@ -61,6 +61,7 @@ impl MMRImpl of MMRTrait {
             self.last_pos += 1;
 
             let mut peaks_span = peaks_arr.span();
+            // As the above condition verifies that a merge is happening, we have at least 2 peaks (that are about to be merged)
             let right = peaks_span.pop_back().unwrap();
             let left = peaks_span.pop_back().unwrap();
 
