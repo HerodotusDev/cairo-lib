@@ -1,5 +1,3 @@
-use array::{Span, SpanTrait};
-
 // @notice Check if a span contains a given value
 // @param arr The span to search
 // @param val The value to search for

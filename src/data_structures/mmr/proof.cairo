@@ -1,12 +1,11 @@
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use cairo_lib::data_structures::mmr::utils::get_height;
-use cairo_lib::utils::bitwise::left_shift;
-use array::SpanTrait;
-use traits::Into;
-use array::ArrayTrait;
-type Proof = Span<felt252>;
-use cairo_lib::utils::bitwise::bit_length;
+use cairo_lib::utils::bitwise::{left_shift, bit_length};
 use cairo_lib::utils::math::pow;
+
+// @notice Represents a proof of inclusion in a MMR
+type Proof = Span<felt252>;
+
 
 #[generate_trait]
 impl ProofImpl of ProofTrait {

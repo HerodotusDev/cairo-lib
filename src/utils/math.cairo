@@ -1,6 +1,4 @@
-use zeroable::Zeroable;
 use math::Oneable;
-use traits::{Sub, Mul};
 
 // @notice Computes `base ^ exp`
 // @param base The base of the exponentiation
@@ -21,13 +19,5 @@ fn pow<
         TOneable::one()
     } else {
         base * pow(base, exp - TOneable::one())
-    }
-}
-
-fn pow_felt252(base: felt252, exp: felt252) -> felt252 {
-    if exp == 0 {
-        1
-    } else {
-        base * pow_felt252(base, exp - 1)
     }
 }

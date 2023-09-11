@@ -2,11 +2,6 @@ use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use traits::{Into, Default};
-use clone::Clone;
-use result::Result;
-use array::{ArrayTrait, SpanTrait};
-use option::OptionTrait;
 
 // @notice Merkle Mountatin Range struct
 #[derive(Drop, Clone, Serde, starknet::Store)]
@@ -16,8 +11,8 @@ struct MMR {
 }
 
 impl MMRDefault of Default<MMR> {
-    #[inline(always)]
     // @return MMR with last_pos 0 and root poseidon(0, 0)
+    #[inline(always)]
     fn default() -> MMR {
         MMR { root: PoseidonHasher::hash_double(0, 0), last_pos: 0 }
     }
@@ -29,6 +24,7 @@ impl MMRImpl of MMRTrait {
     // @param root The root of the MMR
     // @param last_pos The last position in the MMR
     // @return MMR with the given root and last_pos
+    #[inline(always)]
     fn new(root: felt252, last_pos: usize) -> MMR {
         MMR { root, last_pos }
     }
@@ -36,15 +32,14 @@ impl MMRImpl of MMRTrait {
     // @notice Appends an element to the MMR
     // @param hash The hashed element to append
     // @param peaks The peaks of the MMR
-    // @return Result with the new root of the MMR
-    fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<felt252, felt252> {
+    // @return Result with the new root and new peaks of the MMR
+    fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
         if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
         }
 
         self.last_pos += 1;
 
-        // TODO refactor this logic
         let mut peaks_arr = ArrayTrait::new();
         let mut i: usize = 0;
         loop {
@@ -66,10 +61,10 @@ impl MMRImpl of MMRTrait {
             self.last_pos += 1;
 
             let mut peaks_span = peaks_arr.span();
+            // As the above condition verifies that a merge is happening, we have at least 2 peaks (that are about to be merged)
             let right = peaks_span.pop_back().unwrap();
             let left = peaks_span.pop_back().unwrap();
 
-            // TODO refactor this logic
             let mut new_peaks = ArrayTrait::new();
             i = 0;
             loop {
@@ -92,7 +87,7 @@ impl MMRImpl of MMRTrait {
         let new_root = compute_root(self.last_pos.into(), peaks_arr.span());
         self.root = new_root;
 
-        Result::Ok(new_root)
+        Result::Ok((new_root, peaks_arr.span()))
     }
 
     // @notice Verifies a proof for an element in the MMR

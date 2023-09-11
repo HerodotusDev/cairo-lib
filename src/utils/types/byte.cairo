@@ -1,14 +1,14 @@
-use cairo_lib::utils::bitwise::right_shift;
-
+// @notice Represents a single byte
 type Byte = u8;
 
 #[generate_trait]
 impl ByteImpl of ByteTrait {
     // @notice Extracts the high and low nibbles from a byte
-    // @return (high, low)
+    // @return (high, low), example: 0xab -> (0xa, 0xb)
     fn extract_nibbles(self: Byte) -> (Byte, Byte) {
         let masked = self & 0xf0;
-        let high = right_shift(masked, 4);
+        // right shift by 4 bits
+        let high = masked / 16;
         let low = self & 0x0f;
 
         (high, low)

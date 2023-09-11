@@ -1,9 +1,8 @@
-use array::SpanTrait;
-use traits::Into;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use cairo_lib::data_structures::mmr::utils::compute_root;
 use cairo_lib::utils::array::span_contains;
 
+// @notice Represents the peaks of the MMR
 type Peaks = Span<felt252>;
 
 #[generate_trait]
@@ -32,7 +31,7 @@ impl PeaksImpl of PeaksTrait {
         }
     }
 
-    // @notice Checks if the peaks are valid
+    // @notice Checks if the peaks are valid for a given root
     // @param last_pos The last position in the MMR
     // @param root The root of the MMR
     // @return True if the peaks are valid
@@ -44,6 +43,7 @@ impl PeaksImpl of PeaksTrait {
     // @notice Checks if the peaks contain a peak
     // @param peak The peak to check inclusion
     // @return True if the peaks contain the peak
+    #[inline(always)]
     fn contains_peak(self: Peaks, peak: felt252) -> bool {
         span_contains(self, peak)
     }

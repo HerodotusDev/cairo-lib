@@ -32,3 +32,4 @@ fn test_bit_length() {
     assert(bit_length(7_u128) == 3, 'bit length of 7 is 3');
     assert(bit_length(8_u32) == 4, 'bit length of 8 is 4');
 }
+

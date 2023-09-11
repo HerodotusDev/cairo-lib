@@ -1,5 +1,4 @@
 use cairo_lib::utils::array::span_contains;
-use array::ArrayTrait;
 
 #[test]
 #[available_gas(999999)]
