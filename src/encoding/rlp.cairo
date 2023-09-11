@@ -1,9 +1,4 @@
-use result::ResultTrait;
-use option::OptionTrait;
-use array::{Array, ArrayTrait, Span, SpanTrait};
-use clone::Clone;
-use traits::{Into, TryInto};
-use cairo_lib::utils::types::bytes::{Bytes, BytesPartialEq, BytesTryIntoU256};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64};
 use cairo_lib::utils::types::byte::Byte;
 
 // @notice Enum with all possible RLP types
@@ -41,82 +36,105 @@ impl RLPTypeImpl of RLPTypeTrait {
 // @notice Represent a RLP item
 #[derive(Drop)]
 enum RLPItem {
-    Bytes: Bytes,
+    Bytes: Words64,
     // Should be Span<RLPItem> to allow for any depth/recursion, not yet supported by the compiler
-    List: Span<Bytes>
+    List: Span<Words64>
 }
 
 // @notice RLP decodes a rlp encoded byte array
-// @param input RLP encoded bytes
+// @param input RLP encoded input, in little endian 64 bits words
 // @return Result with RLPItem and size of the decoded item
-fn rlp_decode(input: Bytes) -> Result<(RLPItem, usize), felt252> {
-    let prefix = *input.at(0);
+fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
+    let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
 
     // Unwrap is impossible to panic here
-    let rlp_type = RLPTypeTrait::from_byte(prefix).unwrap();
+    let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
     match rlp_type {
         RLPType::String(()) => {
-            let mut arr = array![prefix];
+            let mut arr = array![prefix.into()];
             Result::Ok((RLPItem::Bytes(arr.span()), 1))
         },
         RLPType::StringShort(()) => {
             let len = prefix.into() - 0x80;
-            let res = input.slice(1, len);
+            let res = input.slice_le(6, len);
 
             Result::Ok((RLPItem::Bytes(res), 1 + len))
         },
         RLPType::StringLong(()) => {
-            let len_len = prefix.into() - 0xb7;
-            let len_span = input.slice(1, len_len);
+            let len_len = prefix - 0xb7;
+            let len_span = input.slice_le(6, len_len);
+            // Enough to store 4.29 GB (fits in u32)
+            assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
-            // Bytes => u256 => u32
-            let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
-            let res = input.slice(1 + len_len, len);
+            // len fits in 32 bits, confirmed by previous assertion
+            let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.into()))
+                .try_into()
+                .unwrap();
+            let res = input.slice_le(6 - len_len, len);
 
             Result::Ok((RLPItem::Bytes(res), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
-            let len = prefix.into() - 0xc0;
-            let mut in = input.slice(1, len);
-            let res = rlp_decode_list(ref in);
+            let mut len = prefix - 0xc0;
+            let mut in = input.slice_le(6, len);
+            let res = rlp_decode_list(ref in, len)?;
             Result::Ok((RLPItem::List(res), 1 + len))
         },
         RLPType::ListLong(()) => {
-            let len_len = prefix.into() - 0xf7;
-            let len_span = input.slice(1, len_len);
+            let len_len = prefix - 0xf7;
+            let len_span = input.slice_le(6, len_len);
+            // Enough to store 4.29 GB (fits in u32)
+            assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
-            // Bytes => u256 => u32
-            let len: u32 = len_span.try_into().unwrap().try_into().unwrap();
-            let mut in = input.slice(1 + len_len, len);
-            let res = rlp_decode_list(ref in);
+            // len fits in 32 bits, confirmed by previous assertion
+            let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.into()))
+                .try_into()
+                .unwrap();
+            let mut in = input.slice_le(6 - len_len, len);
+            let res = rlp_decode_list(ref in, len)?;
+
             Result::Ok((RLPItem::List(res), 1 + len_len + len))
         }
     }
 }
 
-fn rlp_decode_list(ref input: Bytes) -> Span<Bytes> {
+// @notice RLP decodes into RLPItem::List
+// @param input RLP encoded input, in little endian 64 bits words
+// @param len Length of the input
+// @return Result with RLPItem::List
+fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt252> {
     let mut i = 0;
-    let len = input.len();
     let mut output = ArrayTrait::new();
+    let mut total_len = len;
 
     loop {
         if i >= len {
-            break ();
+            break Result::Ok(output.span());
         }
 
-        let (decoded, decoded_len) = rlp_decode(input).unwrap();
+        let (decoded, decoded_len) = match rlp_decode(input) {
+            Result::Ok((d, dl)) => (d, dl),
+            Result::Err(e) => {
+                break Result::Err(e);
+            }
+        };
         match decoded {
             RLPItem::Bytes(b) => {
                 output.append(b);
-                input = input.slice(decoded_len, input.len() - decoded_len);
+                let word = decoded_len / 8;
+                let reversed = 7 - (decoded_len % 8);
+                let next_start = word * 8 + reversed;
+                if (total_len - decoded_len != 0) {
+                    input = input.slice_le(next_start, total_len - decoded_len);
+                }
+                total_len -= decoded_len;
             },
             RLPItem::List(_) => {
                 panic_with_felt252('Recursive list not supported');
             }
         }
         i += decoded_len;
-    };
-    output.span()
+    }
 }
 
 impl RLPItemPartialEq of PartialEq<RLPItem> {
@@ -155,7 +173,6 @@ impl RLPItemPartialEq of PartialEq<RLPItem> {
     }
 
     fn ne(lhs: @RLPItem, rhs: @RLPItem) -> bool {
-        // TODO optimize
         !(lhs == rhs)
     }
 }

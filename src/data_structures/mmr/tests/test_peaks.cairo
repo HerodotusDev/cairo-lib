@@ -1,7 +1,5 @@
 use cairo_lib::data_structures::mmr::peaks::PeaksTrait;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use array::ArrayTrait;
-use traits::Into;
 
 #[test]
 #[available_gas(99999999)]

@@ -1,8 +1,5 @@
 use cairo_lib::data_structures::mmr::mmr::{MMR, MMRTrait};
-use cairo_lib::data_structures::mmr::proof::Proof;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use array::{ArrayTrait, SpanTrait};
-use result::ResultTrait;
 
 fn helper_test_get_elements() -> Span<felt252> {
     let elem1 = PoseidonHasher::hash_single(1);
@@ -191,7 +188,9 @@ fn test_verify_proof_left_right() {
     let proof = array![*elems.at(0), *elems.at(5)].span();
     let peaks = array![*elems.at(6), *elems.at(7)].span();
 
-    assert(mmr.verify_proof(2, *elems.at(1), peaks, proof).unwrap(), 'Valid invalid proof left right')
+    assert(
+        mmr.verify_proof(2, *elems.at(1), peaks, proof).unwrap(), 'Valid invalid proof left right'
+    )
 }
 
 #[test]

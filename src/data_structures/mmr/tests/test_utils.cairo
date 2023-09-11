@@ -1,7 +1,8 @@
-use cairo_lib::data_structures::mmr::utils::{get_height, compute_root};
+use cairo_lib::data_structures::mmr::utils::{
+    get_height, compute_root, count_ones, leaf_index_to_mmr_index
+};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
-use array::ArrayTrait;
+use cairo_lib::data_structures::mmr::peaks::PeaksTrait;
 
 #[test]
 #[available_gas(99999999)]
@@ -29,4 +30,45 @@ fn test_compute_root() {
     let computed_root = compute_root(last_pos, peaks.span());
 
     assert(root == computed_root, 'Roots not matching');
+}
+
+#[test]
+#[available_gas(999999999)]
+fn test_count_ones() {
+    assert(count_ones(1) == 1, 'count_ones(1) != 1');
+    assert(count_ones(2) == 1, 'count_ones(2) != 1');
+    assert(count_ones(3) == 2, 'count_ones(3) != 2');
+    assert(count_ones(4) == 1, 'count_ones(4) != 1');
+    assert(count_ones(5) == 2, 'count_ones(5) != 2');
+    assert(count_ones(6) == 2, 'count_ones(6) != 2');
+    assert(count_ones(7) == 3, 'count_ones(7) != 3');
+    assert(count_ones(8) == 1, 'count_ones(8) != 1');
+    assert(count_ones(9) == 2, 'count_ones(9) != 2');
+    assert(count_ones(10) == 2, 'count_ones(10) != 2');
+    assert(count_ones(11) == 3, 'count_ones(11) != 3');
+    assert(count_ones(12) == 2, 'count_ones(12) != 2');
+    assert(count_ones(13) == 3, 'count_ones(13) != 3');
+    assert(count_ones(14) == 3, 'count_ones(14) != 3');
+    assert(count_ones(15) == 4, 'count_ones(15) != 4');
+    assert(count_ones(16) == 1, 'count_ones(16) != 1');
+    assert(count_ones(17) == 2, 'count_ones(17) != 2');
+    assert(count_ones(18) == 2, 'count_ones(18) != 2');
+    assert(count_ones(19) == 3, 'count_ones(19) != 3');
+    assert(count_ones(20) == 2, 'count_ones(20) != 2');
+}
+
+#[test]
+#[available_gas(999999999)]
+fn test_leaf_index_to_mmr_index() {
+    assert(leaf_index_to_mmr_index(1) == 1, 'leaf_..._index(1) != 1');
+    assert(leaf_index_to_mmr_index(2) == 2, 'leaf_..._index(2) != 2');
+    assert(leaf_index_to_mmr_index(3) == 4, 'leaf_..._index(3) != 4');
+    assert(leaf_index_to_mmr_index(4) == 5, 'leaf_..._index(4) != 5');
+    assert(leaf_index_to_mmr_index(5) == 8, 'leaf_..._index(5) != 8');
+    assert(leaf_index_to_mmr_index(6) == 9, 'leaf_..._index(6) != 9');
+    assert(leaf_index_to_mmr_index(7) == 11, 'leaf_..._index(7) != 11');
+    assert(leaf_index_to_mmr_index(8) == 12, 'leaf_..._index(8) != 12');
+    assert(leaf_index_to_mmr_index(9) == 16, 'leaf_..._index(9) != 16');
+    assert(leaf_index_to_mmr_index(10) == 17, 'leaf_..._index(10) != 17');
+    assert(leaf_index_to_mmr_index(11) == 19, 'leaf_..._index(11) != 19');
 }
