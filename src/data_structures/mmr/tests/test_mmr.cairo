@@ -191,7 +191,9 @@ fn test_verify_proof_left_right() {
     let proof = array![*elems.at(0), *elems.at(5)].span();
     let peaks = array![*elems.at(6), *elems.at(7)].span();
 
-    assert(mmr.verify_proof(2, *elems.at(1), peaks, proof).unwrap(), 'Valid invalid proof left right')
+    assert(
+        mmr.verify_proof(2, *elems.at(1), peaks, proof).unwrap(), 'Valid invalid proof left right'
+    )
 }
 
 #[test]
