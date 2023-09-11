@@ -1,4 +1,5 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
+use cairo_lib::utils::types::words64::Words64TryIntoU256LE;
 
 #[test]
 #[available_gas(9999999999)]
@@ -73,7 +74,7 @@ fn test_decode_rlp_node_branch() {
         0x805fb3e2
     ];
 
-    let expected = array![
+    let expected: Span<u256> = array![
         0xF44AC1730C4044A8B4CD681FADECAECE75818924A962DF351B7A06B509CF7077,
         0xB47150026035361ADC184B5C4B1A9FC1344568FE87045C6D4661B25AD085A31E,
         0xEECD3FFAF56A0C80A8368D4F30C18366E5A5533C30721846D1D34035CE044C2C,
@@ -90,12 +91,29 @@ fn test_decode_rlp_node_branch() {
         0xFDB12AC97334928AD1A22AADFF2D22C364CE46B9552AFBA44A71201AD0D73465,
         0x2F50E229FF6121C4F7384714BDC0B10CE86FB0C3C818B6A92DBFB8FE8BC2F9BF,
         0x5FB3E28FEA4837D02E24988F459E43F602C5725EA3BB1B02A54E703C6961147F
-    ];
+    ].span();
 
     let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
-    let expected_value = array![];
-    let expected_node = MPTNode::Branch((expected.span(), expected_value.span()));
-    assert(decoded == expected_node, 'Branch node differs');
+    match decoded {
+        MPTNode::Branch((hashes, value)) => {
+            assert(value.is_empty(), 'Wrong value');
+
+            let mut i = 0;
+            loop {
+                if i >= hashes.len() {
+                    break ();
+                }
+                assert((*hashes.at(i)).try_into().unwrap() == *expected.at(i), 'Wrong hash');
+                i += 1;
+            };
+        },
+        MPTNode::Extension(_) => {
+            panic_with_felt252('Branch node differs');
+        },
+        MPTNode::Leaf(_) => {
+            panic_with_felt252('Branch node differs');
+        },
+    }
 }
 
 #[test]

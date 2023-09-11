@@ -5,7 +5,6 @@ use cairo_lib::utils::bitwise::{right_shift, left_shift};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
 use cairo_lib::utils::math::pow;
 
-
 // @notice Ethereum Merkle Patricia Trie struct
 #[derive(Drop)]
 struct MPT {
@@ -24,7 +23,7 @@ impl MPTDefault of Default<MPT> {
 enum MPTNode {
     // @param 16 hashes of children
     // @param Value of the node
-    Branch: (Span<u256>, Words64),
+    Branch: (Span<Words64>, Words64),
     // @param shared_nibbles
     // @param next_node
     // @param nibbles_skip Number of nibbles to skip in shared nibbles
@@ -82,7 +81,17 @@ impl MPTImpl of MPTTrait {
 
                     let current_nibble = (key / key_pow2) & 0xf;
                     // Unwrap impossible to fail
-                    current_hash = *nibbles.at(current_nibble.try_into().unwrap());
+                    let current_hash_words = *nibbles.at(current_nibble.try_into().unwrap());
+                    current_hash = if current_hash_words.len() == 0 {
+                        0
+                    } else {
+                        match current_hash_words.try_into() {
+                            Option::Some(h) => h,
+                            Option::None(_) => {
+                                break Result::Err('Invalid hash');
+                            }
+                        }
+                    };
                     key_pow2 = key_pow2 / 16;
                 },
                 MPTNode::Extension((
@@ -159,18 +168,7 @@ impl MPTImpl of MPTTrait {
                             break Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)));
                         }
 
-                        let current = *l.at(i);
-                        let hash = if current.len() == 0 {
-                            0
-                        } else {
-                            match current.try_into() {
-                                Option::Some(h) => h,
-                                Option::None(_) => {
-                                    break Result::Err('Invalid hash');
-                                }
-                            }
-                        };
-                        nibble_hashes.append(hash);
+                        nibble_hashes.append(*l.at(i));
                         i += 1;
                     }
                 } else if len == 2 {
