@@ -118,7 +118,9 @@ impl MPTImpl of MPTTrait {
                             break Result::Err('Key reached end');
                         }
 
-                        let current_nibble_shared_nibbles = (shared_nibbles_word / shared_nibbles_pow2) & 0xf;
+                        let current_nibble_shared_nibbles = (shared_nibbles_word
+                            / shared_nibbles_pow2)
+                            & 0xf;
                         let current_nibble_key = (key / key_pow2) & 0xf;
                         if current_nibble_shared_nibbles.into() != current_nibble_key {
                             break Result::Ok(next_node);
