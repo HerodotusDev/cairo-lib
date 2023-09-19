@@ -99,7 +99,57 @@ impl MPTImpl of MPTTrait {
                 MPTNode::Extension((
                     shared_nibbles, next_node, nibbles_skip
                 )) => {
-                    break Result::Err('Not implemented');
+                    let mut shared_nibbles_pow2 = pow(2, nibbles_skip.into() * 4);
+
+                    let mut in_byte = false;
+                    if nibbles_skip % 2 == 1 {
+                        // Right shift 1 nibble
+                        shared_nibbles_pow2 = shared_nibbles_pow2 / 16;
+                        in_byte = true;
+                    } else {
+                        // Left shift 1 nibble
+                        shared_nibbles_pow2 = shared_nibbles_pow2 * 16
+                    }
+
+                    let mut shared_nibbles_word_idx = nibbles_skip / 16;
+                    let mut shared_nibbles_word = *shared_nibbles.at(shared_nibbles_word_idx);
+                    let next_hash = loop {
+                        if key_pow2 == 0 {
+                            break Result::Err('Key reached end');
+                        }
+
+                        let current_nibble_shared_nibbles = (shared_nibbles_word
+                            / shared_nibbles_pow2)
+                            & 0xf;
+                        let current_nibble_key = (key / key_pow2) & 0xf;
+                        if current_nibble_shared_nibbles.into() != current_nibble_key {
+                            break Result::Ok(next_node);
+                        }
+
+                        if shared_nibbles_pow2 == 0x100000000000000 {
+                            shared_nibbles_pow2 = 16;
+                            shared_nibbles_word_idx += 1;
+                            shared_nibbles_word = *shared_nibbles.at(shared_nibbles_word_idx);
+                        } else {
+                            if in_byte {
+                                shared_nibbles_pow2 = shared_nibbles_pow2 * 0x1000;
+                            } else {
+                                shared_nibbles_pow2 = shared_nibbles_pow2 / 0x10;
+                            }
+                        };
+
+                        in_byte = !in_byte;
+                        key_pow2 = key_pow2 / 16;
+                    };
+
+                    match next_hash {
+                        Result::Ok(next_hash) => {
+                            current_hash = next_hash;
+                        },
+                        Result::Err(e) => {
+                            break Result::Err(e);
+                        }
+                    }
                 },
                 MPTNode::Leaf((
                     key_end, value, nibbles_skip
@@ -116,7 +166,6 @@ impl MPTImpl of MPTTrait {
                         key_end_pow2 = key_end_pow2 * 16
                     }
 
-                    // Right shift 1 nibble
                     let mut key_end_word_idx = nibbles_skip / 16;
                     let mut key_end_word = *key_end.at(key_end_word_idx);
                     break loop {
