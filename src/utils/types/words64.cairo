@@ -316,7 +316,7 @@ fn pow2(pow: usize) -> u64 {
     } else if pow == 62 {
         return 0x4000000000000000;
     } else if pow == 63 {
-        return 0x80000000000000;
+        return 0x8000000000000000;
     } else {
         return 0;
     }
