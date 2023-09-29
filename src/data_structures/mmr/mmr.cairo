@@ -1,6 +1,8 @@
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
-use cairo_lib::data_structures::mmr::utils::{compute_root, get_height, mmr_size_to_leaf_count, leaf_count_to_peaks_count};
+use cairo_lib::data_structures::mmr::utils::{
+    compute_root, get_height, mmr_size_to_leaf_count, leaf_count_to_peaks_count
+};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // @notice Merkle Mountatin Range struct

@@ -233,8 +233,12 @@ fn test_verify_proof_invalid_peaks() {
 #[available_gas(99999999)]
 fn test_attack_forge_peaks() {
     let elems = helper_test_get_elements();
-    let mut mmr_real: MMR = MMRTrait::new(0x21aea73dea77022a4882e1f656b76c9195161ed1cff2b065a74d7246b02d5d6, 0x8);
-    let mut mmr_fake: MMR = MMRTrait::new(0x21aea73dea77022a4882e1f656b76c9195161ed1cff2b065a74d7246b02d5d6, 0x8);
+    let mut mmr_real: MMR = MMRTrait::new(
+        0x21aea73dea77022a4882e1f656b76c9195161ed1cff2b065a74d7246b02d5d6, 0x8
+    );
+    let mut mmr_fake: MMR = MMRTrait::new(
+        0x21aea73dea77022a4882e1f656b76c9195161ed1cff2b065a74d7246b02d5d6, 0x8
+    );
 
     // add the next element normally to mmr_real and get the root;
     let peaks_real = array![*elems.at(6), *elems.at(7)].span();
