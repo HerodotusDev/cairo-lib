@@ -48,3 +48,25 @@ fn count_ones(n: u256) -> u256 {
 fn leaf_index_to_mmr_index(n: u256) -> u256 {
     2 * n - 1 - count_ones(n - 1)
 }
+
+fn mmr_size_to_leaf_count(arg: u256) -> u256 {
+    let mut mmr_size = arg;
+    let bits = bit_length(mmr_size);
+    let mut i = pow(2, bits);
+    let mut leaf_count = 0;
+    loop {
+        if i == 0 {
+            break leaf_count;
+        }
+        let x = 2 * i - 1;
+        if x <= mmr_size {
+            mmr_size -= x;
+            leaf_count += i;
+        }
+        i /= 2;
+    }
+}
+
+fn leaf_count_to_peaks_count(leaf_count: u256) -> u256 {
+    count_ones(leaf_count)
+}
