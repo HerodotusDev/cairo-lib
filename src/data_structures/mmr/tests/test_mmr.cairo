@@ -1,6 +1,5 @@
 use cairo_lib::data_structures::mmr::mmr::{MMR, MMRTrait};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
-use debug::PrintTrait;
 use cairo_lib::data_structures::mmr::utils::mmr_size_to_leaf_count;
 
 fn helper_test_get_elements() -> Span<felt252> {
