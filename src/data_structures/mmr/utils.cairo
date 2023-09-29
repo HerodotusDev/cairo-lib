@@ -42,15 +42,18 @@ fn count_ones(n: u32) -> u32 {
     }
 }
 
-// @notice Convert a leaf index to an Merkle Mountain Range tree leaf index
+// @notice Convert a leaf index to an Merkle Mountain Range tree index
 // @param n The leaf index
 // @return The MMR index
 fn leaf_index_to_mmr_index(n: u32) -> u32 {
     2 * n - 1 - count_ones(n - 1)
 }
 
-fn mmr_size_to_leaf_count(arg: u32) -> u32 {
-    let mut mmr_size = arg;
+// @notice Convert a Merkle Mountain Range tree size to number of leaves
+// @param n MMR size
+// @result Number of leaves
+fn mmr_size_to_leaf_count(n: u32) -> u32 {
+    let mut mmr_size = n;
     let bits = bit_length(mmr_size);
     let mut i = pow(2, bits);
     let mut leaf_count = 0;
@@ -67,6 +70,10 @@ fn mmr_size_to_leaf_count(arg: u32) -> u32 {
     }
 }
 
+
+// @notice Convert a number of leaves to number of peaks
+// @param leaf_count Number of leaves
+// @return Number of peaks
 fn leaf_count_to_peaks_count(leaf_count: u32) -> u32 {
     count_ones(leaf_count)
 }
