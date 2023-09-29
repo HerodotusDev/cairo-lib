@@ -77,3 +77,18 @@ fn mmr_size_to_leaf_count(n: u32) -> u32 {
 fn leaf_count_to_peaks_count(leaf_count: u32) -> u32 {
     count_ones(leaf_count)
 }
+
+// @notice Get the number of trailing ones in the binary representation of a number
+// @param n The number
+// @return Number of trailing ones
+fn trailing_ones(n: u32) -> u32 {
+    let mut n = n;
+    let mut count = 0;
+    loop {
+        if n % 2 == 0 {
+            break count;
+        }
+        n /= 2;
+        count += 1;
+    }
+}
