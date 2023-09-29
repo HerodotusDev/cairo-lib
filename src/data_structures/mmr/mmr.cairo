@@ -62,7 +62,7 @@ impl MMRImpl of MMRTrait {
             i += 1;
             self.last_pos += 1;
         };
-        
+
         let mut new_peaks = ArrayTrait::new();
         let mut i = 0;
         loop {
