@@ -1,5 +1,6 @@
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64, pow2};
 use cairo_lib::utils::types::byte::Byte;
+use cairo_lib::utils::array::span_contains;
 
 // @notice Enum with all possible RLP types
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
@@ -46,8 +47,9 @@ enum RLPItem {
 // @notice RLP decodes a rlp encoded byte array
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 // @param input RLP encoded input, in little endian 64 bits words
+// @param lazy If Some, will only decode the specified indexes. If it is not a list, it will always be decoded fully
 // @return Result with RLPItem and size of the decoded item
-fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
+fn rlp_decode(input: Words64, lazy: Option<Span<usize>>) -> Result<(RLPItem, usize), felt252> {
     // It's guaranteed to fid in 32 bits, as we are masking with 0xff
     let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
 
@@ -116,7 +118,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt
             break Result::Ok(output.span());
         }
 
-        let (decoded, decoded_len) = match rlp_decode(input) {
+        let (decoded, decoded_len) = match rlp_decode(input, Option::None(())) {
             Result::Ok((d, dl)) => (d, dl),
             Result::Err(e) => {
                 break Result::Err(e);
@@ -138,6 +140,69 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt
             }
         }
         i += decoded_len;
+    }
+}
+
+fn rlp_decode_list_lazy(ref input: Words64, len: usize, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
+    let mut output = ArrayTrait::new();
+    let mut current_input_index = 0;
+    let mut lazy_index = 0;
+
+    loop {
+        if output.len() == lazy.len() {
+            break Result::Ok(output.span());
+        }
+        
+        if current_input_index >= len {
+            break Result::Err('Too many items to decode');
+        }
+
+        let current_word = current_input_index / 8;
+        let current_word_offset = 7 - (current_input_index % 8);
+
+        let pow2_shift = pow2((7 - current_word_offset) * 8);
+        let prefix = (*input.at(current_word) / pow2_shift) & 0xff;
+
+        let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
+        let (item_start_skip, item_len) = match rlp_type {
+            RLPType::String(()) => {
+                (0, 1)
+            },
+            RLPType::StringShort(()) => {
+                let len = prefix - 0x80;
+                (1, len)
+            },
+            RLPType::StringLong(()) => {
+                let len_len = prefix - 0xb7;
+                let len_span = input.slice_le(6, len_len.try_into().unwrap());
+                // Enough to store 4.29 GB (fits in u32)
+                assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
+
+                // len fits in 32 bits, confirmed by previous assertion
+                let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.try_into().unwrap()))
+                    .try_into()
+                    .unwrap();
+
+                (1 + len_len, len.into())
+            },
+            RLPType::ListShort(()) => {
+                panic_with_felt252('Recursive list not supported')
+            },
+            RLPType::ListLong(()) => {
+                panic_with_felt252('Recursive list not supported')
+            }
+        };
+        
+        current_input_index += item_start_skip.try_into().unwrap();
+        if span_contains(lazy, lazy_index) {
+            let start = current_input_index / 8 + (7 - (current_input_index % 8));
+            let decoded = input.slice_le(start, item_len.try_into().unwrap());
+            output.append(decoded);
+        }
+
+        current_input_index += item_len.try_into().unwrap();
+
+        lazy_index += 1;
     }
 }
 
