@@ -49,7 +49,7 @@ enum RLPItem {
 // @param input RLP encoded input, in little endian 64 bits words
 // @param lazy If Some, will only decode the specified indexes. If it is not a list, it will always be decoded fully
 // @return Result with RLPItem and size of the decoded item
-fn rlp_decode(input: Words64, lazy: Option<Span<usize>>) -> Result<(RLPItem, usize), felt252> {
+fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
     // It's guaranteed to fid in 32 bits, as we are masking with 0xff
     let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
 
@@ -118,7 +118,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt
             break Result::Ok(output.span());
         }
 
-        let (decoded, decoded_len) = match rlp_decode(input, Option::None(())) {
+        let (decoded, decoded_len) = match rlp_decode(input) {
             Result::Ok((d, dl)) => (d, dl),
             Result::Err(e) => {
                 break Result::Err(e);
@@ -143,10 +143,33 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt
     }
 }
 
-fn rlp_decode_list_lazy(ref input: Words64, len: usize, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
+fn rlp_decode_list_lazy(ref input: Words64, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
     let mut output = ArrayTrait::new();
-    let mut current_input_index = 0;
     let mut lazy_index = 0;
+
+    let list_prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
+    let list_type = RLPTypeTrait::from_byte(list_prefix.try_into().unwrap()).unwrap();
+    let (mut current_input_index, len) = match list_type {
+        RLPType::String(()) => { return Result::Err('Not a list'); },
+        RLPType::StringShort(()) => { return Result::Err('Not a list'); },
+        RLPType::StringLong(()) => { return Result::Err('Not a list'); },
+        RLPType::ListShort(()) => (1, list_prefix - 0xc0),
+        RLPType::ListLong(()) => {
+            let len_len = list_prefix - 0xf7;
+            let len_span = input.slice_le(6, len_len);
+            // Enough to store 4.29 GB (fits in u32)
+            assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
+
+            // len fits in 32 bits, confirmed by previous assertion
+            let len = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.into()))
+                .try_into()
+                .unwrap();
+            (1 + len_len, len)
+        }
+    };
+
+
+    let mut current_input_index = 0;
 
     loop {
         if output.len() == lazy.len() {
@@ -174,7 +197,7 @@ fn rlp_decode_list_lazy(ref input: Words64, len: usize, lazy: Span<usize>) -> Re
             },
             RLPType::StringLong(()) => {
                 let len_len = prefix - 0xb7;
-                let len_span = input.slice_le(6, len_len.try_into().unwrap());
+                let len_span = input.slice_le(current_word + current_word_offset, len_len.try_into().unwrap());
                 // Enough to store 4.29 GB (fits in u32)
                 assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 

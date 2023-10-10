@@ -205,7 +205,7 @@ impl MPTImpl of MPTTrait {
     // @param rlp RLP encoded node
     // @return Result with the decoded node
     fn decode_rlp_node(rlp: Words64) -> Result<MPTNode, felt252> {
-        let (item, _) = rlp_decode(rlp, Option::None(()))?;
+        let (item, _) = rlp_decode(rlp)?;
         match item {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {
