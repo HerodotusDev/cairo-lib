@@ -266,5 +266,8 @@ fn test_attack_forge_verify() {
     let proof = array![].span();
     let peaks = array![elem3, elem4].span();
 
-    assert(mmr.verify_proof(1, elem4, peaks, proof).unwrap() == false, 'Attack successful forged verify');
+    assert(
+        mmr.verify_proof(1, elem4, peaks, proof).unwrap() == false,
+        'Attack successful forged verify'
+    );
 }
