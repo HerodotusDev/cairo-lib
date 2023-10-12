@@ -36,8 +36,8 @@ impl MMRImpl of MMRTrait {
     // @param peaks The peaks of the MMR
     // @return Result with the new root and new peaks of the MMR
     fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
-        let leaf_count = mmr_size_to_leaf_count(self.last_pos);
-        if leaf_count_to_peaks_count(leaf_count) != peaks.len() {
+        let leaf_count = mmr_size_to_leaf_count(self.last_pos.into());
+        if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
             return Result::Err('Invalid peaks count');
         }
         if !peaks.valid(self.last_pos, self.root) {

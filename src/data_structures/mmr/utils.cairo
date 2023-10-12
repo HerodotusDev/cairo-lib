@@ -30,7 +30,7 @@ fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
 // @notice Count the number of bits set to 1 in a 256-bit unsigned integer
 // @param n The 256-bit unsigned integer
 // @return The number of bits set to 1 in n
-fn count_ones(n: u32) -> u32 {
+fn count_ones(n: u256) -> u256 {
     let mut n = n;
     let mut count = 0;
     loop {
@@ -45,15 +45,15 @@ fn count_ones(n: u32) -> u32 {
 // @notice Convert a leaf index to an Merkle Mountain Range tree index
 // @param n The leaf index
 // @return The MMR index
-fn leaf_index_to_mmr_index(n: u32) -> u32 {
+fn leaf_index_to_mmr_index(n: u256) -> u256 {
     2 * n - 1 - count_ones(n - 1)
 }
 
 // @notice Convert a Merkle Mountain Range tree size to number of leaves
-// @param n MMR size
+// @param arg MMR size
 // @result Number of leaves
-fn mmr_size_to_leaf_count(n: u32) -> u32 {
-    let mut mmr_size = n;
+fn mmr_size_to_leaf_count(arg: u256) -> u256 {
+    let mut mmr_size = arg;
     let bits = bit_length(mmr_size);
     let mut i = pow(2, bits);
     let mut leaf_count = 0;
@@ -70,11 +70,10 @@ fn mmr_size_to_leaf_count(n: u32) -> u32 {
     }
 }
 
-
 // @notice Convert a number of leaves to number of peaks
 // @param leaf_count Number of leaves
 // @return Number of peaks
-fn leaf_count_to_peaks_count(leaf_count: u32) -> u32 {
+fn leaf_count_to_peaks_count(leaf_count: u256) -> u256 {
     count_ones(leaf_count)
 }
 
