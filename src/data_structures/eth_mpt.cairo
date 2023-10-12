@@ -1,5 +1,5 @@
 use cairo_lib::hashing::keccak::keccak_cairo_words64;
-use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
+use cairo_lib::encoding::rlp::{RLPItem, rlp_decode, rlp_decode_list_lazy};
 use cairo_lib::utils::types::byte::{Byte, ByteTrait};
 use cairo_lib::utils::bitwise::{right_shift, left_shift};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
@@ -19,11 +19,13 @@ impl MPTDefault of Default<MPT> {
 }
 
 // @notice Represents a node in the MPT
-#[derive(Drop)]
+#[derive(Drop, PartialEq)]
 enum MPTNode {
     // @param 16 hashes of children
     // @param Value of the node
     Branch: (Span<Words64>, Words64),
+    // @param hash of the next node
+    LazyBranch: u256,
     // @param shared_nibbles
     // @param next_node
     // @param nibbles_skip Number of nibbles to skip in shared nibbles
@@ -55,8 +57,10 @@ impl MPTImpl of MPTTrait {
         let mut proof_index: usize = 0;
         let mut key_pow2: u256 = pow(2, (key_len.into() - 1) * 4);
 
+        let proof_len = proof.len();
+
         loop {
-            if proof_index == proof.len() {
+            if proof_index == proof_len {
                 break Result::Err('Proof reached end');
             }
 
@@ -65,10 +69,22 @@ impl MPTImpl of MPTTrait {
             let hash = MPTTrait::hash_rlp_node(node);
             assert(hash == current_hash, 'Element not matching');
 
-            let decoded = match MPTTrait::decode_rlp_node(node) {
-                Result::Ok(decoded) => decoded,
-                Result::Err(e) => {
-                    break Result::Err(e);
+            // If it's not the last node and more than 9 words, it must be a branch node
+            let decoded = if proof_index != proof_len - 1 && node.len() > 9 {
+                let current_nibble = (key / key_pow2) & 0xf;
+                // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
+                match MPTTrait::lazy_rlp_decode_branch_node(node, current_nibble.try_into().unwrap()) {
+                    Result::Ok(decoded) => decoded,
+                    Result::Err(e) => {
+                        break Result::Err(e);
+                    }
+                }
+            } else {
+                match MPTTrait::decode_rlp_node(node) {
+                    Result::Ok(decoded) => decoded,
+                    Result::Err(e) => {
+                        break Result::Err(e);
+                    }
                 }
             };
             match decoded {
@@ -94,6 +110,10 @@ impl MPTImpl of MPTTrait {
                                 }
                             }
                         };
+                    key_pow2 = key_pow2 / 16;
+                },
+                MPTNode::LazyBranch(next_node) => {
+                    current_hash = next_node;
                     key_pow2 = key_pow2 / 16;
                 },
                 MPTNode::Extension((
@@ -252,76 +272,19 @@ impl MPTImpl of MPTTrait {
         }
     }
 
+    
+    fn lazy_rlp_decode_branch_node(rlp: Words64, current_nibble: u8) -> Result<MPTNode, felt252> {
+        let hash_words = rlp_decode_list_lazy(rlp, array![current_nibble.into()].span())?;
+        match (*hash_words.at(0)).try_into() {
+            Option::Some(h) => Result::Ok(MPTNode::LazyBranch(h)),
+            Option::None(_) => Result::Err('Invalid hash')
+        }
+    }
+
     // @notice keccak256 hashes an RLP encoded node
     // @param rlp RLP encoded node
     // @return keccak256 hash of the node
     fn hash_rlp_node(rlp: Words64) -> u256 {
         keccak_cairo_words64(rlp)
-    }
-}
-
-impl MPTNodePartialEq of PartialEq<MPTNode> {
-    fn eq(lhs: @MPTNode, rhs: @MPTNode) -> bool {
-        match lhs {
-            MPTNode::Branch((
-                lhs_nibbles, lhs_value
-            )) => {
-                match rhs {
-                    MPTNode::Branch((
-                        rhs_nibbles, rhs_value
-                    )) => {
-                        if (*lhs_nibbles).len() != (*rhs_nibbles).len() {
-                            return false;
-                        }
-                        let mut i: usize = 0;
-                        loop {
-                            if i >= (*lhs_nibbles).len() {
-                                break lhs_value == rhs_value;
-                            }
-                            if (*lhs_nibbles).at(i) != (*rhs_nibbles).at(i) {
-                                break false;
-                            }
-                            i += 1;
-                        }
-                    },
-                    MPTNode::Extension(_) => false,
-                    MPTNode::Leaf(_) => false
-                }
-            },
-            MPTNode::Extension((
-                lhs_shared_nibbles, lhs_next_node, lhs_nibbles_skip
-            )) => {
-                match rhs {
-                    MPTNode::Branch(_) => false,
-                    MPTNode::Extension((
-                        rhs_shared_nibbles, rhs_next_node, rhs_nibbles_skip
-                    )) => {
-                        lhs_shared_nibbles == rhs_shared_nibbles
-                            && lhs_next_node == rhs_next_node
-                            && lhs_nibbles_skip == rhs_nibbles_skip
-                    },
-                    MPTNode::Leaf(_) => false
-                }
-            },
-            MPTNode::Leaf((
-                lhs_key_end, lhs_value, lhs_nibbles_skip
-            )) => {
-                match rhs {
-                    MPTNode::Branch(_) => false,
-                    MPTNode::Extension(_) => false,
-                    MPTNode::Leaf((
-                        rhs_key_end, rhs_value, rhs_nibbles_skip
-                    )) => {
-                        lhs_key_end == rhs_key_end
-                            && lhs_value == rhs_value
-                            && lhs_nibbles_skip == rhs_nibbles_skip
-                    }
-                }
-            }
-        }
-    }
-
-    fn ne(lhs: @MPTNode, rhs: @MPTNode) -> bool {
-        !(lhs == rhs)
     }
 }
