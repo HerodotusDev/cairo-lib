@@ -251,3 +251,21 @@ fn test_attack_forge_peaks() {
 
     assert(res.is_err(), 'attack success: forged peak');
 }
+
+#[test]
+#[available_gas(99999999)]
+fn test_attack_forge_verify() {
+    let elem1 = PoseidonHasher::hash_single(1);
+    let elem2 = PoseidonHasher::hash_single(2);
+    let elem3 = PoseidonHasher::hash_double(elem1, elem2);
+    let elem4 = PoseidonHasher::hash_single(4);
+
+    let mmr = MMRTrait::new(
+        root: PoseidonHasher::hash_double(4, PoseidonHasher::hash_double(elem3, elem4)), last_pos: 4
+    );
+
+    let proof = array![].span();
+    let peaks = array![elem3, elem4].span();
+
+    assert(mmr.verify_proof(1, elem4, peaks, proof).unwrap() == false, 'Attack successful forged verify');
+}
