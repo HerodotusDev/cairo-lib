@@ -193,6 +193,10 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
             },
             RLPType::StringLong(()) => {
                 let len_len = prefix - 0xb7;
+
+                let current_word = (current_input_index + 1) / 8;
+                let current_word_offset = 7 - ((current_input_index + 1) % 8);
+
                 let len_span = input.slice_le(current_word * 8 + current_word_offset, len_len.try_into().unwrap());
                 // Enough to store 4.29 GB (fits in u32)
                 assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
