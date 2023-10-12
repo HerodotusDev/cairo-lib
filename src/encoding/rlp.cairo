@@ -47,7 +47,6 @@ enum RLPItem {
 // @notice RLP decodes a rlp encoded byte array
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 // @param input RLP encoded input, in little endian 64 bits words
-// @param lazy If Some, will only decode the specified indexes. If it is not a list, it will always be decoded fully
 // @return Result with RLPItem and size of the decoded item
 fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
     // It's guaranteed to fid in 32 bits, as we are masking with 0xff
@@ -143,7 +142,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt
     }
 }
 
-fn rlp_decode_list_lazy(ref input: Words64, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
+fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
     let mut output = ArrayTrait::new();
     let mut lazy_index = 0;
 
@@ -167,9 +166,6 @@ fn rlp_decode_list_lazy(ref input: Words64, lazy: Span<usize>) -> Result<Span<Wo
             (1 + len_len, len)
         }
     };
-
-
-    let mut current_input_index = 0;
 
     loop {
         if output.len() == lazy.len() {
@@ -197,7 +193,7 @@ fn rlp_decode_list_lazy(ref input: Words64, lazy: Span<usize>) -> Result<Span<Wo
             },
             RLPType::StringLong(()) => {
                 let len_len = prefix - 0xb7;
-                let len_span = input.slice_le(current_word + current_word_offset, len_len.try_into().unwrap());
+                let len_span = input.slice_le(current_word * 8 + current_word_offset, len_len.try_into().unwrap());
                 // Enough to store 4.29 GB (fits in u32)
                 assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
@@ -218,7 +214,9 @@ fn rlp_decode_list_lazy(ref input: Words64, lazy: Span<usize>) -> Result<Span<Wo
         
         current_input_index += item_start_skip.try_into().unwrap();
         if span_contains(lazy, lazy_index) {
-            let start = current_input_index / 8 + (7 - (current_input_index % 8));
+            let current_word = current_input_index / 8;
+            let current_word_offset = 7 - (current_input_index % 8);
+            let start = current_word * 8 + current_word_offset;
             let decoded = input.slice_le(start, item_len.try_into().unwrap());
             output.append(decoded);
         }
