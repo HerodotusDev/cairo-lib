@@ -77,3 +77,29 @@ fn mmr_size_to_leaf_count(n: u32) -> u32 {
 fn leaf_count_to_peaks_count(leaf_count: u32) -> u32 {
     count_ones(leaf_count)
 }
+
+
+// @notice Get peak size and index of the peak the element is in
+// @param elements_count The size of the MMR (number of elements in the MMR)
+// @param element_index The index of the element in the MMR
+// @return (peak index, peak height)
+fn get_peak_info(elements_count: u32, element_index: u32) -> (u32, u32) {
+    let mut elements_count = elements_count;
+    let mut element_index = element_index;
+
+    let mut mountain_height = bit_length(elements_count);
+    let mut mountain_elements_count = pow(2, mountain_height) - 1;
+    let mut mountain_index = 0;
+    loop {
+        if mountain_elements_count <= elements_count {
+            if element_index <= mountain_elements_count {
+                break (mountain_index, mountain_height - 1);
+            }
+            elements_count -= mountain_elements_count;
+            element_index -= mountain_elements_count;
+            mountain_index += 1;
+        }
+        mountain_height -= 1;
+        mountain_elements_count /= 2;
+    }
+}
