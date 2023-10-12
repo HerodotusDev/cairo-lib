@@ -1,7 +1,7 @@
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
 use cairo_lib::data_structures::mmr::utils::{
-    compute_root, get_height, mmr_size_to_leaf_count, leaf_count_to_peaks_count, trailing_ones
+    compute_root, get_height, mmr_size_to_leaf_count, leaf_count_to_peaks_count, trailing_ones, get_peak_info
 };
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
@@ -93,8 +93,14 @@ impl MMRImpl of MMRTrait {
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');
         }
+        let (peak_index, peak_height) = get_peak_info(*self.last_pos, index);
+
+        if proof.len() != peak_height {
+            return Result::Ok(false);
+        }
 
         let peak = proof.compute_peak(index, hash);
-        Result::Ok(peaks.contains_peak(peak))
+
+        Result::Ok(*peaks.at(peak_index) == peak)
     }
 }
