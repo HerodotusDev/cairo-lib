@@ -21,18 +21,19 @@ impl MPTDefault of Default<MPT> {
 // @notice Represents a node in the MPT
 #[derive(Drop, PartialEq)]
 enum MPTNode {
-    // @param 16 hashes of children
-    // @param Value of the node
+    // @param hashes 16 hashes of children
+    // @param value value of the node
     Branch: (Span<Words64>, Words64),
-    // @param hash of the next node
+    // @param hash hash of the next node
     LazyBranch: u256,
     // @param shared_nibbles
     // @param next_node
-    // @param nibbles_skip Number of nibbles to skip in shared nibbles
+    // @param nibbles_skip number of nibbles to skip in shared nibbles
     Extension: (Words64, u256, usize),
     // @param key_end
-    // @param value of the node
-    // @param nibbles_skip Number of nibbles to skip in the key end
+    // @param value value of the node
+    // @param nibbles_skip number of nibbles to skip in the key end
+    // @param n_nibbles number of nibbles in key_end
     Leaf: (Words64, Words64, usize)
 }
 
@@ -237,33 +238,35 @@ impl MPTImpl of MPTTrait {
                     let mut i: usize = 0;
                     loop {
                         if i == 16 {
-                            let value = *l.at(16);
+                            let (value, _) = *l.at(16);
                             break Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)));
                         }
 
-                        nibble_hashes.append(*l.at(i));
+                        let (current_hash, _) = (*l.at(i));
+                        nibble_hashes.append(current_hash);
                         i += 1;
                     }
                 } else if len == 2 {
-                    let first = *l.at(0);
+                    let (first, _) = *l.at(0);
+                    let (second, _) = *l.at(1);
                     // Unwrap impossible to fail, as we are making with 0xff, meaning the result always fits in a byte
                     let prefix_byte: Byte = (*first.at(0) & 0xff).try_into().unwrap();
                     let (prefix, _) = prefix_byte.extract_nibbles();
 
                     if prefix == 0 {
-                        match (*l.at(1)).try_into() {
+                        match second.try_into() {
                             Option::Some(n) => Result::Ok(MPTNode::Extension((first, n, 2))),
                             Option::None(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
-                        match (*l.at(1)).try_into() {
+                        match second.try_into() {
                             Option::Some(n) => Result::Ok(MPTNode::Extension((first, n, 1))),
                             Option::None(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 2 {
-                        Result::Ok(MPTNode::Leaf((first, *l.at(1), 2)))
+                        Result::Ok(MPTNode::Leaf((first, second, 2)))
                     } else if prefix == 3 {
-                        Result::Ok(MPTNode::Leaf((first, *l.at(1), 1)))
+                        Result::Ok(MPTNode::Leaf((first, second, 1)))
                     } else {
                         Result::Err('Invalid RLP prefix')
                     }
