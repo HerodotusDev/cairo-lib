@@ -1,5 +1,6 @@
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64, pow2};
 use cairo_lib::utils::types::byte::Byte;
+use cairo_lib::utils::array::span_contains;
 
 // @notice Enum with all possible RLP types
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
@@ -138,6 +139,95 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt
             }
         }
         i += decoded_len;
+    }
+}
+
+fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
+    let mut output = ArrayTrait::new();
+    let mut lazy_index = 0;
+
+    let list_prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
+    let list_type = RLPTypeTrait::from_byte(list_prefix.try_into().unwrap()).unwrap();
+    let (mut current_input_index, len) = match list_type {
+        RLPType::String(()) => { return Result::Err('Not a list'); },
+        RLPType::StringShort(()) => { return Result::Err('Not a list'); },
+        RLPType::StringLong(()) => { return Result::Err('Not a list'); },
+        RLPType::ListShort(()) => (1, list_prefix - 0xc0),
+        RLPType::ListLong(()) => {
+            let len_len = list_prefix - 0xf7;
+            let len_span = input.slice_le(6, len_len);
+            // Enough to store 4.29 GB (fits in u32)
+            assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
+
+            // len fits in 32 bits, confirmed by previous assertion
+            let len = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.into()))
+                .try_into()
+                .unwrap();
+            (1 + len_len, len)
+        }
+    };
+
+    loop {
+        if output.len() == lazy.len() {
+            break Result::Ok(output.span());
+        }
+        
+        if current_input_index >= len {
+            break Result::Err('Too many items to decode');
+        }
+
+        let current_word = current_input_index / 8;
+        let current_word_offset = 7 - (current_input_index % 8);
+
+        let pow2_shift = pow2((7 - current_word_offset) * 8);
+        let prefix = (*input.at(current_word) / pow2_shift) & 0xff;
+
+        let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
+        let (item_start_skip, item_len) = match rlp_type {
+            RLPType::String(()) => {
+                (0, 1)
+            },
+            RLPType::StringShort(()) => {
+                let len = prefix - 0x80;
+                (1, len)
+            },
+            RLPType::StringLong(()) => {
+                let len_len = prefix - 0xb7;
+
+                let current_word = (current_input_index + 1) / 8;
+                let current_word_offset = 7 - ((current_input_index + 1) % 8);
+
+                let len_span = input.slice_le(current_word * 8 + current_word_offset, len_len.try_into().unwrap());
+                // Enough to store 4.29 GB (fits in u32)
+                assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
+
+                // len fits in 32 bits, confirmed by previous assertion
+                let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.try_into().unwrap()))
+                    .try_into()
+                    .unwrap();
+
+                (1 + len_len, len.into())
+            },
+            RLPType::ListShort(()) => {
+                panic_with_felt252('Recursive list not supported')
+            },
+            RLPType::ListLong(()) => {
+                panic_with_felt252('Recursive list not supported')
+            }
+        };
+        
+        current_input_index += item_start_skip.try_into().unwrap();
+        if span_contains(lazy, lazy_index) {
+            let current_word = current_input_index / 8;
+            let current_word_offset = 7 - (current_input_index % 8);
+            let start = current_word * 8 + current_word_offset;
+            let decoded = input.slice_le(start, item_len.try_into().unwrap());
+            output.append(decoded);
+        }
+
+        current_input_index += item_len.try_into().unwrap();
+
+        lazy_index += 1;
     }
 }
 
