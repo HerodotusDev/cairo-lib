@@ -237,7 +237,7 @@ fn test_decode_rlp_node_leaf_odd() {
     ];
 
     let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
-    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 1));
+    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 1, 57));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
 
@@ -276,7 +276,7 @@ fn test_decode_rlp_node_leaf_even() {
     ];
 
     let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
-    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 2));
+    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 2, 56));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
 
