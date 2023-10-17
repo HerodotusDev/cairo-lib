@@ -149,9 +149,15 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
     let list_prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
     let list_type = RLPTypeTrait::from_byte(list_prefix.try_into().unwrap()).unwrap();
     let (mut current_input_index, len) = match list_type {
-        RLPType::String(()) => { return Result::Err('Not a list'); },
-        RLPType::StringShort(()) => { return Result::Err('Not a list'); },
-        RLPType::StringLong(()) => { return Result::Err('Not a list'); },
+        RLPType::String(()) => {
+            return Result::Err('Not a list');
+        },
+        RLPType::StringShort(()) => {
+            return Result::Err('Not a list');
+        },
+        RLPType::StringLong(()) => {
+            return Result::Err('Not a list');
+        },
         RLPType::ListShort(()) => (1, list_prefix - 0xc0),
         RLPType::ListLong(()) => {
             let len_len = list_prefix - 0xf7;
@@ -171,7 +177,7 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
         if output.len() == lazy.len() {
             break Result::Ok(output.span());
         }
-        
+
         if current_input_index >= len {
             break Result::Err('Too many items to decode');
         }
@@ -197,12 +203,15 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
                 let current_word = (current_input_index + 1) / 8;
                 let current_word_offset = 7 - ((current_input_index + 1) % 8);
 
-                let len_span = input.slice_le(current_word * 8 + current_word_offset, len_len.try_into().unwrap());
+                let len_span = input
+                    .slice_le(current_word * 8 + current_word_offset, len_len.try_into().unwrap());
                 // Enough to store 4.29 GB (fits in u32)
                 assert(len_span.len() == 1 && *len_span.at(0) <= 0xffffffff, 'Len of len too big');
 
                 // len fits in 32 bits, confirmed by previous assertion
-                let len: u32 = reverse_endianness_u64(*len_span.at(0), Option::Some(len_len.try_into().unwrap()))
+                let len: u32 = reverse_endianness_u64(
+                    *len_span.at(0), Option::Some(len_len.try_into().unwrap())
+                )
                     .try_into()
                     .unwrap();
 
@@ -215,7 +224,7 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
                 panic_with_felt252('Recursive list not supported')
             }
         };
-        
+
         current_input_index += item_start_skip.try_into().unwrap();
         if span_contains(lazy, lazy_index) {
             let current_word = current_input_index / 8;

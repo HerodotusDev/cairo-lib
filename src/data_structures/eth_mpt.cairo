@@ -73,7 +73,9 @@ impl MPTImpl of MPTTrait {
             let decoded = if proof_index != proof_len - 1 && node.len() > 9 {
                 let current_nibble = (key / key_pow2) & 0xf;
                 // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
-                match MPTTrait::lazy_rlp_decode_branch_node(node, current_nibble.try_into().unwrap()) {
+                match MPTTrait::lazy_rlp_decode_branch_node(
+                    node, current_nibble.try_into().unwrap()
+                ) {
                     Result::Ok(decoded) => decoded,
                     Result::Err(e) => {
                         break Result::Err(e);
@@ -272,7 +274,7 @@ impl MPTImpl of MPTTrait {
         }
     }
 
-    
+
     fn lazy_rlp_decode_branch_node(rlp: Words64, current_nibble: u8) -> Result<MPTNode, felt252> {
         let hash_words = rlp_decode_list_lazy(rlp, array![current_nibble.into()].span())?;
         match (*hash_words.at(0)).try_into() {
