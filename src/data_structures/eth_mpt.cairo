@@ -265,12 +265,16 @@ impl MPTImpl of MPTTrait {
 
                     if prefix == 0 {
                         match second.try_into() {
-                            Option::Some(n) => Result::Ok(MPTNode::Extension((first, n, 2, n_nibbles - 1))),
+                            Option::Some(n) => Result::Ok(
+                                MPTNode::Extension((first, n, 2, n_nibbles - 1))
+                            ),
                             Option::None(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
                         match second.try_into() {
-                            Option::Some(n) => Result::Ok(MPTNode::Extension((first, n, 1, n_nibbles))),
+                            Option::Some(n) => Result::Ok(
+                                MPTNode::Extension((first, n, 1, n_nibbles))
+                            ),
                             Option::None(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 2 {

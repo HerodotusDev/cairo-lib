@@ -1,10 +1,16 @@
 use cairo_lib::utils::types::words64::{Words64, bytes_used_u64};
 use keccak::cairo_keccak;
 
+const EMPTY_KECCAK: u256 = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+
 // @notice Wrapper arround cairo_keccak that format the input for compatibility with EVM
 // @param words The input data, as a list of 64-bit little-endian words
 // @return The keccak hash of the input, matching the output of the EVM's keccak256 opcode
 fn keccak_cairo_words64(words: Words64) -> u256 {
+    if words.is_empty() {
+        return EMPTY_KECCAK;
+    }
+
     let n = words.len();
 
     let mut keccak_input = ArrayTrait::new();
