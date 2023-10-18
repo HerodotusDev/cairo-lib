@@ -166,23 +166,25 @@ fn test_rlp_decode_short_list() {
 #[available_gas(99999999)]
 fn test_rlp_lazy_decode_short_list() {
     let mut arr = array![0x45834289353583c9, 0x9238];
+    let rlp_byte_len = 10;
 
     let res = rlp_decode_list_lazy(arr.span(), array![].span()).unwrap();
-    assert(res.is_empty(), 'Wrong value indexes: empty');
+    let expected_res = (RLPItem::List(array![].span()), rlp_byte_len);
+    assert(res == expected_res, 'Wrong value indexes: empty');
 
     let res = rlp_decode_list_lazy(arr.span(), array![1].span()).unwrap();
-    let expected_res = array![array![0x42].span()].span();
+    let expected_res = (RLPItem::List(array![(array![0x42].span(), 1)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 1');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0, 1, 2].span()).unwrap();
-    let mut expected_res = array![
-        array![0x893535].span(), array![0x42].span(), array![0x923845].span()
+    let mut expected_res = (RLPItem::List(array![
+        (array![0x893535].span(), 3), (array![0x42].span(), 1), (array![0x923845].span(), 3)
     ]
-        .span();
+        .span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value: indexes: 0, 1, 2');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0, 2].span()).unwrap();
-    let mut expected_res = array![array![0x893535].span(), array![0x923845].span()].span();
+    let mut expected_res = (RLPItem::List(array![(array![0x893535].span(), 3), (array![0x923845].span(), 3)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value: indexes: 0, 2');
 }
 
@@ -421,6 +423,7 @@ fn test_rlp_lazy_decode_long_list() {
         0x8fea4837d02e2498,
         0x805fb3e2
     ];
+    let rlp_byte_len = 66 * 8 + 4;
 
     let mut expected_res_full = array![
         array![0x1b7a06b509cf7077, 0x75818924a962df35, 0xb4cd681fadecaece, 0xf44ac1730c4044a8]
@@ -460,25 +463,26 @@ fn test_rlp_lazy_decode_long_list() {
     ];
 
     let res = rlp_decode_list_lazy(arr.span(), array![].span()).unwrap();
-    assert(res.is_empty(), 'Wrong value indexes: empty');
+    let expected_res = (RLPItem::List(array![].span()), rlp_byte_len);
+    assert(res == expected_res, 'Wrong value indexes: empty');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0].span()).unwrap();
-    let expected_res = array![*expected_res_full.at(0)].span();
+    let expected_res = (RLPItem::List(array![(*expected_res_full.at(0), 32)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 0');
 
     let res = rlp_decode_list_lazy(arr.span(), array![1].span()).unwrap();
-    let expected_res = array![*expected_res_full.at(1)].span();
+    let expected_res = (RLPItem::List(array![(*expected_res_full.at(1), 32)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 1');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0xa].span()).unwrap();
-    let expected_res = array![*expected_res_full.at(0xa)].span();
+    let expected_res = (RLPItem::List(array![(*expected_res_full.at(0xa), 32)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 10');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0x5, 0x9, 0xf].span()).unwrap();
-    let expected_res = array![
-        *expected_res_full.at(0x5), *expected_res_full.at(0x9), *expected_res_full.at(0xf)
+    let expected_res = (RLPItem::List(array![
+        (*expected_res_full.at(0x5), 32), (*expected_res_full.at(0x9), 32), (*expected_res_full.at(0xf), 32)
     ]
-        .span();
+        .span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 5, 9, 15');
 }
 
@@ -544,6 +548,7 @@ fn test_rlp_lazy_decode_list_long_string() {
         0x5663776535476567,
         0xfa77645733,
     ];
+    let rlp_byte_len = 11 * 8 + 5;
 
     let expected_res_full = array![
         array![0x57b94f7235e356ac, 0x1d27207f0b03476f, 0x3aab1f4760f75aaf, 0xed276fa9c2173ae5,]
@@ -561,17 +566,18 @@ fn test_rlp_lazy_decode_list_long_string() {
     ];
 
     let res = rlp_decode_list_lazy(arr.span(), array![].span()).unwrap();
-    assert(res.is_empty(), 'Wrong value indexes: empty');
+    let expected_res = (RLPItem::List(array![].span()), rlp_byte_len);
+    assert(res == expected_res, 'Wrong value indexes: empty');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0].span()).unwrap();
-    let expected_res = array![*expected_res_full.at(0)].span();
+    let expected_res = (RLPItem::List(array![(*expected_res_full.at(0), 32)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 0');
 
     let res = rlp_decode_list_lazy(arr.span(), array![1].span()).unwrap();
-    let expected_res = array![*expected_res_full.at(1)].span();
+    let expected_res = (RLPItem::List(array![(*expected_res_full.at(1), 56)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 1');
 
     let res = rlp_decode_list_lazy(arr.span(), array![0, 1].span()).unwrap();
-    let expected_res = array![*expected_res_full.at(0), *expected_res_full.at(1)].span();
+    let expected_res = (RLPItem::List(array![(*expected_res_full.at(0), 32), (*expected_res_full.at(1), 56)].span()), rlp_byte_len);
     assert(res == expected_res, 'Wrong value indexes: 0, 1');
 }

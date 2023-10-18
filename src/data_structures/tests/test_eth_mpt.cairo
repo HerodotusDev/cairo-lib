@@ -94,7 +94,8 @@ fn test_decode_rlp_node_branch() {
     ]
         .span();
 
-    let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
     match decoded {
         MPTNode::Branch((
             hashes, value
@@ -197,7 +198,9 @@ fn test_lazy_rlp_node_branch() {
 
     let expected = 0xE7420366C27811B1DAB792630039C1CB6B504B4ED003E19E05B055663B68B020;
 
-    let decoded = MPTTrait::lazy_rlp_decode_branch_node(rlp_node.span(), 0xa).unwrap();
+    let (decoded, rlp_byte_len) = MPTTrait::lazy_rlp_decode_branch_node(rlp_node.span(), 0xa).unwrap();
+    assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
+
     let expected_node = MPTNode::LazyBranch(expected);
     assert(decoded == expected_node, 'Lazy branch node diffes');
 }
@@ -236,7 +239,9 @@ fn test_decode_rlp_node_leaf_odd() {
         0xc71a5df8340f
     ];
 
-    let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    assert(rlp_byte_len == 13 * 8, 'Wrong RLP len');
+
     let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 1, 57));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
@@ -275,7 +280,9 @@ fn test_decode_rlp_node_leaf_even() {
         0xc71a5df8340f
     ];
 
-    let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    assert(rlp_byte_len == 13 * 8, 'Wrong RLP len');
+
     let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 2, 56));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
@@ -299,7 +306,7 @@ fn test_hash_rlp_node() {
         0xc71a5df8340f6249
     ];
 
-    let hash = MPTTrait::hash_rlp_node(rlp_node.span());
+    let hash = MPTTrait::hash_rlp_node(rlp_node.span(), 8);
     assert(
         hash == 0x035F9A54E8BEE015293EB9791C7FEC6A4A111DB8B32464597B6F8E63B1167FA1,
         'Wrong node rlp hash'

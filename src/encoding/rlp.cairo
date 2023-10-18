@@ -142,7 +142,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usiz
     }
 }
 
-fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words64>, felt252> {
+fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, usize), felt252> {
     let mut output = ArrayTrait::new();
     let mut lazy_index = 0;
 
@@ -173,9 +173,11 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
         }
     };
 
+    let rlp_byte_len = current_input_index + len;
+
     loop {
         if output.len() == lazy.len() {
-            break Result::Ok(output.span());
+            break Result::Ok((RLPItem::List(output.span()), rlp_byte_len));
         }
 
         if current_input_index >= len {
@@ -230,8 +232,10 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<Span<Words6
             let current_word = current_input_index / 8;
             let current_word_offset = 7 - (current_input_index % 8);
             let start = current_word * 8 + current_word_offset;
-            let decoded = input.slice_le(start, item_len.try_into().unwrap());
-            output.append(decoded);
+
+            let item_len = item_len.try_into().unwrap();
+            let decoded = input.slice_le(start, item_len);
+            output.append((decoded, item_len));
         }
 
         current_input_index += item_len.try_into().unwrap();

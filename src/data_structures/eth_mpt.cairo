@@ -68,29 +68,36 @@ impl MPTImpl of MPTTrait {
 
             let node = *proof.at(proof_index);
 
-            let hash = MPTTrait::hash_rlp_node(node);
-            assert(hash == current_hash, 'Element not matching');
-
             // If it's not the last node and more than 9 words, it must be a branch node
-            let decoded = if proof_index != proof_len - 1 && node.len() > 9 {
+            let (decoded, rlp_byte_len) = if proof_index != proof_len - 1 && node.len() > 9 {
                 let current_nibble = (key / key_pow2) & 0xf;
                 // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
                 match MPTTrait::lazy_rlp_decode_branch_node(
                     node, current_nibble.try_into().unwrap()
                 ) {
-                    Result::Ok(decoded) => decoded,
+                    Result::Ok(d) => d,
                     Result::Err(e) => {
                         break Result::Err(e);
                     }
                 }
             } else {
                 match MPTTrait::decode_rlp_node(node) {
-                    Result::Ok(decoded) => decoded,
+                    Result::Ok(d) => d,
                     Result::Err(e) => {
                         break Result::Err(e);
                     }
                 }
             };
+
+
+            let mut last_word_byte_len = rlp_byte_len % 8;
+            if last_word_byte_len == 0 {
+                last_word_byte_len = 8;
+            }
+
+            let hash = MPTTrait::hash_rlp_node(node, last_word_byte_len);
+            assert(hash == current_hash, 'Element not matching');
+
             match decoded {
                 MPTNode::Branch((
                     nibbles, value
@@ -234,9 +241,9 @@ impl MPTImpl of MPTTrait {
 
     // @notice Decodes an RLP encoded node
     // @param rlp RLP encoded node
-    // @return Result with the decoded node
-    fn decode_rlp_node(rlp: Words64) -> Result<MPTNode, felt252> {
-        let (item, _) = rlp_decode(rlp)?;
+    // @return Result with the decoded node and the RLP byte length
+    fn decode_rlp_node(rlp: Words64) -> Result<(MPTNode, usize), felt252> {
+        let (item, rlp_byte_len) = rlp_decode(rlp)?;
         match item {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {
@@ -247,7 +254,7 @@ impl MPTImpl of MPTTrait {
                     loop {
                         if i == 16 {
                             let (value, _) = *l.at(16);
-                            break Result::Ok(MPTNode::Branch((nibble_hashes.span(), value)));
+                            break Result::Ok((MPTNode::Branch((nibble_hashes.span(), value)), rlp_byte_len));
                         }
 
                         let (current_hash, _) = (*l.at(i));
@@ -266,21 +273,21 @@ impl MPTImpl of MPTTrait {
                     if prefix == 0 {
                         match second.try_into() {
                             Option::Some(n) => Result::Ok(
-                                MPTNode::Extension((first, n, 2, n_nibbles - 1))
+                                (MPTNode::Extension((first, n, 2, n_nibbles - 1)), rlp_byte_len)
                             ),
                             Option::None(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
                         match second.try_into() {
                             Option::Some(n) => Result::Ok(
-                                MPTNode::Extension((first, n, 1, n_nibbles))
+                                (MPTNode::Extension((first, n, 1, n_nibbles)), rlp_byte_len)
                             ),
                             Option::None(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 2 {
-                        Result::Ok(MPTNode::Leaf((first, second, 2, n_nibbles - 1)))
+                        Result::Ok((MPTNode::Leaf((first, second, 2, n_nibbles - 1)), rlp_byte_len))
                     } else if prefix == 3 {
-                        Result::Ok(MPTNode::Leaf((first, second, 1, n_nibbles)))
+                        Result::Ok((MPTNode::Leaf((first, second, 1, n_nibbles)), rlp_byte_len))
                     } else {
                         Result::Err('Invalid RLP prefix')
                     }
@@ -292,18 +299,25 @@ impl MPTImpl of MPTTrait {
     }
 
 
-    fn lazy_rlp_decode_branch_node(rlp: Words64, current_nibble: u8) -> Result<MPTNode, felt252> {
-        let hash_words = rlp_decode_list_lazy(rlp, array![current_nibble.into()].span())?;
-        match (*hash_words.at(0)).try_into() {
-            Option::Some(h) => Result::Ok(MPTNode::LazyBranch(h)),
-            Option::None(_) => Result::Err('Invalid hash')
+    fn lazy_rlp_decode_branch_node(rlp: Words64, current_nibble: u8) -> Result<(MPTNode, usize), felt252> {
+        let (lazy_item, rlp_byte_len) = rlp_decode_list_lazy(rlp, array![current_nibble.into()].span())?;
+        match lazy_item {
+            RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
+            RLPItem::List(l) => {
+                let (hash_words, _) = *l.at(0);
+                match (hash_words).try_into() {
+                    Option::Some(h) => Result::Ok((MPTNode::LazyBranch(h), rlp_byte_len)),
+                    Option::None(_) => Result::Err('Invalid hash')
+                }
+            }
         }
     }
 
     // @notice keccak256 hashes an RLP encoded node
     // @param rlp RLP encoded node
+    // @param last_word_bytes number of bytes in the last worf of the RLP encoded node
     // @return keccak256 hash of the node
-    fn hash_rlp_node(rlp: Words64) -> u256 {
-        keccak_cairo_words64(rlp)
+    fn hash_rlp_node(rlp: Words64, last_word_bytes: usize) -> u256 {
+        keccak_cairo_words64(rlp, last_word_bytes)
     }
 }
