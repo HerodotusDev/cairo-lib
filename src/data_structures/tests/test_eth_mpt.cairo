@@ -198,7 +198,8 @@ fn test_lazy_rlp_node_branch() {
 
     let expected = 0xE7420366C27811B1DAB792630039C1CB6B504B4ED003E19E05B055663B68B020;
 
-    let (decoded, rlp_byte_len) = MPTTrait::lazy_rlp_decode_branch_node(rlp_node.span(), 0xa).unwrap();
+    let (decoded, rlp_byte_len) = MPTTrait::lazy_rlp_decode_branch_node(rlp_node.span(), 0xa)
+        .unwrap();
     assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
 
     let expected_node = MPTNode::LazyBranch(expected);

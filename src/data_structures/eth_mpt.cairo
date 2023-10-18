@@ -89,7 +89,6 @@ impl MPTImpl of MPTTrait {
                 }
             };
 
-
             let mut last_word_byte_len = rlp_byte_len % 8;
             if last_word_byte_len == 0 {
                 last_word_byte_len = 8;
@@ -254,7 +253,9 @@ impl MPTImpl of MPTTrait {
                     loop {
                         if i == 16 {
                             let (value, _) = *l.at(16);
-                            break Result::Ok((MPTNode::Branch((nibble_hashes.span(), value)), rlp_byte_len));
+                            break Result::Ok(
+                                (MPTNode::Branch((nibble_hashes.span(), value)), rlp_byte_len)
+                            );
                         }
 
                         let (current_hash, _) = (*l.at(i));
@@ -299,8 +300,12 @@ impl MPTImpl of MPTTrait {
     }
 
 
-    fn lazy_rlp_decode_branch_node(rlp: Words64, current_nibble: u8) -> Result<(MPTNode, usize), felt252> {
-        let (lazy_item, rlp_byte_len) = rlp_decode_list_lazy(rlp, array![current_nibble.into()].span())?;
+    fn lazy_rlp_decode_branch_node(
+        rlp: Words64, current_nibble: u8
+    ) -> Result<(MPTNode, usize), felt252> {
+        let (lazy_item, rlp_byte_len) = rlp_decode_list_lazy(
+            rlp, array![current_nibble.into()].span()
+        )?;
         match lazy_item {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {

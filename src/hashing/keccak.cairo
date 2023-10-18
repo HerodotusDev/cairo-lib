@@ -11,7 +11,7 @@ fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
     if words.is_empty() {
         return EMPTY_KECCAK;
     }
-    
+
     let n = words.len();
     let mut keccak_input = ArrayTrait::new();
     let mut i: usize = 0;
@@ -30,5 +30,4 @@ fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
     } else {
         cairo_keccak(ref keccak_input, last, last_word_bytes)
     }
-
 }
