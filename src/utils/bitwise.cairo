@@ -61,7 +61,7 @@ fn bit_length<
     let mut bit_position = TZeroable::zero();
     let mut cur_n = num;
     let two = TOneable::one() + TOneable::one();
-    
+
     loop {
         if cur_n == TZeroable::zero() {
             break ();
