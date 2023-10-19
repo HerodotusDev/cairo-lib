@@ -50,7 +50,6 @@ fn bit_length<
     T,
     impl TZeroable: Zeroable<T>,
     impl TOneable: Oneable<T>,
-    impl TPartialEq: PartialEq<T>,
     impl TAddImpl: Add<T>,
     impl TDiv: Div<T>,
     impl TCopy: Copy<T>,
@@ -63,7 +62,7 @@ fn bit_length<
     let two = TOneable::one() + TOneable::one();
 
     loop {
-        if cur_n == TZeroable::zero() {
+        if cur_n.is_zero() {
             break ();
         };
         bit_position = bit_position + TOneable::one();
