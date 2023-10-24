@@ -173,7 +173,10 @@ fn bytes_used_u64(val: u64) -> usize {
 // @return The reversed value
 fn reverse_endianness_u64(input: u64, significant_bytes: Option<u32>) -> u64 {
     let sb = match significant_bytes {
-        Option::Some(x) => x,
+        Option::Some(x) => {
+            assert(x <= 8, 'Invalid significant bytes');
+            x
+        },
         Option::None(()) => 8
     };
 
