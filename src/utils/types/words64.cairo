@@ -1,4 +1,4 @@
-use cairo_lib::utils::bitwise::{left_shift, right_shift};
+use cairo_lib::utils::bitwise::left_shift;
 
 // @notice Represents a span of 64 bit words
 // @dev In many cases it's expected that the words are in little endian, but the overall order is big endian
@@ -30,7 +30,7 @@ impl Words64TryIntoU256LE of TryInto<Words64, u256> {
             }
 
             // left shift and add
-            output = output | (*self.at(i)).into() * *pows.at(i - 1);
+            output = output | ((*self.at(i)).into() * *pows.at(i - 1));
 
             i += 1;
         }
