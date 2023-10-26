@@ -38,15 +38,15 @@ impl RLPTypeImpl of RLPTypeTrait {
 // @notice Represent a RLP item
 #[derive(Drop)]
 enum RLPItem {
-    Bytes: Words64,
+    Bytes: (Words64, usize),
     // Should be Span<RLPItem> to allow for any depth/recursion, not yet supported by the compiler
-    List: Span<Words64>
+    List: Span<(Words64, usize)>
 }
 
 // @notice RLP decodes a rlp encoded byte array
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 // @param input RLP encoded input, in little endian 64 bits words
-// @return Result with RLPItem and size of the decoded item
+// @return Result with RLPItem and size of the encoded item
 fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
     // It's guaranteed to fid in 32 bits, as we are masking with 0xff
     let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
@@ -56,13 +56,13 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
     match rlp_type {
         RLPType::String(()) => {
             let mut arr = array![prefix.into()];
-            Result::Ok((RLPItem::Bytes(arr.span()), 1))
+            Result::Ok((RLPItem::Bytes((arr.span(), 1)), 1))
         },
         RLPType::StringShort(()) => {
             let len = prefix.into() - 0x80;
             let res = input.slice_le(6, len);
 
-            Result::Ok((RLPItem::Bytes(res), 1 + len))
+            Result::Ok((RLPItem::Bytes((res, len)), 1 + len))
         },
         RLPType::StringLong(()) => {
             let len_len = prefix - 0xb7;
@@ -76,7 +76,7 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
                 .unwrap();
             let res = input.slice_le(6 - len_len, len);
 
-            Result::Ok((RLPItem::Bytes(res), 1 + len_len + len))
+            Result::Ok((RLPItem::Bytes((res, len)), 1 + len_len + len))
         },
         RLPType::ListShort(()) => {
             let mut len = prefix - 0xc0;
@@ -106,7 +106,7 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
 // @param input RLP encoded input, in little endian 64 bits words
 // @param len Length of the input
 // @return Result with RLPItem::List
-fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<Words64>, felt252> {
+fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usize)>, felt252> {
     let mut i = 0;
     let mut output = ArrayTrait::new();
     let mut total_len = len;
