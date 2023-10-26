@@ -20,6 +20,7 @@ fn test_right_shift() {
     assert(right_shift(256_u32, 8_u32) == 1, '256 >> 8');
     assert(right_shift(512_u32, 8_u32) == 2, '512 >> 8');
     assert(right_shift(65280_u32, 8_u32) == 255, '65280 >> 8');
+    assert(right_shift(128392_u32, 33_u32) == 0, '128392 >> 33');
 }
 
 #[test]

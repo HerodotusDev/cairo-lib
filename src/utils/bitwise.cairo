@@ -29,18 +29,26 @@ fn left_shift<
 fn right_shift<
     T,
     impl TZeroable: Zeroable<T>,
+    impl TOneable: Oneable<T>,
     impl TAdd: Add<T>,
     impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
     impl TDiv: Div<T>,
-    impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
 >(
     num: T, shift: T
 ) -> T {
+    let mut num = num;
+    let mut shift = shift;
     let two = TOneable::one() + TOneable::one();
-    num / pow(two, shift)
+
+    loop {
+        if shift.is_zero() {
+            break num;
+        }
+        num = num / two;
+        shift = shift - TOneable::one();
+    }
 }
 
 // @notice Bit length of a number
