@@ -26,7 +26,7 @@ impl Words64TryIntoU256LE of TryInto<Words64, u256> {
             }
 
             // left shift and add
-            output = output | (*self.at(i)).into() * *pows.at(i - 1);
+            output = output | ((*self.at(i)).into() * *pows.at(i - 1));
 
             i += 1;
         }
