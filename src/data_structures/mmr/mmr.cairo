@@ -1,6 +1,8 @@
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
-use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
+use cairo_lib::data_structures::mmr::utils::{
+    compute_root, get_height, mmr_size_to_leaf_count, leaf_count_to_peaks_count
+};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // @notice Merkle Mountatin Range struct
@@ -34,6 +36,10 @@ impl MMRImpl of MMRTrait {
     // @param peaks The peaks of the MMR
     // @return Result with the new root and new peaks of the MMR
     fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
+        let leaf_count = mmr_size_to_leaf_count(self.last_pos.into());
+        if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
+            return Result::Err('Invalid peaks count');
+        }
         if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
         }
