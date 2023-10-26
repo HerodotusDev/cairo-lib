@@ -1,4 +1,4 @@
-use cairo_lib::utils::bitwise::{left_shift, right_shift};
+use cairo_lib::utils::bitwise::left_shift;
 
 // @notice Represents a span of 64 bit words
 // @dev In many cases it's expected that the words are in little endian, but the overall order is big endian
