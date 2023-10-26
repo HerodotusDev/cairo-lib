@@ -33,3 +33,8 @@ fn test_bit_length() {
     assert(bit_length(8_u32) == 4, 'bit length of 8 is 4');
 }
 
+#[test]
+#[available_gas(999999999)]
+fn test_bit_length_most_significant_bit_one() {
+    assert(bit_length(4294967295_u32) == 32, 'bit length of 2^32-1 is 32');
+}
