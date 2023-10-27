@@ -14,7 +14,11 @@ fn left_shift<
     impl TMul: Mul<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    impl TDrop: Drop<T>,
+    impl TDiv: Div<T>,
+    impl TRem: Rem<T>,
+    impl TPartialEq: PartialEq<T>,
+    impl TPartialOrd: PartialOrd<T>
 >(
     num: T, shift: T
 ) -> T {
