@@ -12,6 +12,10 @@ impl Words64TryIntoU256LE of TryInto<Words64, u256> {
             return Option::None(());
         }
 
+        if self.len() == 0 {
+            return Option::Some(0);
+        }
+
         let pows = array![
             0x10000000000000000, // 2 ** 64
             0x100000000000000000000000000000000, // 2 ** 128
