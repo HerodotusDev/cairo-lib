@@ -1,5 +1,5 @@
 use cairo_lib::hashing::keccak::keccak_cairo_words64;
-use cairo_lib::encoding::rlp::{RLPItem, rlp_decode};
+use cairo_lib::encoding::rlp::{RLPItem, rlp_decode, rlp_decode_list_lazy};
 use cairo_lib::utils::types::byte::{Byte, ByteTrait};
 use cairo_lib::utils::bitwise::{right_shift, left_shift};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
@@ -24,14 +24,16 @@ enum MPTNode {
     // @param hashes 16 hashes of children
     // @param value value of the node
     Branch: (Span<Words64>, Words64),
+    // @param hash hash of the next node
+    LazyBranch: u256,
     // @param shared_nibbles
     // @param next_node
     // @param nibbles_skip number of nibbles to skip in shared nibbles
     // @param n_nibbles number of shared nibbles
     Extension: (Words64, u256, usize, usize),
     // @param key_end
-    // @param value of the node
-    // @param nibbles_skip Number of nibbles to skip in the key end
+    // @param value value of the node
+    // @param nibbles_skip number of nibbles to skip in the key end
     // @param n_nibbles number of nibbles in key_end
     Leaf: (Words64, Words64, usize, usize)
 }
@@ -57,16 +59,33 @@ impl MPTImpl of MPTTrait {
         let mut proof_index: usize = 0;
         let mut key_pow2: u256 = pow(2, (key_len.into() - 1) * 4);
 
+        let proof_len = proof.len();
+
         loop {
-            if proof_index == proof.len() {
+            if proof_index == proof_len {
                 break Result::Err('Proof reached end');
             }
+
             let node = *proof.at(proof_index);
 
-            let (decoded, rlp_byte_len) = match MPTTrait::decode_rlp_node(node) {
-                Result::Ok(d) => d,
-                Result::Err(e) => {
-                    break Result::Err(e);
+            // If it's not the last node and more than 9 words, it must be a branch node
+            let (decoded, rlp_byte_len) = if proof_index != proof_len - 1 && node.len() > 9 {
+                let current_nibble = (key / key_pow2) & 0xf;
+                // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
+                match MPTTrait::lazy_rlp_decode_branch_node(
+                    node, current_nibble.try_into().unwrap()
+                ) {
+                    Result::Ok(d) => d,
+                    Result::Err(e) => {
+                        break Result::Err(e);
+                    }
+                }
+            } else {
+                match MPTTrait::decode_rlp_node(node) {
+                    Result::Ok(d) => d,
+                    Result::Err(e) => {
+                        break Result::Err(e);
+                    }
                 }
             };
 
@@ -101,6 +120,10 @@ impl MPTImpl of MPTTrait {
                                 }
                             }
                         };
+                    key_pow2 = key_pow2 / 16;
+                },
+                MPTNode::LazyBranch(next_node) => {
+                    current_hash = next_node;
                     key_pow2 = key_pow2 / 16;
                 },
                 MPTNode::Extension((
@@ -235,7 +258,7 @@ impl MPTImpl of MPTTrait {
                             );
                         }
 
-                        let (current_hash, _) = *l.at(i);
+                        let (current_hash, _) = (*l.at(i));
                         nibble_hashes.append(current_hash);
                         i += 1;
                     }
@@ -275,6 +298,26 @@ impl MPTImpl of MPTTrait {
             }
         }
     }
+
+
+    fn lazy_rlp_decode_branch_node(
+        rlp: Words64, current_nibble: u8
+    ) -> Result<(MPTNode, usize), felt252> {
+        let (lazy_item, rlp_byte_len) = rlp_decode_list_lazy(
+            rlp, array![current_nibble.into()].span()
+        )?;
+        match lazy_item {
+            RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
+            RLPItem::List(l) => {
+                let (hash_words, _) = *l.at(0);
+                match (hash_words).try_into() {
+                    Option::Some(h) => Result::Ok((MPTNode::LazyBranch(h), rlp_byte_len)),
+                    Option::None(_) => Result::Err('Invalid hash')
+                }
+            }
+        }
+    }
+
     // @notice keccak256 hashes an RLP encoded node
     // @param rlp RLP encoded node
     // @param last_word_bytes number of bytes in the last worf of the RLP encoded node

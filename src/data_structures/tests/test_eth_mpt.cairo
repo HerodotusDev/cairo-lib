@@ -96,7 +96,6 @@ fn test_decode_rlp_node_branch() {
 
     let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
     assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
-
     match decoded {
         MPTNode::Branch((
             hashes, value
@@ -112,6 +111,9 @@ fn test_decode_rlp_node_branch() {
                 i += 1;
             };
         },
+        MPTNode::LazyBranch(_) => {
+            panic_with_felt252('Branch node differs');
+        },
         MPTNode::Extension(_) => {
             panic_with_felt252('Branch node differs');
         },
@@ -119,6 +121,89 @@ fn test_decode_rlp_node_branch() {
             panic_with_felt252('Branch node differs');
         },
     }
+}
+
+#[test]
+#[available_gas(9999999999)]
+fn test_lazy_rlp_node_branch() {
+    let rlp_node = array![
+        0x09cf7077a01102f9,
+        0xa962df351b7a06b5,
+        0xadecaece75818924,
+        0x0c4044a8b4cd681f,
+        0x85a31ea0f44ac173,
+        0x045c6d4661b25ad0,
+        0x1a9fc1344568fe87,
+        0x35361adc184b5c4b,
+        0x4c2ca0b471500260,
+        0x1846d1d34035ce04,
+        0x8366e5a5533c3072,
+        0x0c80a8368d4f30c1,
+        0xa9a0eecd3ffaf56a,
+        0xc4d37d4bc58d77dc,
+        0xb0fe61d139e72282,
+        0x3717d5dcb2ceeec0,
+        0xa05138a6378e5bf0,
+        0xdd62df56554d5fa9,
+        0x9b56ae97049962c2,
+        0x9307207bdafd8ecd,
+        0xd71897db4cded3f8,
+        0x2238146d06d439a0,
+        0x74a843e9c94aaf6e,
+        0xb91dd8b05fc2a9a9,
+        0x03e2b336138c1d86,
+        0x6ab4637ccc7aa04c,
+        0x25a141a0c9b318a4,
+        0x7a396b316173cb6b,
+        0x13bb1b4967885ada,
+        0x25818a3515a03001,
+        0xc736fe137193c42e,
+        0x3497a1fb11b74680,
+        0x5f78007a1829bb91,
+        0xd3429168a0ae52f8,
+        0xdfce8b1ca7faab16,
+        0x254e10b2db1d2049,
+        0x1f2256e8c490dc0a,
+        0x5036dca058964a53,
+        0xa714a3a8fd342599,
+        0xb59dc7a83baeb0db,
+        0xc060242ace690c55,
+        0xb020a0a3c1c4ad07,
+        0xe19e05b055663b68,
+        0xc1cb6b504b4ed003,
+        0x11b1dab792630039,
+        0x8ea0e7420366c278,
+        0xd91c0f63fb45ebed,
+        0xcb17225718eb3697,
+        0x03e21bb715f3d5c6,
+        0xa014269bd9e83cb0,
+        0x6f985af63da32379,
+        0x69b9c2e4e6f9e7d5,
+        0x3999be4e94086b73,
+        0xf309e62f6114864a,
+        0x71201ad0d73465a0,
+        0xce46b9552afba44a,
+        0xa22aadff2d22c364,
+        0xb12ac97334928ad1,
+        0xb8fe8bc2f9bfa0fd,
+        0xb0c3c818b6a92dbf,
+        0x4714bdc0b10ce86f,
+        0xe229ff6121c4f738,
+        0x3c6961147fa02f50,
+        0x5ea3bb1b02a54e70,
+        0x8f459e43f602c572,
+        0x8fea4837d02e2498,
+        0x805fb3e2
+    ];
+
+    let expected = 0xE7420366C27811B1DAB792630039C1CB6B504B4ED003E19E05B055663B68B020;
+
+    let (decoded, rlp_byte_len) = MPTTrait::lazy_rlp_decode_branch_node(rlp_node.span(), 0xa)
+        .unwrap();
+    assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
+
+    let expected_node = MPTNode::LazyBranch(expected);
+    assert(decoded == expected_node, 'Lazy branch node diffes');
 }
 
 #[test]
