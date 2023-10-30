@@ -1,8 +1,8 @@
 use cairo_lib::hashing::keccak::keccak_cairo_words64;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode, rlp_decode_list_lazy};
 use cairo_lib::utils::types::byte::{Byte, ByteTrait};
-use cairo_lib::utils::bitwise::{right_shift, left_shift};
-use cairo_lib::utils::types::words64::{Words64, Words64Trait, Words64TryIntoU256LE};
+use cairo_lib::utils::bitwise::{right_shift, left_shift, reverse_endianness_u256};
+use cairo_lib::utils::types::words64::{Words64, Words64Trait};
 use cairo_lib::utils::math::pow;
 
 // @notice Ethereum Merkle Patricia Trie struct
@@ -113,9 +113,9 @@ impl MPTImpl of MPTTrait {
                         if current_hash_words.len() == 0 {
                             0
                         } else {
-                            match current_hash_words.try_into() {
-                                Option::Some(h) => h,
-                                Option::None(_) => {
+                            match current_hash_words.as_u256_be(32) {
+                                Result::Ok(h) => reverse_endianness_u256(h),
+                                Result::Err(_) => {
                                     break Result::Err('Invalid hash');
                                 }
                             }
@@ -272,18 +272,28 @@ impl MPTImpl of MPTTrait {
                     let n_nibbles = (first_len * 2) - 1;
 
                     if prefix == 0 {
-                        match second.try_into() {
-                            Option::Some(n) => Result::Ok(
-                                (MPTNode::Extension((first, n, 2, n_nibbles - 1)), rlp_byte_len)
+                        match second.as_u256_be(32) {
+                            Result::Ok(n) => Result::Ok(
+                                (
+                                    MPTNode::Extension(
+                                        (first, reverse_endianness_u256(n), 2, n_nibbles - 1)
+                                    ),
+                                    rlp_byte_len
+                                )
                             ),
-                            Option::None(_) => Result::Err('Invalid next node')
+                            Result::Err(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
-                        match second.try_into() {
-                            Option::Some(n) => Result::Ok(
-                                (MPTNode::Extension((first, n, 1, n_nibbles)), rlp_byte_len)
+                        match second.as_u256_be(32) {
+                            Result::Ok(n) => Result::Ok(
+                                (
+                                    MPTNode::Extension(
+                                        (first, reverse_endianness_u256(n), 1, n_nibbles)
+                                    ),
+                                    rlp_byte_len
+                                )
                             ),
-                            Option::None(_) => Result::Err('Invalid next node')
+                            Result::Err(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 2 {
                         Result::Ok((MPTNode::Leaf((first, second, 2, n_nibbles - 1)), rlp_byte_len))
@@ -310,9 +320,11 @@ impl MPTImpl of MPTTrait {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {
                 let (hash_words, _) = *l.at(0);
-                match (hash_words).try_into() {
-                    Option::Some(h) => Result::Ok((MPTNode::LazyBranch(h), rlp_byte_len)),
-                    Option::None(_) => Result::Err('Invalid hash')
+                match hash_words.as_u256_be(32) {
+                    Result::Ok(h) => Result::Ok(
+                        (MPTNode::LazyBranch(reverse_endianness_u256(h)), rlp_byte_len)
+                    ),
+                    Result::Err(_) => Result::Err('Invalid hash')
                 }
             }
         }
