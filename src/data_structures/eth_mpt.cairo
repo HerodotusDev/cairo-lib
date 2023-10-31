@@ -57,7 +57,11 @@ impl MPTImpl of MPTTrait {
     ) -> Result<Words64, felt252> {
         let mut current_hash = *self.root;
         let mut proof_index: usize = 0;
-        let mut key_pow2: u256 = pow(2, (key_len.into() - 1) * 4);
+        let mut key_pow2: u256 = if key_len == 64 {
+            0x1000000000000000000000000000000000000000000000000000000000000000
+        } else {
+            pow(2, (key_len.into() - 1) * 4)
+        };
 
         let proof_len = proof.len();
 
