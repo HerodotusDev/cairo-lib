@@ -1,6 +1,5 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait};
-use cairo_lib::utils::bitwise::reverse_endianness_u256;
 
 #[test]
 #[available_gas(9999999999)]
@@ -108,11 +107,7 @@ fn test_decode_rlp_node_branch() {
                 if i >= hashes.len() {
                     break ();
                 }
-                assert(
-                    reverse_endianness_u256((*hashes.at(i)).as_u256_be(32).unwrap()) == *expected
-                        .at(i),
-                    'Wrong hash'
-                );
+                assert((*hashes.at(i)).as_u256_le(32).unwrap() == *expected.at(i), 'Wrong hash');
                 i += 1;
             };
         },

@@ -1,7 +1,7 @@
 use cairo_lib::hashing::keccak::keccak_cairo_words64;
 use cairo_lib::encoding::rlp::{RLPItem, rlp_decode, rlp_decode_list_lazy};
 use cairo_lib::utils::types::byte::{Byte, ByteTrait};
-use cairo_lib::utils::bitwise::{right_shift, left_shift, reverse_endianness_u256};
+use cairo_lib::utils::bitwise::{right_shift, left_shift};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait};
 use cairo_lib::utils::math::pow;
 
@@ -113,8 +113,8 @@ impl MPTImpl of MPTTrait {
                         if current_hash_words.len() == 0 {
                             0
                         } else {
-                            match current_hash_words.as_u256_be(32) {
-                                Result::Ok(h) => reverse_endianness_u256(h),
+                            match current_hash_words.as_u256_le(32) {
+                                Result::Ok(h) => h,
                                 Result::Err(_) => {
                                     break Result::Err('Invalid hash');
                                 }
@@ -272,26 +272,16 @@ impl MPTImpl of MPTTrait {
                     let n_nibbles = (first_len * 2) - 1;
 
                     if prefix == 0 {
-                        match second.as_u256_be(32) {
+                        match second.as_u256_le(32) {
                             Result::Ok(n) => Result::Ok(
-                                (
-                                    MPTNode::Extension(
-                                        (first, reverse_endianness_u256(n), 2, n_nibbles - 1)
-                                    ),
-                                    rlp_byte_len
-                                )
+                                (MPTNode::Extension((first, n, 2, n_nibbles - 1)), rlp_byte_len)
                             ),
                             Result::Err(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
-                        match second.as_u256_be(32) {
+                        match second.as_u256_le(32) {
                             Result::Ok(n) => Result::Ok(
-                                (
-                                    MPTNode::Extension(
-                                        (first, reverse_endianness_u256(n), 1, n_nibbles)
-                                    ),
-                                    rlp_byte_len
-                                )
+                                (MPTNode::Extension((first, n, 1, n_nibbles)), rlp_byte_len)
                             ),
                             Result::Err(_) => Result::Err('Invalid next node')
                         }
@@ -320,10 +310,8 @@ impl MPTImpl of MPTTrait {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {
                 let (hash_words, _) = *l.at(0);
-                match hash_words.as_u256_be(32) {
-                    Result::Ok(h) => Result::Ok(
-                        (MPTNode::LazyBranch(reverse_endianness_u256(h)), rlp_byte_len)
-                    ),
+                match hash_words.as_u256_le(32) {
+                    Result::Ok(h) => Result::Ok((MPTNode::LazyBranch(h), rlp_byte_len)),
                     Result::Err(_) => Result::Err('Invalid hash')
                 }
             }

@@ -70,10 +70,58 @@ fn test_as_u256_be_not_full() {
 #[test]
 #[available_gas(99999999)]
 fn test_as_u256_be_not_full_start() {
+    let words = array![0x008b632605e20000, 0x480829ebcee54bc4, 0xb6f2392a].span();
+
+    let expected = 0xe20526638b00c44be5ceeb2908482a39f2b6;
+    assert(words.as_u256_be(20).unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_as_u256_be_not_full_end() {
     let words = array![0x2e8b632605e20000, 0x480829ebcee54bc4, 0xb6f2392a].span();
 
-    let expected = 0xe20526638b2ec44be5ceeb2908482a39f2b6;
-    assert(words.as_u256_be(20).unwrap() == expected, 'Wrong value');
+    let expected = 0x0000e20526638b2ec44be5ceeb2908482a39f2b600;
+    assert(words.as_u256_be(21).unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_as_u256_le_full() {
+    let words = array![
+        0x2e8b632605e21673, 0x480829ebcee54bc4, 0xb6f239256ff310f9, 0x09898da43a5d35f4,
+    ]
+        .span();
+
+    let expected = 0x09898DA43A5D35F4B6F239256FF310F9480829EBCEE54BC42E8B632605E21673;
+    assert(words.as_u256_le(32).unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_as_u256_le_not_full() {
+    let words = array![0x2e8b632605e21673, 0x480829ebcee54bc4, 0xb6f2392a].span();
+
+    let expected: u256 = 0xB6F2392A480829EBCEE54BC42E8B632605E21673000000000000000000000000;
+    assert(words.as_u256_le(20).unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_as_u256_le_not_full_start() {
+    let words = array![0x008b632605e20000, 0x480829ebcee54bc4, 0xb6f2392a].span();
+
+    let expected = 0xB6F2392A480829EBCEE54BC4008B632605E20000000000000000000000000000;
+    assert(words.as_u256_le(20).unwrap() == expected, 'Wrong value');
+}
+
+#[test]
+#[available_gas(99999999)]
+fn test_as_u256_le_not_full_end() {
+    let words = array![0x008b632605e20000, 0x480829ebcee54bc4, 0xb6f2392a].span();
+
+    let expected: u256 = 0x00B6F2392A480829EBCEE54BC4008B632605E200000000000000000000000000;
+    assert(words.as_u256_le(21).unwrap() == expected, 'Wrong value');
 }
 
 #[test]
