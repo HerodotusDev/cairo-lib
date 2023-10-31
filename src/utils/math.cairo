@@ -7,7 +7,7 @@ use math::Oneable;
 
 fn pow<
     T,
-    impl Zeroable: Zeroable<T>,
+    impl TZeroable: Zeroable<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>,
@@ -51,7 +51,7 @@ fn slow_pow<
 
 fn fast_pow<
     T,
-    impl Zeroable: Zeroable<T>,
+    impl TZeroable: Zeroable<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>,
