@@ -105,6 +105,10 @@ impl MMRImpl of MMRTrait {
     fn verify_proof(
         self: @MMR, index: usize, hash: felt252, peaks: Peaks, proof: Proof
     ) -> Result<bool, felt252> {
+        let leaf_count = mmr_size_to_leaf_count((*self.last_pos).into());
+        if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
+            return Result::Err('Invalid peaks count');
+        }
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');
         }
