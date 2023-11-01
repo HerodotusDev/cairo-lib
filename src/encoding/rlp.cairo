@@ -180,7 +180,7 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
             break Result::Ok((RLPItem::List(output.span()), rlp_byte_len));
         }
 
-        if current_input_index >= len {
+        if current_input_index >= rlp_byte_len {
             break Result::Err('Too many items to decode');
         }
 
