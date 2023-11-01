@@ -185,9 +185,8 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
         }
 
         let current_word = current_input_index / 8;
-        let current_word_offset = 7 - (current_input_index % 8);
 
-        let pow2_shift = pow2((7 - current_word_offset) * 8);
+        let pow2_shift = pow2((current_input_index % 8) * 8);
         let prefix = (*input.at(current_word) / pow2_shift) & 0xff;
 
         let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
