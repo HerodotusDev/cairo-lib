@@ -115,7 +115,7 @@ impl MPTImpl of MPTTrait {
                     let current_hash_words = *nibbles.at(current_nibble.try_into().unwrap());
                     current_hash =
                         if current_hash_words.len() == 0 {
-                            0
+                            break Result::Ok(array![].span());
                         } else {
                             match current_hash_words.as_u256_le(32) {
                                 Result::Ok(h) => h,
@@ -127,6 +127,9 @@ impl MPTImpl of MPTTrait {
                     key_pow2 = key_pow2 / 16;
                 },
                 MPTNode::LazyBranch(next_node) => {
+                    if next_node == 0 {
+                        break Result::Ok(array![].span());
+                    }
                     current_hash = next_node;
                     key_pow2 = key_pow2 / 16;
                 },
@@ -157,7 +160,7 @@ impl MPTImpl of MPTTrait {
                                 & 0xf;
                             let current_nibble_key = (key / key_pow2) & 0xf;
                             if current_nibble_shared_nibbles.into() != current_nibble_key {
-                                break Result::Err('Extension nibbles not matching');
+                                break Result::Ok(0);
                             }
 
                             key_pow2 = key_pow2 / 16;
@@ -188,6 +191,9 @@ impl MPTImpl of MPTTrait {
 
                     match next_hash {
                         Result::Ok(next_hash) => {
+                            if next_hash == 0 {
+                                break Result::Ok(array![].span());
+                            }
                             current_hash = next_hash;
                         },
                         Result::Err(e) => {
@@ -221,7 +227,7 @@ impl MPTImpl of MPTTrait {
                         let current_nibble_key_end = (key_end_word / key_end_pow2) & 0xf;
                         let current_nibble_key = (key / key_pow2) & 0xf;
                         if current_nibble_key_end.into() != current_nibble_key {
-                            break Result::Err('Key not matching');
+                            break Result::Ok(array![].span());
                         }
 
                         key_pow2 = key_pow2 / 16;
