@@ -51,7 +51,7 @@ impl MPTImpl of MPTTrait {
     // @param key Key to verify
     // @param key_len Length of they key in nibbles
     // @param proof Merkle proof, collection of rlp encoded nodes
-    // @return Result with the value associated with the key if it exists
+    // @return Result with the value associated with the key, empty in case of non inclusion
     fn verify(
         self: @MPT, key: u256, key_len: usize, proof: Span<Words64>
     ) -> Result<Words64, felt252> {
