@@ -148,37 +148,42 @@ impl MPTImpl of MPTTrait {
                     let mut shared_nibbles_word_idx = nibbles_skip / 16;
                     let mut shared_nibbles_word = *shared_nibbles.at(shared_nibbles_word_idx);
                     let mut i_nibbles = 0;
-                    let next_hash = loop {
-                        if i_nibbles == n_nibbles {
-                            break Result::Ok(next_node);
-                        }
-                        if key_pow2 == 0 {
-                            break Result::Err('Key reached end');
-                        }
-
-                        let current_nibble_shared_nibbles = (shared_nibbles_word
-                            / shared_nibbles_pow2)
-                            & 0xf;
-                        let current_nibble_key = (key / key_pow2) & 0xf;
-                        if current_nibble_shared_nibbles.into() != current_nibble_key {
-                            break Result::Err('Extension nibbles not matching');
-                        }
-
-                        if shared_nibbles_pow2 == 0x100000000000000 {
-                            shared_nibbles_pow2 = 16;
-                            shared_nibbles_word_idx += 1;
-                            shared_nibbles_word = *shared_nibbles.at(shared_nibbles_word_idx);
-                        } else {
-                            if in_byte {
-                                shared_nibbles_pow2 = shared_nibbles_pow2 * 0x1000;
-                            } else {
-                                shared_nibbles_pow2 = shared_nibbles_pow2 / 0x10;
+                    let next_hash = if n_nibbles == 0 {
+                        Result::Ok(next_node)
+                    } else {
+                        loop {
+                            let current_nibble_shared_nibbles = (shared_nibbles_word
+                                / shared_nibbles_pow2)
+                                & 0xf;
+                            let current_nibble_key = (key / key_pow2) & 0xf;
+                            if current_nibble_shared_nibbles.into() != current_nibble_key {
+                                break Result::Err('Extension nibbles not matching');
                             }
-                        };
 
-                        in_byte = !in_byte;
-                        key_pow2 = key_pow2 / 16;
-                        i_nibbles += 1;
+                            key_pow2 = key_pow2 / 16;
+                            i_nibbles += 1;
+
+                            if i_nibbles == n_nibbles {
+                                break Result::Ok(next_node);
+                            }
+                            if key_pow2 == 0 {
+                                break Result::Err('Key reached end');
+                            }
+
+                            if shared_nibbles_pow2 == 0x100000000000000 {
+                                shared_nibbles_pow2 = 16;
+                                shared_nibbles_word_idx += 1;
+                                shared_nibbles_word = *shared_nibbles.at(shared_nibbles_word_idx);
+                            } else {
+                                if in_byte {
+                                    shared_nibbles_pow2 = shared_nibbles_pow2 * 0x1000;
+                                } else {
+                                    shared_nibbles_pow2 = shared_nibbles_pow2 / 0x10;
+                                }
+                            };
+
+                            in_byte = !in_byte;
+                        }
                     };
 
                     match next_hash {
@@ -193,6 +198,10 @@ impl MPTImpl of MPTTrait {
                 MPTNode::Leaf((
                     key_end, value, nibbles_skip, n_nibbles
                 )) => {
+                    if key_pow2 == 0 && n_nibbles == 0 {
+                        break Result::Ok(value);
+                    }
+
                     let mut key_end_pow2 = pow(2, nibbles_skip.into() * 4);
 
                     let mut in_byte = false;
@@ -209,14 +218,17 @@ impl MPTImpl of MPTTrait {
                     let mut key_end_word = *key_end.at(key_end_word_idx);
                     let mut i_nibbles = 0;
                     break loop {
-                        if key_pow2 == 0 && i_nibbles == n_nibbles {
-                            break Result::Ok(value);
-                        }
-
                         let current_nibble_key_end = (key_end_word / key_end_pow2) & 0xf;
                         let current_nibble_key = (key / key_pow2) & 0xf;
                         if current_nibble_key_end.into() != current_nibble_key {
                             break Result::Err('Key not matching');
+                        }
+
+                        key_pow2 = key_pow2 / 16;
+                        i_nibbles += 1;
+
+                        if key_pow2 == 0 && i_nibbles == n_nibbles {
+                            break Result::Ok(value);
                         }
 
                         if key_end_pow2 == 0x100000000000000 {
@@ -232,8 +244,6 @@ impl MPTImpl of MPTTrait {
                         };
 
                         in_byte = !in_byte;
-                        key_pow2 = key_pow2 / 16;
-                        i_nibbles += 1;
                     };
                 }
             };
