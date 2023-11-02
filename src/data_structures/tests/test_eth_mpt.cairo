@@ -795,7 +795,8 @@ fn test_full_verify_2_nodes() {
             0xcb959918a8d08b95,
             0x8080d2e4ec07dcfc,
             0x808080
-        ].span(),
+        ]
+            .span(),
         array![
             0x76522d0e31a043f8,
             0x71fdcdee263b0712,
@@ -806,16 +807,11 @@ fn test_full_verify_2_nodes() {
             0x0000000000000000,
             0x0000000000000000,
             0x0800000000
-        ].span()
+        ]
+            .span()
     ];
 
-    let expected_res = array![
-        0x6b636f4da0,
-        0x0,
-        0x0,
-        0x0,
-        0x8
-    ];
+    let expected_res = array![0x6b636f4da0, 0x0, 0x0, 0x0, 0x8];
 
     let key = 0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6;
 
