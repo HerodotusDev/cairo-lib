@@ -106,7 +106,7 @@ fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
 // @notice RLP decodes into RLPItem::List
 // @param input RLP encoded input, in little endian 64 bits words
 // @param len Length of the input
-// @return Result with RLPItem::List
+// @return Result with a span of the decoded items and the decoded size of each
 fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usize)>, felt252> {
     let mut i = 0;
     let mut output = ArrayTrait::new();

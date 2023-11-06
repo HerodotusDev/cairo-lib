@@ -28,7 +28,7 @@ fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
 }
 
 // @notice Count the number of bits set to 1 in a 256-bit unsigned integer
-// @param n The 256-bit unsigned integer
+// @param arg The 256-bit unsigned integer
 // @return The number of bits set to 1 in n
 fn count_ones(arg: u256) -> u256 {
     let mut n = arg;
