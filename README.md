@@ -1,3 +1,5 @@
+![](/banner.png)
+
 # `cairo-lib`: Comprehensive Library for Cairo 🐺
 [![CI](https://github.com/HerodotusDev/cairo-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/HerodotusDev/cairo-lib/actions/workflows/ci.yml)
 
