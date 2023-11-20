@@ -1,5 +1,6 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
-use cairo_lib::utils::types::words64::Words64TryIntoU256LE;
+use cairo_lib::utils::types::words64::{Words64, Words64Trait};
+use debug::PrintTrait;
 
 #[test]
 #[available_gas(9999999999)]
@@ -94,7 +95,8 @@ fn test_decode_rlp_node_branch() {
     ]
         .span();
 
-    let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
     match decoded {
         MPTNode::Branch((
             hashes, value
@@ -106,9 +108,12 @@ fn test_decode_rlp_node_branch() {
                 if i >= hashes.len() {
                     break ();
                 }
-                assert((*hashes.at(i)).try_into().unwrap() == *expected.at(i), 'Wrong hash');
+                assert((*hashes.at(i)).as_u256_le(32).unwrap() == *expected.at(i), 'Wrong hash');
                 i += 1;
             };
+        },
+        MPTNode::LazyBranch(_) => {
+            panic_with_felt252('Branch node differs');
         },
         MPTNode::Extension(_) => {
             panic_with_felt252('Branch node differs');
@@ -117,6 +122,89 @@ fn test_decode_rlp_node_branch() {
             panic_with_felt252('Branch node differs');
         },
     }
+}
+
+#[test]
+#[available_gas(9999999999)]
+fn test_lazy_rlp_node_branch() {
+    let rlp_node = array![
+        0x09cf7077a01102f9,
+        0xa962df351b7a06b5,
+        0xadecaece75818924,
+        0x0c4044a8b4cd681f,
+        0x85a31ea0f44ac173,
+        0x045c6d4661b25ad0,
+        0x1a9fc1344568fe87,
+        0x35361adc184b5c4b,
+        0x4c2ca0b471500260,
+        0x1846d1d34035ce04,
+        0x8366e5a5533c3072,
+        0x0c80a8368d4f30c1,
+        0xa9a0eecd3ffaf56a,
+        0xc4d37d4bc58d77dc,
+        0xb0fe61d139e72282,
+        0x3717d5dcb2ceeec0,
+        0xa05138a6378e5bf0,
+        0xdd62df56554d5fa9,
+        0x9b56ae97049962c2,
+        0x9307207bdafd8ecd,
+        0xd71897db4cded3f8,
+        0x2238146d06d439a0,
+        0x74a843e9c94aaf6e,
+        0xb91dd8b05fc2a9a9,
+        0x03e2b336138c1d86,
+        0x6ab4637ccc7aa04c,
+        0x25a141a0c9b318a4,
+        0x7a396b316173cb6b,
+        0x13bb1b4967885ada,
+        0x25818a3515a03001,
+        0xc736fe137193c42e,
+        0x3497a1fb11b74680,
+        0x5f78007a1829bb91,
+        0xd3429168a0ae52f8,
+        0xdfce8b1ca7faab16,
+        0x254e10b2db1d2049,
+        0x1f2256e8c490dc0a,
+        0x5036dca058964a53,
+        0xa714a3a8fd342599,
+        0xb59dc7a83baeb0db,
+        0xc060242ace690c55,
+        0xb020a0a3c1c4ad07,
+        0xe19e05b055663b68,
+        0xc1cb6b504b4ed003,
+        0x11b1dab792630039,
+        0x8ea0e7420366c278,
+        0xd91c0f63fb45ebed,
+        0xcb17225718eb3697,
+        0x03e21bb715f3d5c6,
+        0xa014269bd9e83cb0,
+        0x6f985af63da32379,
+        0x69b9c2e4e6f9e7d5,
+        0x3999be4e94086b73,
+        0xf309e62f6114864a,
+        0x71201ad0d73465a0,
+        0xce46b9552afba44a,
+        0xa22aadff2d22c364,
+        0xb12ac97334928ad1,
+        0xb8fe8bc2f9bfa0fd,
+        0xb0c3c818b6a92dbf,
+        0x4714bdc0b10ce86f,
+        0xe229ff6121c4f738,
+        0x3c6961147fa02f50,
+        0x5ea3bb1b02a54e70,
+        0x8f459e43f602c572,
+        0x8fea4837d02e2498,
+        0x805fb3e2
+    ];
+
+    let expected = 0xE7420366C27811B1DAB792630039C1CB6B504B4ED003E19E05B055663B68B020;
+
+    let (decoded, rlp_byte_len) = MPTTrait::lazy_rlp_decode_branch_node(rlp_node.span(), 0xa)
+        .unwrap();
+    assert(rlp_byte_len == 66 * 8 + 4, 'Wrong RLP len');
+
+    let expected_node = MPTNode::LazyBranch(expected);
+    assert(decoded == expected_node, 'Lazy branch node diffes');
 }
 
 #[test]
@@ -153,8 +241,10 @@ fn test_decode_rlp_node_leaf_odd() {
         0xc71a5df8340f
     ];
 
-    let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
-    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 1));
+    let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    assert(rlp_byte_len == 13 * 8, 'Wrong RLP len');
+
+    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 1, 57));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
 
@@ -192,8 +282,10 @@ fn test_decode_rlp_node_leaf_even() {
         0xc71a5df8340f
     ];
 
-    let decoded = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
-    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 2));
+    let (decoded, rlp_byte_len) = MPTTrait::decode_rlp_node(rlp_node.span()).unwrap();
+    assert(rlp_byte_len == 13 * 8, 'Wrong RLP len');
+
+    let expected_node = MPTNode::Leaf((expected_key_end.span(), expected_value.span(), 2, 56));
     assert(decoded == expected_node, 'Even leaf node differs');
 }
 
@@ -216,7 +308,7 @@ fn test_hash_rlp_node() {
         0xc71a5df8340f6249
     ];
 
-    let hash = MPTTrait::hash_rlp_node(rlp_node.span());
+    let hash = MPTTrait::hash_rlp_node(rlp_node.span(), 8);
     assert(
         hash == 0x035F9A54E8BEE015293EB9791C7FEC6A4A111DB8B32464597B6F8E63B1167FA1,
         'Wrong node rlp hash'
@@ -674,6 +766,476 @@ fn test_full_verify() {
     let key = 0x6464aaeb3d3905f6526cb7fbb8ca13df8d9c63efade348e70065aa05f578f315;
 
     let mpt = MPTTrait::new(0x2BBF8BB05C4F3446F14BEBAD306B4D0FDD7A53CE5D373A5A8729F0679E18B5C2);
+    let res = mpt.verify(key, 64, proof.span()).unwrap();
+    assert(res == expected_res.span(), 'Result not matching');
+}
+
+#[test]
+#[available_gas(9999999999999)]
+fn test_full_verify_2_nodes() {
+    let proof = array![
+        array![
+            0x5c0b6aa0808051f8,
+            0x9720a2845ec292e7,
+            0xdde909402854fc40,
+            0x8b0ff9103babb578,
+            0x808080c17ea1cc35,
+            0xf86ba08080808080,
+            0x652dee110f0a9fd1,
+            0x98195bc1e2e398a8,
+            0xcb959918a8d08b95,
+            0x8080d2e4ec07dcfc,
+            0x808080
+        ]
+            .span(),
+        array![
+            0x76522d0e31a043f8,
+            0x71fdcdee263b0712,
+            0xfa4a4bf40c326a7e,
+            0xb7e2cb9f2d73b0c2,
+            0x636f4da0a1f60cfa,
+            0x000000000000006b,
+            0x0000000000000000,
+            0x0000000000000000,
+            0x0800000000
+        ]
+            .span()
+    ];
+
+    let expected_res = array![0x6b636f4da0, 0x0, 0x0, 0x0, 0x8];
+
+    let key = 0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6;
+
+    let mpt = MPTTrait::new(0x8051DC27EC55E8B88C99B97B08DFF3E99B5106E4BED472E53B9B7D53C0129A6E);
+    let res = mpt.verify(key, 64, proof.span()).unwrap();
+    assert(res == expected_res.span(), 'Result not matching');
+}
+
+#[test]
+#[available_gas(9999999999999)]
+fn test_verify_non_inclusion() {
+    let proof = array![
+        array![
+            0xec98f822a01102f9,
+            0xa6dd8f1214e1f11f,
+            0xff4ad6f843ecf036,
+            0xf6a7e88f76b1c824,
+            0x5e47eba0f38aad9d,
+            0x7ab225aee4e37bc0,
+            0x504eb61cf06f663d,
+            0xbb3b7ede40eadac7,
+            0x9824a09076b7c780,
+            0x919f6fa982b02b36,
+            0x58d20214605f9948,
+            0x56b041c561468afe,
+            0x97a03430bd08cf66,
+            0x62bbd866a3c8fb66,
+            0x54d883fae6fe8129,
+            0xa028191e12dfd561,
+            0xa0670d84e1aa857b,
+            0x55ccec057a3dd6cd,
+            0x362b3118d757701e,
+            0x146b17eeaf0ad6fd,
+            0x1319c45144710cf9,
+            0x46f757a79362bba0,
+            0xa6ef7d98da737a41,
+            0x02195eb29cd3e26d,
+            0x7dfd57449c4c589a,
+            0x38440d73892ca0e3,
+            0xb4489211b479dbbd,
+            0x0d4de704e5849607,
+            0xb25d3b17d9f4d02a,
+            0x7364a11c42a06df8,
+            0x6d86c52845ef2567,
+            0x724871838ca2dcdd,
+            0xc9d2cecc83e6e9a0,
+            0x02300c35a0620e9c,
+            0x6b8dc74c237580ab,
+            0xdbce8d27070a6c4f,
+            0xb8cc16227e6f82a5,
+            0x36d813a037bd63f4,
+            0x44ec4fe517ce274f,
+            0x64e998642529587c,
+            0x7a4288f48bba7ea4,
+            0x278ea0fdba64dc87,
+            0x8da7ef8f781077aa,
+            0x1ab52ff8420c677b,
+            0x071a58e621bd3a13,
+            0x9ea0ed688e392ff2,
+            0x1c64a2e0cf0280e6,
+            0x56e6d81a8d9c782a,
+            0x59a9c64f4f680642,
+            0xa056099859cfc1fd,
+            0x8609c42dd7f52a4b,
+            0x39e7c1999c1e73d4,
+            0x9e8282fb3f570af7,
+            0x11333251697454e3,
+            0x1a397b07c8246aa0,
+            0xed8e88c7a947b661,
+            0x229c111bf67c959e,
+            0xec403782f21939ba,
+            0x9fa9d5f8fc07a085,
+            0xa3f59303f4f8fd89,
+            0xb00533f3b4daba74,
+            0x382c892f74849089,
+            0x454f994c81a09b53,
+            0x07e3f1381c062a08,
+            0xec28c36be4a9f162,
+            0x51ace64e0718855f,
+            0x804af09c,
+        ]
+            .span(),
+        array![
+            0xa18b1734a01102f9,
+            0x624c4dd4e96fec64,
+            0x8923e53f4e4a5c08,
+            0xc1cca86fa2faaf4b,
+            0xd8ba0ba0fc96285c,
+            0xcddc7ebea7be7113,
+            0x46ecd259ea06047d,
+            0xa421c443d6f9a71a,
+            0x8102a03f4d1d0680,
+            0xaec223e9d168da7b,
+            0x5cd2cdcc97098098,
+            0x09d04cafc495736d,
+            0xdea02f35e2bc92b2,
+            0x436b95f3e26fb0df,
+            0xc1bbe2d660b38aca,
+            0xc0a370f7287dea21,
+            0xa01b3d90b2772163,
+            0x1fe1a4120535ee81,
+            0x1961fea5b81063da,
+            0xd4a5dd507ff58dcf,
+            0x9332183e378bdfc9,
+            0x7d9a1054ac0aa3a0,
+            0x9bd80710831fefeb,
+            0x83c7f00efd8667f3,
+            0x5cb588453ef8ae96,
+            0x1064588e1e69a0a3,
+            0x6641154313a7cc3f,
+            0xef0f04edc1fea6af,
+            0x73277c83d5f6512a,
+            0xe0e9c4b3b9a0ff7a,
+            0x2a6357e218c4abc4,
+            0x0ba0ce6fb2540a92,
+            0xaecc5377ccd2b0ef,
+            0xc11ad0f2a011c168,
+            0x1c5a4c32d0bfe92a,
+            0xed1f322b61d1d604,
+            0x90af5d7174e78a83,
+            0x506c29a0e666815f,
+            0x5053d0102ff893d2,
+            0x54f731b4085ac946,
+            0x733749cfe21355ab,
+            0x32f7a063d4ad43f8,
+            0xe5343e587b5e5d1e,
+            0xc0e6fe7ad162469b,
+            0xed48d6a34a49a7f9,
+            0x98a06d024b68cd97,
+            0xab0a55475693e194,
+            0xd5e032a70fd0ffa7,
+            0x0b050793e64ae739,
+            0xa09902e1816e7d29,
+            0x2640b912a74d28d2,
+            0x64da28ce2641f943,
+            0xe82330c8f0c0be7c,
+            0x9027ed1180802ac6,
+            0x28e739f42d1482a0,
+            0x5b9e95496cd50bc8,
+            0xd29954dacf762a6f,
+            0x5e59017da19f29ce,
+            0xd3ad89fb4e26a058,
+            0x36c079fad94cff14,
+            0xcf1d594ee1bef76f,
+            0x9108169a3df266c3,
+            0xa281f807b6a03eb1,
+            0x873adec4d65bd57e,
+            0x1badb7afbbbc11e4,
+            0xf31d82660adfe876,
+            0x80bd5648,
+        ]
+            .span(),
+        array![
+            0xc4a440b1a01102f9,
+            0x3969b0c09139282d,
+            0x9cbfda9fe532254a,
+            0x7ed5d8e8a424c1bf,
+            0xffdabaa0da52e97b,
+            0x52d7d98b6d93947a,
+            0x2a393a8bd8bd2fbd,
+            0xa1bdf99909348d33,
+            0x1100a0467678105d,
+            0xe369147638f178b5,
+            0x71a9fb0f909f78bf,
+            0x583d7a8a7649d3e8,
+            0x17a0dd0aad1c5936,
+            0x4d61315b3884d1fa,
+            0x83be5a97959bbabd,
+            0x8301009624ac80cc,
+            0xa0ef97f2327d184d,
+            0x149fccea7de6888a,
+            0x9cef77c2f7fe18c2,
+            0x65f45bf48b551057,
+            0x595009e3e81946a2,
+            0xc10af680de3f0ca0,
+            0x20ba6ae86874c488,
+            0x76dd0a762ec2f509,
+            0x29b484e8f2a5008c,
+            0x903ee2650407a0ea,
+            0x6ef3e3b755f98730,
+            0xb5dae74e7d54c91c,
+            0x7b98cbc8a4ecb196,
+            0x7a01843172a073fc,
+            0xb442de1416bb6aa2,
+            0xe1a4e0e43d2a6e88,
+            0x4c7ae56697867af4,
+            0xd1641177a0a4808d,
+            0x83a2f11192df3d5d,
+            0xa41bcc4ce0112d5c,
+            0x46f9f649e94d4c70,
+            0x7e8f38a0e7276078,
+            0x6910d91ea9bb8194,
+            0xbc1895b7a1e97e37,
+            0x3f67491a0e148cf4,
+            0x661aa0c79d08dbb0,
+            0xbae7f8980692546d,
+            0x948a9a4e0ea5465e,
+            0xa87af3b0cef159de,
+            0x17a0cc2f218b8da1,
+            0x78a422b82e26a345,
+            0xf02820f191d68219,
+            0xf5b64741487e9990,
+            0xa0f7320918aee5fb,
+            0x76b832fd41ad2238,
+            0x562698f5166c6659,
+            0x8cc54eff977ee295,
+            0x6788e130e1661af3,
+            0x9d3847995a05f5a0,
+            0x83f82b3df6042972,
+            0x526a3f19c6aeaa5d,
+            0x0c3fed0fef0e76c7,
+            0xd57edf5f200ea08d,
+            0x577455eb7dfb4feb,
+            0x8515cfa916e3fb43,
+            0x33b9d4cadf37b171,
+            0x63a487f889a0ed11,
+            0x93f7ac9e98299d0c,
+            0x61f15f15dbf1d83b,
+            0xcec095010ed87f1b,
+            0x80a68778,
+        ]
+            .span(),
+        array![
+            0x9d99ee5ca01102f9,
+            0x718cfd1f8d72c2de,
+            0x2d2191cfecc39b56,
+            0x1cc59360702b6245,
+            0xbe3960a0c261e2f4,
+            0xf41244c2977cb023,
+            0x3ce5aab9c48812a0,
+            0x3ddc8577ae4bb1df,
+            0xa02da0e93fbb3f10,
+            0xdf7a547c6557993f,
+            0xffa317d9c6089ded,
+            0xf203bccd7ddfa938,
+            0x70a04826c6e60022,
+            0x9619712d712cba4f,
+            0x4c4dd96d022bd305,
+            0x83af07d2a9934e29,
+            0xa083be1dd409218f,
+            0x9c3ab0c6f93b3d96,
+            0xb593f5ea39517fd7,
+            0x0c8b34c46e00a0b9,
+            0x2145f5c0f0300f6c,
+            0x75cb5fa55e3071a0,
+            0x73e564b622b7d445,
+            0x022ba70dc9155ec3,
+            0x72eae3ac17cb92e7,
+            0xad863d7e82f2a002,
+            0x92766445ba5dd234,
+            0xf150548095c1e96d,
+            0x1526413a359e5ea2,
+            0xfc8af56c91a0d9be,
+            0xe414e346e31e5916,
+            0xfb5eba4e2e7d7819,
+            0x5872d97dab134060,
+            0x615e0ce1a0bbd9ba,
+            0x258b96575c22fd58,
+            0xef7998285751eaae,
+            0xbe6697b6c5af2f88,
+            0x972be7a02e6d7b4a,
+            0x124def6cc25837c7,
+            0xc81e604f8e72e2e1,
+            0xdaff2c0729010557,
+            0x316fa0a1fa7cba5e,
+            0x6a09a3a2831319fa,
+            0xa04192f3fa0e26a0,
+            0xb5032ea58874f3e7,
+            0xf2a00340e23b6c08,
+            0x7ef5f056401f3bb6,
+            0x8136d6f15419c073,
+            0x51e40d6613e4b0e4,
+            0xa031928c18dc5e19,
+            0x1010127ad8c00db9,
+            0x8b0f20cab38db09c,
+            0xf03736d6873bb3f9,
+            0x0e34f847ce7ed8ee,
+            0xc70b5d3c432046a0,
+            0x2ab0bdf3cedfc54f,
+            0x6120574252c3bc11,
+            0x24c517bb7ee7eeb6,
+            0xf877bad85ed3a0f1,
+            0x153858932ff1f622,
+            0x06b53db20c624055,
+            0xf58414076214041f,
+            0xf5b9dac3dda07386,
+            0xe5a5b676d8b2710b,
+            0x85b80c919b65ac5d,
+            0xf561815eb587be0b,
+            0x80efc780,
+        ]
+            .span(),
+        array![
+            0x68bdb97ea01102f9,
+            0x8b1064346a7e703d,
+            0x231d3944a343edfd,
+            0xe5b1b3c993a4348e,
+            0x759426a0493316a9,
+            0xead237cc12b7c961,
+            0xa8d030b48aaf334b,
+            0x813079136c313ec8,
+            0x7885a0e856317a41,
+            0xdbdd4d9c1a897697,
+            0x84d0f4f124c97010,
+            0x8f5407402a859357,
+            0x13a0628a0acf17a9,
+            0x1a337078335bf480,
+            0x3d3a0e71904efc66,
+            0xa00c45e239c314a7,
+            0xa012ccc781e8a1c3,
+            0x472c2cf37cd19e25,
+            0x89f736e6b2e6d1b0,
+            0xbe5228aac7df21a0,
+            0x7e77dd520f0563c7,
+            0x34a6bdf7a46956a0,
+            0x605ea0a95c8331ee,
+            0x153164427ea10319,
+            0x754b92c9873e571a,
+            0x8bb30b7d9897a079,
+            0x73399da4f82e29cc,
+            0xd8abc14f1cf26e27,
+            0xc09ed92452e02856,
+            0x5022c5a784a0c4de,
+            0x269fa9269a00e08a,
+            0x09d747926f9640b5,
+            0xa208597b2710f6c5,
+            0x46a626c9a01d431c,
+            0xbcb4c775d7165c7b,
+            0x7937485ef08a5216,
+            0x0fb70b713997e0a8,
+            0x44b3c8a0a1ce0bc7,
+            0x9875ec1bb38e4ff7,
+            0x1db1dfe1b2f2d10f,
+            0x3ffe5db701cd8d8d,
+            0x5481a0f967e57604,
+            0xcda26de3d706bc7b,
+            0x8d7f78dcf4800483,
+            0xbc7c842dbf9f085f,
+            0x1aa06261fcc5fc09,
+            0xc55c43be0d37637f,
+            0xde3211f4ceec8b75,
+            0x9a1e06de138f053b,
+            0xa0252ee10ef1f096,
+            0xab5c2c608bf54cc9,
+            0xfdbac1b241ce0abb,
+            0x2a90d9204f8c4627,
+            0x46dc5020a562297f,
+            0x16efe04ee931afa0,
+            0x1072a0182c3dd6b0,
+            0xd8e538aec461e353,
+            0x38bd65aae5c1f928,
+            0x4288940395fea00b,
+            0x09a893417b081529,
+            0x4d0a83649fd69ee0,
+            0x795df895b0e225d7,
+            0xc2178b7ea8a05160,
+            0xd00b899083a8d9fc,
+            0x7b419dfdda0aa3eb,
+            0x7f5bbb883e1e7ee3,
+            0x8027cda8,
+        ]
+            .span(),
+        array![
+            0x5581eda4a07101f9,
+            0xd5111547ea5c54a2,
+            0x4b1fec18db84d370,
+            0x8537c1d7ae6f56fb,
+            0x06a08080cbc9df22,
+            0x10c6cd2c69ac990c,
+            0x93dee1c6766af5b8,
+            0xb348396b55e98bcd,
+            0x80129b99bbe80276,
+            0x0562ec2e3cc8bfa0,
+            0x8b076699a733c392,
+            0x78b5b82117ec50a0,
+            0xa613011249cb30a0,
+            0x7068b3979ff8a0c6,
+            0xd8e2eef6399bf1b4,
+            0x47d7f177febcc8cf,
+            0x7ae242f5faedcc66,
+            0x865ea57e93a0e94d,
+            0xa0afbe49d5c9635f,
+            0xff909d74f211bda8,
+            0xed96bfe6e238286a,
+            0x5ddba535a02caf0d,
+            0xfd97460f36d94ffb,
+            0x11ece487b149932a,
+            0x86c9ded3a5fde827,
+            0x18955da027329f87,
+            0xfef67004b8a00b2d,
+            0xc63b240909fda606,
+            0x23899e7ff818e02d,
+            0x10b9a0853c868a88,
+            0xafc929a021b8c4c9,
+            0x12639f697f9bb2d8,
+            0x35accd64e12da7ab,
+            0xa080e800b9941511,
+            0x1021d1bfe372ee71,
+            0x2fc2c9d8cebfca23,
+            0xe8e313c3613bf42a,
+            0x2d23c417040536e5,
+            0xe7c108928484a080,
+            0x61e9867c309be2c3,
+            0x81b805d7196e1d2d,
+            0xf5fe944b8f54cf8d,
+            0x03d653f4afa0d485,
+            0x516ca97707f93858,
+            0x7b972d02f9acf612,
+            0xa2ce82f3b1bba0a8,
+            0x80d62f2a,
+        ]
+            .span(),
+        array![
+            0x598c57a0808051f8,
+            0x400bb190e7c2eda0,
+            0x616be10e250f50cb,
+            0xf3501527389e5cea,
+            0xbea0801ee74dd943,
+            0xf62e5e6b8b43bcbd,
+            0x2df96e397dc1b4dd,
+            0x4506143bf6cf6ffc,
+            0x80244912bcd14b94,
+            0x8080808080808080,
+            0x808080,
+        ]
+            .span(),
+    ];
+
+    let expected_res = array![];
+
+    let key = 0xa0772cc0ab5df2ddbf685663d9f2235f2022a1d9cd4594642d0db66171285358;
+
+    let mpt = MPTTrait::new(0xB28377C58119C5D785423161829FC87C613F5CC284C14A130D9CCFE5F4A0E196);
     let res = mpt.verify(key, 64, proof.span()).unwrap();
     assert(res == expected_res.span(), 'Result not matching');
 }

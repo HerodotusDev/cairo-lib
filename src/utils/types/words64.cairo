@@ -1,40 +1,102 @@
-use cairo_lib::utils::bitwise::{left_shift, right_shift};
+use cairo_lib::utils::bitwise::left_shift;
+use cairo_lib::utils::math::pow;
 
 // @notice Represents a span of 64 bit words
 // @dev In many cases it's expected that the words are in little endian, but the overall order is big endian
 // Example: 0x34957c6d8a83f9cff74578dea9 is represented as [0xcff9838a6d7c9534, 0xa9de7845f7]
 type Words64 = Span<u64>;
 
-impl Words64TryIntoU256LE of TryInto<Words64, u256> {
-    // @notice Converts a span of 64 bit little endian words into a little endian u256
-    fn try_into(self: Words64) -> Option<u256> {
-        if self.len() > 4 {
-            return Option::None(());
+#[generate_trait]
+impl Words64Impl of Words64Trait {
+    // @notice Converts little endian 64 bit words to a big endian u256
+    // @param bytes_used The number of bytes used
+    // @return The big endian u256 representation of the words
+    fn as_u256_be(self: Words64, bytes_used: usize) -> Result<u256, felt252> {
+        let len = self.len();
+
+        if len > 4 {
+            return Result::Err('Too many words');
         }
 
-        let pows = array![
-            0x10000000000000000, // 2 ** 64
-            0x100000000000000000000000000000000, // 2 ** 128
-            0x1000000000000000000000000000000000000000000000000 // 2 ** 192
-        ];
+        if len == 0 || bytes_used == 0 {
+            return Result::Ok(0);
+        }
 
-        let mut output: u256 = (*self.at(0)).into();
-        let mut i: usize = 1;
+        let mut len_last_word = bytes_used % 8;
+        if len_last_word == 0 {
+            len_last_word = 8;
+        }
+
+        let mut output: u256 = reverse_endianness_u64(
+            (*self.at(len - 1)), Option::Some(len_last_word)
+        )
+            .into();
+
+        let word_pow2 = 0x10000000000000000; // 2 ** 64
+        let mut current_pow2: u256 = if len_last_word == 8 {
+            word_pow2
+        } else {
+            pow2(len_last_word * 8).into()
+        };
+
+        let mut i = 1;
         loop {
-            if i == self.len() {
-                break Option::Some(output);
+            if i == len {
+                break Result::Ok(output);
             }
 
-            // left shift and add
-            output = output | (*self.at(i)).into() * *pows.at(i - 1);
+            output = output
+                | (reverse_endianness_u64(*self.at(len - i - 1), Option::None(())).into()
+                    * current_pow2);
+
+            if i < len - 1 {
+                current_pow2 = current_pow2 * word_pow2;
+            }
 
             i += 1;
         }
     }
-}
 
-#[generate_trait]
-impl Words64Impl of Words64Trait {
+    // @notice Converts little endian 64 bit words to a little endian u256
+    // @param bytes_used The number of bytes used
+    // @return The little endian u256 representation of the words
+    fn as_u256_le(self: Words64, bytes_used: usize) -> Result<u256, felt252> {
+        let len = self.len();
+
+        if len > 4 {
+            return Result::Err('Too many words');
+        }
+
+        if len == 0 || bytes_used == 0 {
+            return Result::Ok(0);
+        }
+
+        let mut len_last_word = bytes_used % 8;
+        if len_last_word == 0 {
+            len_last_word = 8;
+        }
+
+        let mut output: u256 = 0;
+
+        let word_pow2 = 0x10000000000000000; // 2 ** 64
+        let mut current_pow2: u256 = pow(2, (32 - bytes_used.into()) * 8);
+
+        let mut i = 0;
+        loop {
+            if i == len {
+                break Result::Ok(output);
+            }
+
+            output = output | ((*self.at(i)).into() * current_pow2);
+
+            if i < len - 1 {
+                current_pow2 = current_pow2 * word_pow2;
+            }
+
+            i += 1;
+        }
+    }
+
     // @notice Slices 64 bit little endian words from a starting byte and a length
     // @param start The starting byte
     // The starting byte is counted from the left. Example: 0xabcdef -> byte 0 is 0xab, byte 1 is 0xcd...

@@ -14,7 +14,11 @@ fn left_shift<
     impl TMul: Mul<T>,
     impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    impl TDrop: Drop<T>,
+    impl TDiv: Div<T>,
+    impl TRem: Rem<T>,
+    impl TPartialEq: PartialEq<T>,
+    impl TPartialOrd: PartialOrd<T>
 >(
     num: T, shift: T
 ) -> T {
@@ -29,18 +33,26 @@ fn left_shift<
 fn right_shift<
     T,
     impl TZeroable: Zeroable<T>,
+    impl TOneable: Oneable<T>,
     impl TAdd: Add<T>,
     impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
     impl TDiv: Div<T>,
-    impl TOneable: Oneable<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
 >(
     num: T, shift: T
 ) -> T {
+    let mut num = num;
+    let mut shift = shift;
     let two = TOneable::one() + TOneable::one();
-    num / pow(two, shift)
+
+    loop {
+        if shift.is_zero() {
+            break num;
+        }
+        num = num / two;
+        shift = shift - TOneable::one();
+    }
 }
 
 // @notice Bit length of a number
@@ -49,24 +61,24 @@ fn right_shift<
 fn bit_length<
     T,
     impl TZeroable: Zeroable<T>,
-    impl TPartialOrd: PartialOrd<T>,
-    impl TAddImpl: Add<T>,
-    impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
     impl TOneable: Oneable<T>,
+    impl TAddImpl: Add<T>,
+    impl TDiv: Div<T>,
     impl TCopy: Copy<T>,
     impl TDrop: Drop<T>
 >(
     num: T
 ) -> T {
     let mut bit_position = TZeroable::zero();
-    let mut cur_n = TOneable::one();
+    let mut cur_n = num;
+    let two = TOneable::one() + TOneable::one();
+
     loop {
-        if cur_n > num {
+        if cur_n.is_zero() {
             break ();
         };
         bit_position = bit_position + TOneable::one();
-        cur_n = left_shift(cur_n, TOneable::one());
+        cur_n = cur_n / two;
     };
     bit_position
 }

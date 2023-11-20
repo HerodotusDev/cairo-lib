@@ -1,6 +1,8 @@
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 use cairo_lib::data_structures::mmr::proof::{Proof, ProofTrait};
-use cairo_lib::data_structures::mmr::utils::{compute_root, get_height};
+use cairo_lib::data_structures::mmr::utils::{
+    compute_root, get_height, mmr_size_to_leaf_count, leaf_count_to_peaks_count, get_peak_info
+};
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // @notice Merkle Mountatin Range struct
@@ -34,6 +36,10 @@ impl MMRImpl of MMRTrait {
     // @param peaks The peaks of the MMR
     // @return Result with the new root and new peaks of the MMR
     fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
+        let leaf_count = mmr_size_to_leaf_count(self.last_pos.into());
+        if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
+            return Result::Err('Invalid peaks count');
+        }
         if !peaks.valid(self.last_pos, self.root) {
             return Result::Err('Invalid peaks');
         }
@@ -99,11 +105,22 @@ impl MMRImpl of MMRTrait {
     fn verify_proof(
         self: @MMR, index: usize, hash: felt252, peaks: Peaks, proof: Proof
     ) -> Result<bool, felt252> {
+        let leaf_count = mmr_size_to_leaf_count((*self.last_pos).into());
+        if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
+            return Result::Err('Invalid peaks count');
+        }
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');
         }
 
+        let (peak_index, peak_height) = get_peak_info(*self.last_pos, index);
+
+        if proof.len() != peak_height {
+            return Result::Ok(false);
+        }
+
         let peak = proof.compute_peak(index, hash);
-        Result::Ok(peaks.contains_peak(peak))
+
+        Result::Ok(*peaks.at(peak_index) == peak)
     }
 }
