@@ -6,11 +6,7 @@ impl ByteImpl of ByteTrait {
     // @notice Extracts the high and low nibbles from a byte
     // @return (high, low), example: 0xab -> (0xa, 0xb)
     fn extract_nibbles(self: Byte) -> (Byte, Byte) {
-        let masked = self & 0xf0;
-        // right shift by 4 bits
-        let high = masked / 16;
-        let low = self & 0x0f;
-
+        let (high, low) = DivRem::div_rem(self, 16);
         (high, low)
     }
 }
