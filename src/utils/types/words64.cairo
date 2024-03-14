@@ -128,8 +128,8 @@ impl Words64Impl of Words64Trait {
             pow2_reverse_words_offset_bits = pow2(reverse_words_offset_bits);
         }
 
-        let mut output_words = len / 8;
-        if len % 8 != 0 {
+        let (mut output_words, offset) = DivRem::div_rem(len, 8);
+        if offset != 0 {
             output_words += 1;
         }
 
