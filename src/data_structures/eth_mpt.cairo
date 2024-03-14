@@ -80,16 +80,12 @@ impl MPTImpl of MPTTrait {
                     node, current_nibble.try_into().unwrap()
                 ) {
                     Result::Ok(d) => d,
-                    Result::Err(e) => {
-                        break Result::Err(e);
-                    }
+                    Result::Err(e) => { break Result::Err(e); }
                 }
             } else {
                 match MPTTrait::decode_rlp_node(node) {
                     Result::Ok(d) => d,
-                    Result::Err(e) => {
-                        break Result::Err(e);
-                    }
+                    Result::Err(e) => { break Result::Err(e); }
                 }
             };
 
@@ -117,11 +113,9 @@ impl MPTImpl of MPTTrait {
                         if current_hash_words.len() == 0 {
                             break Result::Ok(array![].span());
                         } else {
-                            match current_hash_words.as_u256_le(32) {
+                            match current_hash_words.as_u256_le() {
                                 Result::Ok(h) => h,
-                                Result::Err(_) => {
-                                    break Result::Err('Invalid hash');
-                                }
+                                Result::Err(_) => { break Result::Err('Invalid hash'); }
                             }
                         };
                     key_pow2 = key_pow2 / 16;
@@ -192,9 +186,7 @@ impl MPTImpl of MPTTrait {
                             }
                             current_hash = next_hash;
                         },
-                        Result::Err(e) => {
-                            break Result::Err(e);
-                        }
+                        Result::Err(e) => { break Result::Err(e); }
                     }
                 },
                 MPTNode::Leaf((
@@ -284,14 +276,14 @@ impl MPTImpl of MPTTrait {
                     let n_nibbles = (first_len * 2) - 1;
 
                     if prefix == 0 {
-                        match second.as_u256_le(32) {
+                        match second.as_u256_le() {
                             Result::Ok(n) => Result::Ok(
                                 (MPTNode::Extension((first, n, 2, n_nibbles - 1)), rlp_byte_len)
                             ),
                             Result::Err(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
-                        match second.as_u256_le(32) {
+                        match second.as_u256_le() {
                             Result::Ok(n) => Result::Ok(
                                 (MPTNode::Extension((first, n, 1, n_nibbles)), rlp_byte_len)
                             ),
@@ -322,7 +314,7 @@ impl MPTImpl of MPTTrait {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {
                 let (hash_words, _) = *l.at(0);
-                match hash_words.as_u256_le(32) {
+                match hash_words.as_u256_le() {
                     Result::Ok(h) => Result::Ok((MPTNode::LazyBranch(h), rlp_byte_len)),
                     Result::Err(_) => Result::Err('Invalid hash')
                 }

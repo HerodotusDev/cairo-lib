@@ -108,19 +108,13 @@ fn test_decode_rlp_node_branch() {
                 if i >= hashes.len() {
                     break ();
                 }
-                assert((*hashes.at(i)).as_u256_le(32).unwrap() == *expected.at(i), 'Wrong hash');
+                assert((*hashes.at(i)).as_u256_le().unwrap() == *expected.at(i), 'Wrong hash');
                 i += 1;
             };
         },
-        MPTNode::LazyBranch(_) => {
-            panic_with_felt252('Branch node differs');
-        },
-        MPTNode::Extension(_) => {
-            panic_with_felt252('Branch node differs');
-        },
-        MPTNode::Leaf(_) => {
-            panic_with_felt252('Branch node differs');
-        },
+        MPTNode::LazyBranch(_) => { panic_with_felt252('Branch node differs'); },
+        MPTNode::Extension(_) => { panic_with_felt252('Branch node differs'); },
+        MPTNode::Leaf(_) => { panic_with_felt252('Branch node differs'); },
     }
 }
 

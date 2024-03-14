@@ -57,44 +57,32 @@ impl Words64Impl of Words64Trait {
         }
     }
 
-    // @notice Converts little endian 64 bit words to a little endian u256
-    // @param bytes_used The number of bytes used
+    // @notice Converts little endian 64 bit words to a little endian u256 using the first 4 64 bits words
     // @return The little endian u256 representation of the words
-    fn as_u256_le(self: Words64, bytes_used: usize) -> Result<u256, felt252> {
-        let len = self.len();
-
-        if len > 4 {
-            return Result::Err('Too many words');
-        }
-
-        if len == 0 || bytes_used == 0 {
-            return Result::Ok(0);
-        }
-
-        let mut len_last_word = bytes_used % 8;
-        if len_last_word == 0 {
-            len_last_word = 8;
-        }
-
-        let mut output: u256 = 0;
-
+    fn as_u256_le(self: Words64) -> Result<u256, felt252> {
         let word_pow2 = 0x10000000000000000; // 2 ** 64
-        let mut current_pow2: u256 = pow(2, (32 - bytes_used.into()) * 8);
 
-        let mut i = 0;
-        loop {
-            if i == len {
-                break Result::Ok(output);
-            }
+        let w0: u128 = match self.get(0) {
+            Option::Some(x) => { (*x.unbox()).into() },
+            Option::None => { 0 }
+        };
+        let w1: u128 = match self.get(1) {
+            Option::Some(x) => { (*x.unbox()).into() },
+            Option::None => { 0 }
+        };
 
-            output = output | ((*self.at(i)).into() * current_pow2);
+        let w2: u128 = match self.get(2) {
+            Option::Some(x) => { (*x.unbox()).into() },
+            Option::None => { 0 }
+        };
 
-            if i < len - 1 {
-                current_pow2 = current_pow2 * word_pow2;
-            }
+        let w3: u128 = match self.get(3) {
+            Option::Some(x) => { (*x.unbox()).into() },
+            Option::None => { 0 }
+        };
 
-            i += 1;
-        }
+        let res = u256 { low: w0 + w1 * word_pow2, high: w2 + w3 * word_pow2 };
+        return Result::Ok(res);
     }
 
     // @notice Slices 64 bit little endian words from a starting byte and a length
