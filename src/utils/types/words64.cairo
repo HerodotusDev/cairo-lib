@@ -1,3 +1,4 @@
+use core::option::OptionTrait;
 use cairo_lib::utils::bitwise::left_shift;
 use cairo_lib::utils::math::pow;
 
@@ -98,83 +99,107 @@ impl Words64Impl of Words64Trait {
         if len == 0 {
             return ArrayTrait::new().span();
         }
+        let (q, n_ending_bytes) = DivRem::div_rem(len, 8);
 
-        let first_word_index = start / 8;
-        // number of right bytes to remove
-        let mut word_offset_bytes = 8 - ((start + 1) % 8);
-        if word_offset_bytes == 8 {
-            word_offset_bytes = 0;
-        }
-
-        let word_offset_bits = word_offset_bytes * 8;
-        let pow2_word_offset_bits = pow2(word_offset_bits);
-        let mask_second_word = pow2_word_offset_bits - 1;
-        let reverse_words_offset_bits = 64 - word_offset_bits;
-
-        let mut pow2_reverse_words_offset_bits = 0;
-        if word_offset_bytes != 0 {
-            pow2_reverse_words_offset_bits = pow2(reverse_words_offset_bits);
-        }
-
-        let (mut output_words, offset) = DivRem::div_rem(len, 8);
-        if offset != 0 {
-            output_words += 1;
-        }
-
-        let mut output = ArrayTrait::new();
-        let mut i = first_word_index;
-        loop {
-            if i - first_word_index == output_words - 1 {
-                break ();
+        let mut n_words = 0;
+        if q == 0 {
+            if n_ending_bytes == 0 {
+                // 0 bytes to extract
+                return ArrayTrait::new().span();
+            } else {
+                // 1 to 7 bytes to extract
+                n_words = 1;
             }
-            let word = *self.at(i);
-            let next = *self.at(i + 1);
+        } else {
+            if n_ending_bytes == 0 {
+                n_words = q;
+            } else {
+                n_words = q + 1;
+            }
+        }
 
-            // remove bytes from the right
-            let shifted = word / pow2_word_offset_bits;
+        let start_index = start / 8;
+        let start_offset = (8 - ((start + 1) % 8)) % 8;
 
-            // get right bytes from the next word
-            let bytes_to_append = next & mask_second_word;
+        if start_offset == 0 {
+            // Handle trivial case where start offset is 0, words can be copied directly
+            let copy = self.slice(start_index, q);
+            let mut output: Array<u64> = ArrayTrait::new();
+            let mut i = 0;
+            loop {
+                if i == q {
+                    break;
+                }
+                output.append(*copy.at(i));
+                i += 1;
+            };
+            if (n_ending_bytes != 0) {
+                let last_word: u64 = *self.at(start_index + q) / (pow2(8 * n_ending_bytes)).into();
+                output.append(last_word);
+                return output.span();
+            }
 
-            // apend bytes to the left of first word
-            let mask_first_word = bytes_to_append * pow2_reverse_words_offset_bits;
-            let new_word = shifted | mask_first_word;
+            return output.span();
+        }
 
-            output.append(new_word);
+        let pow_cut: u64 = pow2(8 * start_offset);
+        let pow_acc: u64 = pow2(64 - 8 * start_offset);
+
+        let mut current_word: u64 = (*self.at(start_index) / pow_cut);
+        let mut output: Array<u64> = ArrayTrait::new();
+
+        if n_words == 1 {
+            let avl_bytes_in_first_word = 8 - start_offset;
+            let needs_next_word = len > avl_bytes_in_first_word;
+            if needs_next_word == false {
+                let last_word: u64 = (current_word % pow2(8 * n_ending_bytes)).into();
+                output.append(last_word);
+                return output.span();
+            } else {
+                let last_word: u64 = (*self
+                    .at(start_index + 1) % pow2(8 * (len + start_offset - 8))
+                    .into());
+                output.append(current_word + last_word * pow_acc.into());
+                return output.span();
+            }
+        }
+
+        let mut n_words_to_handle_in_loop = n_words;
+        if n_ending_bytes != 0 {
+            n_words_to_handle_in_loop = n_words_to_handle_in_loop - 1;
+        }
+
+        let mut i = 1;
+        let mut n_words_handled = 0;
+        loop {
+            if n_words_handled == n_words_to_handle_in_loop {
+                break;
+            }
+            let (q, r) = DivRem::div_rem(*self.at(start_index + i), pow_cut.try_into().unwrap());
+            output.append(current_word + r * pow_acc);
+            current_word = q;
+            n_words_handled += 1;
             i += 1;
         };
 
-        // Handling remainder (last word)
-
-        let last_word = *self.at(i);
-        let shifted = last_word / pow2_word_offset_bits;
-
-        let mut len_last_word = len % 8;
-        if len_last_word == 0 {
-            len_last_word = 8;
+        if n_ending_bytes != 0 {
+            let current_word = *self.at(start_index + n_words_handled) / pow_cut;
+            let avl_bytes_in_next_word = 8 - start_offset;
+            let needs_next_word = n_ending_bytes > avl_bytes_in_next_word;
+            if needs_next_word == false {
+                let last_word: u64 = (current_word % pow2(8 * n_ending_bytes).into()).into();
+                output.append(last_word);
+                return output.span();
+            } else {
+                let last_word: u64 = (*self
+                    .at(
+                        start_index + n_words_handled + 1
+                    ) % pow2(8 * (n_ending_bytes + start_offset - 8))
+                    .into());
+                output.append(current_word + last_word * pow_acc.into());
+                return output.span();
+            }
         }
-
-        if len_last_word <= 8 - word_offset_bytes {
-            // using u128 because if len_last_word == 8 left_shift might overflow by 1
-            // after subtracting 1 it's safe to unwrap
-            let mask: u128 = left_shift(1_u128, len_last_word.into() * 8) - 1;
-            let last_word_masked = shifted & mask.try_into().unwrap();
-            output.append(last_word_masked);
-        } else {
-            let missing_bytes = len_last_word - (8 - word_offset_bytes);
-            let next = *self.at(i + 1);
-
-            // get right bytes from the next word
-            let mask_second_word = pow2(missing_bytes * 8) - 1;
-            let bytes_to_append = next & mask_second_word;
-
-            // apend bytes to the left of first word
-            let mask_first_word = bytes_to_append * pow2_reverse_words_offset_bits;
-            let new_word = shifted | mask_first_word;
-
-            output.append(new_word);
-        }
-
         output.span()
     }
 }
