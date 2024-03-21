@@ -23,11 +23,14 @@ fn test_append_initial() {
     let mut mmr: MMR = Default::default();
 
     let peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    let (new_root, new_peaks) = mmr.append(*elems.at(0), peaks).unwrap();
 
-    let root = PoseidonHasher::hash_double(1, *elems.at(0));
+    let expected_root = PoseidonHasher::hash_double(1, *elems.at(0));
     assert(mmr.last_pos == 1, 'Wrong last_pos');
-    assert(mmr.root == root, 'Wrong root');
+    assert(mmr.root == expected_root, 'Wrong updated root');
+    assert(new_root == expected_root, 'Wrong returned root');
+
+    assert(new_peaks == array![*elems.at(0)].span(), 'Wrong new_peaks');
 }
 
 #[test]
@@ -35,16 +38,25 @@ fn test_append_initial() {
 fn test_append_1() {
     let elems = helper_test_get_elements();
     let mut mmr: MMR = Default::default();
+    let mmr_peaks_0 = array![].span();
 
-    let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    let (mmr_root_1, mmr_peaks_1) = mmr.append(*elems.at(0), mmr_peaks_0).unwrap();
 
-    peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    let expected_peaks_1 = array![*elems.at(0)].span();
+    let expected_root_1 = PoseidonHasher::hash_double(1, *elems.at(0));
+    assert(expected_peaks_1 == mmr_peaks_1, 'Wrong peaks after 1 append');
+    assert(mmr.root == expected_root_1, 'Wrong updated root after 2 a.');
+    assert(mmr_root_1 == expected_root_1, 'Wrong returned root after 1 a.');
 
-    let root = PoseidonHasher::hash_double(3, *elems.at(2));
+    let (mmr_root_2, mmr_peaks_2) = mmr.append(*elems.at(1), mmr_peaks_1).unwrap();
+
+    let expected_peaks_2 = array![*elems.at(2)].span();
+    let expected_root_2 = PoseidonHasher::hash_double(3, *elems.at(2));
+    assert(expected_peaks_2 == mmr_peaks_2, 'Wrong peaks after 2 appends');
+    assert(mmr.root == expected_root_2, 'Wrong updated root after 2 a.');
+    assert(mmr_root_2 == expected_root_2, 'Wrong reeturned root after 2 a.');
+
     assert(mmr.last_pos == 3, 'Wrong last_pos');
-    assert(mmr.root == root, 'Wrong root');
 }
 
 #[test]
@@ -52,21 +64,35 @@ fn test_append_1() {
 fn test_append_2() {
     let elems = helper_test_get_elements();
     let mut mmr: MMR = Default::default();
+    let mmr_peaks_0 = array![].span();
 
-    let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    let (mmr_root_1, mmr_peaks_1) = mmr.append(*elems.at(0), mmr_peaks_0).unwrap();
 
-    peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    let expected_peaks_1 = array![*elems.at(0)].span();
+    let expected_root_1 = PoseidonHasher::hash_double(1, *elems.at(0));
+    assert(expected_peaks_1 == mmr_peaks_1, 'Wrong peaks after 1 append');
+    assert(mmr.root == expected_root_1, 'Wrong updated root after 2 a.');
+    assert(mmr_root_1 == expected_root_1, 'Wrong returned root after 1 a.');
 
-    peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    let (mmr_root_2, mmr_peaks_2) = mmr.append(*elems.at(1), mmr_peaks_1).unwrap();
 
-    let root = PoseidonHasher::hash_double(
+    let expected_peaks_2 = array![*elems.at(2)].span();
+    let expected_root_2 = PoseidonHasher::hash_double(3, *elems.at(2));
+    assert(expected_peaks_2 == mmr_peaks_2, 'Wrong peaks after 2 appends');
+    assert(mmr.root == expected_root_2, 'Wrong updated root after 2 a.');
+    assert(mmr_root_2 == expected_root_2, 'Wrong reeturned root after 2 a.');
+
+    let (mmr_root_3, mmr_peaks_3) = mmr.append(*elems.at(3), mmr_peaks_2).unwrap();
+
+    let expected_peaks_3 = array![*elems.at(2), *elems.at(3)].span();
+    let expected_root_3 = PoseidonHasher::hash_double(
         4, PoseidonHasher::hash_double(*elems.at(2), *elems.at(3))
     );
+    assert(expected_peaks_3 == mmr_peaks_3, 'Wrong peaks after 3 appends');
+    assert(mmr.root == expected_root_3, 'Wrong updated root after 3 a.');
+    assert(mmr_root_3 == expected_root_3, 'Wrong reeturned root after 3 a.');
+
     assert(mmr.last_pos == 4, 'Wrong last_pos');
-    assert(mmr.root == root, 'Wrong root');
 }
 
 #[test]
@@ -74,22 +100,43 @@ fn test_append_2() {
 fn test_append_3() {
     let elems = helper_test_get_elements();
     let mut mmr: MMR = Default::default();
+    let mmr_peaks_0 = array![].span();
 
-    let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    let (mmr_root_1, mmr_peaks_1) = mmr.append(*elems.at(0), mmr_peaks_0).unwrap();
 
-    peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    let expected_peaks_1 = array![*elems.at(0)].span();
+    let expected_root_1 = PoseidonHasher::hash_double(1, *elems.at(0));
+    assert(expected_peaks_1 == mmr_peaks_1, 'Wrong peaks after 1 append');
+    assert(mmr.root == expected_root_1, 'Wrong updated root after 2 a.');
+    assert(mmr_root_1 == expected_root_1, 'Wrong returned root after 1 a.');
 
-    peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    let (mmr_root_2, mmr_peaks_2) = mmr.append(*elems.at(1), mmr_peaks_1).unwrap();
 
-    peaks = array![*elems.at(2), *elems.at(3)].span();
-    mmr.append(*elems.at(4), peaks);
+    let expected_peaks_2 = array![*elems.at(2)].span();
+    let expected_root_2 = PoseidonHasher::hash_double(3, *elems.at(2));
+    assert(expected_peaks_2 == mmr_peaks_2, 'Wrong peaks after 2 appends');
+    assert(mmr.root == expected_root_2, 'Wrong updated root after 2 a.');
+    assert(mmr_root_2 == expected_root_2, 'Wrong reeturned root after 2 a.');
 
-    let root = PoseidonHasher::hash_double(7, *elems.at(6));
+    let (mmr_root_3, mmr_peaks_3) = mmr.append(*elems.at(3), mmr_peaks_2).unwrap();
+
+    let expected_peaks_3 = array![*elems.at(2), *elems.at(3)].span();
+    let expected_root_3 = PoseidonHasher::hash_double(
+        4, PoseidonHasher::hash_double(*elems.at(2), *elems.at(3))
+    );
+    assert(expected_peaks_3 == mmr_peaks_3, 'Wrong peaks after 3 appends');
+    assert(mmr.root == expected_root_3, 'Wrong updated root after 3 a.');
+    assert(mmr_root_3 == expected_root_3, 'Wrong reeturned root after 3 a.');
+
+    let (mmr_root_4, mmr_peaks_4) = mmr.append(*elems.at(4), mmr_peaks_3).unwrap();
+
+    let expected_peaks_4 = array![*elems.at(6)].span();
+    let expected_root_4 = PoseidonHasher::hash_double(7, *elems.at(6));
+    assert(expected_peaks_4 == mmr_peaks_4, 'Wrong peaks after 4 appends');
+    assert(mmr.root == expected_root_4, 'Wrong updated root after 4 a.');
+    assert(mmr_root_4 == expected_root_4, 'Wrong reeturned root after 4 a.');
+
     assert(mmr.last_pos == 7, 'Wrong last_pos');
-    assert(mmr.root == root, 'Wrong root');
 }
 
 #[test]
@@ -97,27 +144,53 @@ fn test_append_3() {
 fn test_append_4() {
     let elems = helper_test_get_elements();
     let mut mmr: MMR = Default::default();
+    let mmr_peaks_0 = array![].span();
 
-    let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    let (mmr_root_1, mmr_peaks_1) = mmr.append(*elems.at(0), mmr_peaks_0).unwrap();
 
-    peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    let expected_peaks_1 = array![*elems.at(0)].span();
+    let expected_root_1 = PoseidonHasher::hash_double(1, *elems.at(0));
+    assert(expected_peaks_1 == mmr_peaks_1, 'Wrong peaks after 1 append');
+    assert(mmr.root == expected_root_1, 'Wrong updated root after 2 a.');
+    assert(mmr_root_1 == expected_root_1, 'Wrong returned root after 1 a.');
 
-    peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    let (mmr_root_2, mmr_peaks_2) = mmr.append(*elems.at(1), mmr_peaks_1).unwrap();
 
-    peaks = array![*elems.at(2), *elems.at(3)].span();
-    mmr.append(*elems.at(4), peaks);
+    let expected_peaks_2 = array![*elems.at(2)].span();
+    let expected_root_2 = PoseidonHasher::hash_double(3, *elems.at(2));
+    assert(expected_peaks_2 == mmr_peaks_2, 'Wrong peaks after 2 appends');
+    assert(mmr.root == expected_root_2, 'Wrong updated root after 2 a.');
+    assert(mmr_root_2 == expected_root_2, 'Wrong reeturned root after 2 a.');
 
-    peaks = array![*elems.at(6)].span();
-    mmr.append(*elems.at(7), peaks);
+    let (mmr_root_3, mmr_peaks_3) = mmr.append(*elems.at(3), mmr_peaks_2).unwrap();
 
-    let root = PoseidonHasher::hash_double(
+    let expected_peaks_3 = array![*elems.at(2), *elems.at(3)].span();
+    let expected_root_3 = PoseidonHasher::hash_double(
+        4, PoseidonHasher::hash_double(*elems.at(2), *elems.at(3))
+    );
+    assert(expected_peaks_3 == mmr_peaks_3, 'Wrong peaks after 3 appends');
+    assert(mmr.root == expected_root_3, 'Wrong updated root after 3 a.');
+    assert(mmr_root_3 == expected_root_3, 'Wrong reeturned root after 3 a.');
+
+    let (mmr_root_4, mmr_peaks_4) = mmr.append(*elems.at(4), mmr_peaks_3).unwrap();
+
+    let expected_peaks_4 = array![*elems.at(6)].span();
+    let expected_root_4 = PoseidonHasher::hash_double(7, *elems.at(6));
+    assert(expected_peaks_4 == mmr_peaks_4, 'Wrong peaks after 4 appends');
+    assert(mmr.root == expected_root_4, 'Wrong updated root after 4 a.');
+    assert(mmr_root_4 == expected_root_4, 'Wrong reeturned root after 4 a.');
+
+    let (mmr_root_5, mmr_peaks_5) = mmr.append(*elems.at(7), mmr_peaks_4).unwrap();
+
+    let expected_peaks_5 = array![*elems.at(6), *elems.at(7)].span();
+    let expected_root_5 = PoseidonHasher::hash_double(
         8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))
     );
+    assert(expected_peaks_5 == mmr_peaks_5, 'Wrong peaks after 5 appends');
+    assert(mmr.root == expected_root_5, 'Wrong updated root after 5 a.');
+    assert(mmr_root_5 == expected_root_5, 'Wrong reeturned root after 5 a.');
+
     assert(mmr.last_pos == 8, 'Wrong last_pos');
-    assert(mmr.root == root, 'Wrong root');
 }
 
 #[test]
@@ -125,20 +198,20 @@ fn test_append_4() {
 fn test_append_wrong_peaks() {
     let elems = helper_test_get_elements();
     let mut mmr: MMR = Default::default();
+    let peaks = array![].span();
 
-    let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    let (_, peaks) = mmr.append(*elems.at(0), peaks).unwrap();
 
-    peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    let (_, peaks) = mmr.append(*elems.at(1), peaks).unwrap();
 
-    peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    let (_, peaks) = mmr.append(*elems.at(3), peaks).unwrap();
 
-    peaks = array![*elems.at(2), *elems.at(4)].span();
-    let res = mmr.append(*elems.at(4), peaks);
+    assert(peaks == array![*elems.at(2), *elems.at(3)].span(), 'Wrong peaks returned by append');
 
-    assert(res.is_err(), 'Wrong peaks');
+    let wrong_peaks = array![*elems.at(2), *elems.at(4)].span();
+    let res = mmr.append(*elems.at(4), wrong_peaks);
+
+    assert(res.is_err(), 'Appnd accepted with wrong peaks');
 }
 
 #[test]
@@ -241,7 +314,7 @@ fn test_attack_forge_peaks() {
 
     // add the next element normally to mmr_real and get the root;
     let peaks_real = array![*elems.at(6), *elems.at(7)].span();
-    mmr_real.append(9, peaks_real);
+    let _ = mmr_real.append(9, peaks_real);
 
     // add the next element abnormally to mmr_real and get the root;
     let forged_peak = PoseidonHasher::hash_double(*elems.at(6), *elems.at(7));

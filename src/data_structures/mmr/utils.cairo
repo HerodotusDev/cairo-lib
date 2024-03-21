@@ -28,7 +28,7 @@ fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
 }
 
 // @notice Count the number of bits set to 1 in a 256-bit unsigned integer
-// @param n The 256-bit unsigned integer
+// @param arg The 256-bit unsigned integer
 // @return The number of bits set to 1 in n
 fn count_ones(n: u32) -> u32 {
     let mut n = n;
@@ -54,19 +54,19 @@ fn leaf_index_to_mmr_index(n: u32) -> u32 {
 // @result Number of leaves
 fn mmr_size_to_leaf_count(n: u32) -> u32 {
     let mut mmr_size = n;
-    let bits = bit_length(mmr_size);
-    let mut i = pow(2, bits);
+    let bits = bit_length(mmr_size + 1);
+    let mut mountain_leaf_count = pow(2, bits - 1);
     let mut leaf_count = 0;
     loop {
-        if i == 0 {
+        if mountain_leaf_count == 0 {
             break leaf_count;
         }
-        let x = 2 * i - 1;
-        if x <= mmr_size {
-            mmr_size -= x;
-            leaf_count += i;
+        let mountain_size = 2 * mountain_leaf_count - 1;
+        if mountain_size <= mmr_size {
+            mmr_size -= mountain_size;
+            leaf_count += mountain_leaf_count;
         }
-        i /= 2;
+        mountain_leaf_count /= 2;
     }
 }
 
