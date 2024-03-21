@@ -119,9 +119,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usiz
 
         let (decoded, decoded_len) = match rlp_decode(input) {
             Result::Ok((d, dl)) => (d, dl),
-            Result::Err(e) => {
-                break Result::Err(e);
-            }
+            Result::Err(e) => { break Result::Err(e); }
         };
         match decoded {
             RLPItem::Bytes(b) => {
@@ -134,9 +132,7 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usiz
                 }
                 total_len -= decoded_len;
             },
-            RLPItem::List(_) => {
-                panic_with_felt252('Recursive list not supported');
-            }
+            RLPItem::List(_) => { panic_with_felt252('Recursive list not supported'); }
         }
         i += decoded_len;
     }
@@ -149,15 +145,9 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
     let list_prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
     let list_type = RLPTypeTrait::from_byte(list_prefix.try_into().unwrap()).unwrap();
     let (mut current_input_index, len) = match list_type {
-        RLPType::String(()) => {
-            return Result::Err('Not a list');
-        },
-        RLPType::StringShort(()) => {
-            return Result::Err('Not a list');
-        },
-        RLPType::StringLong(()) => {
-            return Result::Err('Not a list');
-        },
+        RLPType::String(()) => { return Result::Err('Not a list'); },
+        RLPType::StringShort(()) => { return Result::Err('Not a list'); },
+        RLPType::StringLong(()) => { return Result::Err('Not a list'); },
         RLPType::ListShort(()) => (1, list_prefix - 0xc0),
         RLPType::ListLong(()) => {
             let len_len = list_prefix - 0xf7;
@@ -191,9 +181,7 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
 
         let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
         let (item_start_skip, item_len) = match rlp_type {
-            RLPType::String(()) => {
-                (0, 1)
-            },
+            RLPType::String(()) => { (0, 1) },
             RLPType::StringShort(()) => {
                 let len = prefix - 0x80;
                 (1, len)
@@ -218,12 +206,8 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
 
                 (1 + len_len, len.into())
             },
-            RLPType::ListShort(()) => {
-                panic_with_felt252('Recursive list not supported')
-            },
-            RLPType::ListLong(()) => {
-                panic_with_felt252('Recursive list not supported')
-            }
+            RLPType::ListShort(()) => { panic_with_felt252('Recursive list not supported') },
+            RLPType::ListLong(()) => { panic_with_felt252('Recursive list not supported') }
         };
 
         current_input_index += item_start_skip.try_into().unwrap();

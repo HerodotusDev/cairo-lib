@@ -112,15 +112,9 @@ fn test_decode_rlp_node_branch() {
                 i += 1;
             };
         },
-        MPTNode::LazyBranch(_) => {
-            panic_with_felt252('Branch node differs');
-        },
-        MPTNode::Extension(_) => {
-            panic_with_felt252('Branch node differs');
-        },
-        MPTNode::Leaf(_) => {
-            panic_with_felt252('Branch node differs');
-        },
+        MPTNode::LazyBranch(_) => { panic_with_felt252('Branch node differs'); },
+        MPTNode::Extension(_) => { panic_with_felt252('Branch node differs'); },
+        MPTNode::Leaf(_) => { panic_with_felt252('Branch node differs'); },
     }
 }
 

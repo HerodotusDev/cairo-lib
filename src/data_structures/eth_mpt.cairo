@@ -80,16 +80,12 @@ impl MPTImpl of MPTTrait {
                     node, current_nibble.try_into().unwrap()
                 ) {
                     Result::Ok(d) => d,
-                    Result::Err(e) => {
-                        break Result::Err(e);
-                    }
+                    Result::Err(e) => { break Result::Err(e); }
                 }
             } else {
                 match MPTTrait::decode_rlp_node(node) {
                     Result::Ok(d) => d,
-                    Result::Err(e) => {
-                        break Result::Err(e);
-                    }
+                    Result::Err(e) => { break Result::Err(e); }
                 }
             };
 
@@ -119,9 +115,7 @@ impl MPTImpl of MPTTrait {
                         } else {
                             match current_hash_words.as_u256_le(32) {
                                 Result::Ok(h) => h,
-                                Result::Err(_) => {
-                                    break Result::Err('Invalid hash');
-                                }
+                                Result::Err(_) => { break Result::Err('Invalid hash'); }
                             }
                         };
                     key_pow2 = key_pow2 / 16;
@@ -192,9 +186,7 @@ impl MPTImpl of MPTTrait {
                             }
                             current_hash = next_hash;
                         },
-                        Result::Err(e) => {
-                            break Result::Err(e);
-                        }
+                        Result::Err(e) => { break Result::Err(e); }
                     }
                 },
                 MPTNode::Leaf((
