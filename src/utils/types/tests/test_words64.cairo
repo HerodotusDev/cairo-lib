@@ -19,7 +19,6 @@ fn test_slice_words64_le_multiple_words_not_full() {
 fn test_slice_words64_le_multiple_words_full() {
     let val: Words64 = array![0xabcdef1234567890, 0x7584934785943295, 0x48542576].span();
 
-    let gas = testing::get_available_gas();
     let res = val.slice_le(4, 16);
     assert(res.len() == 2, 'Wrong len');
     assert(*res.at(0) == 0x943295abcdef1234, 'Wrong value at 0');
