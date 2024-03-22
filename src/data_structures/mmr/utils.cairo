@@ -45,6 +45,8 @@ fn count_ones(n: u32) -> u32 {
 // @notice Convert a leaf index to an Merkle Mountain Range tree index
 // @param n The leaf index
 // @return The MMR index
+// Explanation of why this formula is correct
+// https://mmr.herodotus.dev/mmr-size-vs-leaf-count#leaf-count-to-mmr-size-algorithm
 fn leaf_index_to_mmr_index(n: u32) -> u32 {
     2 * n - 1 - count_ones(n - 1)
 }
@@ -52,6 +54,8 @@ fn leaf_index_to_mmr_index(n: u32) -> u32 {
 // @notice Convert a Merkle Mountain Range tree size to number of leaves
 // @param n MMR size
 // @result Number of leaves
+// Explanation of why this algorithm is correct
+// https://mmr.herodotus.dev/mmr-size-vs-leaf-count#mmr-size-to-leaf-count-algorithm
 fn mmr_size_to_leaf_count(n: u32) -> u32 {
     let mut mmr_size = n;
     let bits = bit_length(mmr_size + 1);

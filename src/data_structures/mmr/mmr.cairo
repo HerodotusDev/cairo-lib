@@ -49,32 +49,28 @@ impl MMRImpl of MMRTrait {
 
         self.last_pos += 1;
 
+        // TODO: why number of new peaks is equal to number of trailing ones
         let new_peaks_count = trailing_ones(leaf_count);
-        let mut new_peak = hash;
-        let mut i = 0;
+        let mut preserved_peaks = peaks.slice(0, peaks_count - new_peaks_count);
+        let mut merged_peaks = peaks.slice(peaks_count - new_peaks_count, new_peaks_count);
 
+        let mut last_peak = hash;
         loop {
-            if i == new_peaks_count {
-                break ();
-            }
-
-            new_peak = PoseidonHasher::hash_double(*peaks.at(peaks.len() - i - 1), new_peak);
-
-            i += 1;
+            match merged_peaks.pop_back() {
+                Option::Some(x) => { last_peak = PoseidonHasher::hash_double(*x, last_peak); },
+                Option::None => { break; }
+            };
             self.last_pos += 1;
         };
 
         let mut new_peaks = ArrayTrait::new();
-        let mut i = 0;
         loop {
-            if i == peaks_count - new_peaks_count {
-                break ();
-            }
-            new_peaks.append(*peaks.at(i));
-
-            i += 1;
+            match preserved_peaks.pop_front() {
+                Option::Some(x) => { new_peaks.append(*x); },
+                Option::None => { break; }
+            };
         };
-        new_peaks.append(new_peak);
+        new_peaks.append(last_peak);
 
         let new_root = compute_root(self.last_pos.into(), new_peaks.span());
         self.root = new_root;
@@ -98,7 +94,7 @@ impl MMRImpl of MMRTrait {
         if !peaks.valid(*self.last_pos, *self.root) {
             return Result::Err('Invalid peaks');
         }
-        
+
         let (peak_index, peak_height) = get_peak_info(*self.last_pos, index);
 
         if proof.len() != peak_height {
