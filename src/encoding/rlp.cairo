@@ -123,7 +123,9 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usiz
         match decoded {
             RLPItem::Bytes(b) => {
                 output.append(b);
-                let (word, offset) = DivRem::div_rem(decoded_len, 8);
+                let (word, offset) = DivRem::div_rem(
+                    decoded_len, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+                );
                 let reversed = 7 - offset;
                 let next_start = word * 8 + reversed;
                 if (total_len - decoded_len != 0) {
@@ -173,7 +175,9 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
             break Result::Err('Too many items to decode');
         }
 
-        let (current_word, current_word_offset) = DivRem::div_rem(current_input_index, 8);
+        let (current_word, current_word_offset) = DivRem::div_rem(
+            current_input_index, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+        );
 
         let pow2_shift = pow2(current_word_offset * 8);
         let prefix = (*input.at(current_word) / pow2_shift) & 0xff;
@@ -188,7 +192,9 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
             RLPType::StringLong(()) => {
                 let len_len = prefix - 0xb7;
 
-                let (current_word, offset) = DivRem::div_rem(current_input_index + 1, 8);
+                let (current_word, offset) = DivRem::div_rem(
+                    current_input_index + 1, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+                );
                 let current_word_offset = 7 - offset;
 
                 let len_span = input
@@ -211,7 +217,9 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
 
         current_input_index += item_start_skip.try_into().unwrap();
         if span_contains(lazy, lazy_index) {
-            let (current_word, offset) = DivRem::div_rem(current_input_index, 8);
+            let (current_word, offset) = DivRem::div_rem(
+                current_input_index, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+            );
             let current_word_offset = 7 - offset;
             let start = current_word * 8 + current_word_offset;
 

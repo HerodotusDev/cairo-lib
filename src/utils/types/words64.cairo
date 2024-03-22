@@ -99,7 +99,9 @@ impl Words64Impl of Words64Trait {
         if len == 0 {
             return ArrayTrait::new().span();
         }
-        let (q, n_ending_bytes) = DivRem::div_rem(len, 8);
+        let (q, n_ending_bytes) = DivRem::div_rem(
+            len, TryInto::<usize, NonZero<usize>>::try_into(8).unwrap()
+        );
 
         let mut n_words = 0;
         if q == 0 {
