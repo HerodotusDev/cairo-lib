@@ -89,10 +89,11 @@ fn trailing_ones(n: u32) -> u32 {
     let mut n = n;
     let mut count = 0;
     loop {
-        if n % 2 == 0 {
+        let (halfed, rem) = DivRem::div_rem(n, TryInto::<u32, NonZero<u32>>::try_into(2).unwrap());
+        if rem == 0 {
             break count;
         }
-        n /= 2;
+        n = halfed;
         count += 1;
     }
 }
