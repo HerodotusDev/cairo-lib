@@ -39,12 +39,4 @@ impl PeaksImpl of PeaksTrait {
         let computed_root = compute_root(last_pos.into(), self);
         computed_root == root
     }
-
-    // @notice Checks if the peaks contain a peak
-    // @param peak The peak to check inclusion
-    // @return True if the peaks contain the peak
-    #[inline(always)]
-    fn contains_peak(self: Peaks, peak: felt252) -> bool {
-        span_contains(self, peak)
-    }
 }

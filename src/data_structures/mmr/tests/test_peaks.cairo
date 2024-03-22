@@ -53,21 +53,3 @@ fn test_valid() {
 
     assert(peaks.span().valid(last_pos_u32, root), 'Valid');
 }
-
-#[test]
-#[available_gas(99999999)]
-fn test_containts_peak() {
-    let peak0 = PoseidonHasher::hash_double(245, 287388);
-    let peak1 = PoseidonHasher::hash_double(2340, 827394299);
-    let peak2 = PoseidonHasher::hash_double(923048, 23984294798);
-
-    let peaks_arr = array![peak0, peak1, peak2];
-    let peaks = peaks_arr.span();
-
-    assert(peaks.contains_peak(peak0), 'Contains peak 0');
-    assert(peaks.contains_peak(peak1), 'Contains peak 1');
-    assert(peaks.contains_peak(peak2), 'Contains peak 2');
-
-    assert(!peaks.contains_peak(0), 'Does not contain 0');
-    assert(!peaks.contains_peak(1), 'Does not contain 1');
-}
