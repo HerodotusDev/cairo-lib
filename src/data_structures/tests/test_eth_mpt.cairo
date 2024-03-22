@@ -108,7 +108,7 @@ fn test_decode_rlp_node_branch() {
                 if i >= hashes.len() {
                     break ();
                 }
-                assert((*hashes.at(i)).as_u256_le(32).unwrap() == *expected.at(i), 'Wrong hash');
+                assert((*hashes.at(i)).as_u256_le().unwrap() == *expected.at(i), 'Wrong hash');
                 i += 1;
             };
         },
