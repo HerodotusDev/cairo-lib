@@ -27,10 +27,10 @@ fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
     PoseidonHasher::hash_double(last_pos, bag)
 }
 
-// @notice Count the number of bits set to 1 in a 256-bit unsigned integer
-// @param arg The 256-bit unsigned integer
+// @notice Count the number of bits set to 1 in an unsigned integer
+// @param arg The usize (u32) unsigned integer
 // @return The number of bits set to 1 in n
-fn count_ones(n: u32) -> u32 {
+fn count_ones(n: usize) -> usize {
     let mut n = n;
     let mut count = 0;
     loop {
@@ -47,7 +47,7 @@ fn count_ones(n: u32) -> u32 {
 // @return The MMR index
 // Explanation of why this formula is correct
 // https://mmr.herodotus.dev/mmr-size-vs-leaf-count#leaf-count-to-mmr-size-algorithm
-fn leaf_index_to_mmr_index(n: u32) -> u32 {
+fn leaf_index_to_mmr_index(n: usize) -> usize {
     2 * n - 1 - count_ones(n - 1)
 }
 
@@ -56,7 +56,7 @@ fn leaf_index_to_mmr_index(n: u32) -> u32 {
 // @result Number of leaves
 // Explanation of why this algorithm is correct
 // https://mmr.herodotus.dev/mmr-size-vs-leaf-count#mmr-size-to-leaf-count-algorithm
-fn mmr_size_to_leaf_count(n: u32) -> u32 {
+fn mmr_size_to_leaf_count(n: usize) -> usize {
     let mut mmr_size = n;
     let bits = bit_length(mmr_size + 1);
     let mut mountain_leaf_count = pow(2, bits - 1);
@@ -78,18 +78,20 @@ fn mmr_size_to_leaf_count(n: u32) -> u32 {
 // @notice Convert a number of leaves to number of peaks
 // @param leaf_count Number of leaves
 // @return Number of peaks
-fn leaf_count_to_peaks_count(leaf_count: u32) -> u32 {
+fn leaf_count_to_peaks_count(leaf_count: usize) -> usize {
     count_ones(leaf_count)
 }
 
 // @notice Get the number of trailing ones in the binary representation of a number
 // @param n The number
 // @return Number of trailing ones
-fn trailing_ones(n: u32) -> u32 {
+fn trailing_ones(n: usize) -> usize {
     let mut n = n;
     let mut count = 0;
     loop {
-        let (halfed, rem) = DivRem::div_rem(n, TryInto::<u32, NonZero<u32>>::try_into(2).unwrap());
+        let (halfed, rem) = DivRem::div_rem(
+            n, TryInto::<usize, NonZero<usize>>::try_into(2).unwrap()
+        );
         if rem == 0 {
             break count;
         }
@@ -102,7 +104,7 @@ fn trailing_ones(n: u32) -> u32 {
 // @param elements_count The size of the MMR (number of elements in the MMR)
 // @param element_index The index of the element in the MMR
 // @return (peak index, peak height)
-fn get_peak_info(elements_count: u32, element_index: u32) -> (u32, u32) {
+fn get_peak_info(elements_count: usize, element_index: usize) -> (usize, usize) {
     let mut elements_count = elements_count;
     let mut element_index = element_index;
 
