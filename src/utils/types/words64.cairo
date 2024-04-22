@@ -3,8 +3,9 @@ use cairo_lib::utils::bitwise::left_shift;
 use cairo_lib::utils::math::pow;
 
 // @notice Represents a span of 64 bit words
-// @dev In many cases it's expected that the words are in little endian, but the overall order is big endian
-// Example: 0x34957c6d8a83f9cff74578dea9 is represented as [0xcff9838a6d7c9534, 0xa9de7845f7]
+// @dev In many cases it's expected that the words are in little endian, but the overall order is
+// big endian Example: 0x34957c6d8a83f9cff74578dea9 is represented as [0xcff9838a6d7c9534,
+// 0xa9de7845f7]
 type Words64 = Span<u64>;
 
 #[generate_trait]
@@ -58,8 +59,8 @@ impl Words64Impl of Words64Trait {
         }
     }
 
-    // @notice Converts little endian 64 bit words to a little endian u256 using the first 4 64 bits words
-    // @return The little endian u256 representation of the words
+    // @notice Converts little endian 64 bit words to a little endian u256 using the first 4 64 bits
+    // words @return The little endian u256 representation of the words
     fn as_u256_le(self: Words64) -> Result<u256, felt252> {
         let word_pow2 = 0x10000000000000000; // 2 ** 64
 
@@ -88,10 +89,11 @@ impl Words64Impl of Words64Trait {
 
     // @notice Slices 64 bit little endian words from a starting byte and a length
     // @param start The starting byte
-    // The starting byte is counted from the left. Example: 0xabcdef -> byte 0 is 0xab, byte 1 is 0xcd...
+    // The starting byte is counted from the left. Example: 0xabcdef -> byte 0 is 0xab, byte 1 is
+    // 0xcd...
     // @param len The number of bytes to slice
     // @return A span of 64 bit little endian words
-    // Example: 
+    // Example:
     // words: [0xabcdef1234567890, 0x7584934785943295, 0x48542576]
     // start: 5 | len: 17
     // output: [0x3295abcdef123456, 0x2576758493478594, 0x54]

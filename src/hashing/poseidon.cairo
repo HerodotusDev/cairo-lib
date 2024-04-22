@@ -19,7 +19,9 @@ fn hash_words64(words: Words64) -> felt252 {
     }
 }
 
-// Permutation params: https://docs.starknet.io/documentation/architecture_and_concepts/Cryptography/hash-functions/#poseidon_hash
+// Permutation params:
+// 
+// https://docs.starknet.io/documentation/architecture_and_concepts/Cryptography/hash-functions/#poseidon_hash
 impl PoseidonHasher of Hasher<felt252, felt252> {
     // @inheritdoc Hasher
     fn hash_single(a: felt252) -> felt252 {

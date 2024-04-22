@@ -15,7 +15,8 @@ impl ProofImpl of ProofTrait {
     // @return The root of the subtree
     fn compute_peak(self: Proof, index: usize, hash: felt252) -> felt252 {
         // calculate direction array
-        // direction[i] - whether the i-th node from the root is a left or a right child of its parent
+        // direction[i] - whether the i-th node from the root is a left or a right child of its
+        // parent
         let mut bits = bit_length(index);
         if self.len() + 1 > bits {
             bits = self.len() + 1;
