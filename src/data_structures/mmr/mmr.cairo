@@ -49,10 +49,12 @@ impl MMRImpl of MMRTrait {
 
         self.last_pos += 1;
 
-        // TODO: why number of new peaks is equal to number of trailing ones
-        let new_peaks_count = trailing_ones(leaf_count);
-        let mut preserved_peaks = peaks.slice(0, peaks_count - new_peaks_count);
-        let mut merged_peaks = peaks.slice(peaks_count - new_peaks_count, new_peaks_count);
+        // number of new nodes = trailing_ones(leaf_count)
+        // explanation: https://mmr.herodotus.dev/append
+        let no_merged_peaks = trailing_ones(leaf_count);
+        let no_preserved_peaks = peaks_count - no_merged_peaks;
+        let mut preserved_peaks = peaks.slice(0, no_preserved_peaks);
+        let mut merged_peaks = peaks.slice(no_preserved_peaks, no_merged_peaks);
 
         let mut last_peak = hash;
         loop {
