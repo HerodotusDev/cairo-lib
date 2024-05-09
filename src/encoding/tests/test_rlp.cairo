@@ -2,6 +2,101 @@ use cairo_lib::encoding::rlp::{RLPItem, rlp_decode, rlp_decode_list_lazy};
 
 #[test]
 #[available_gas(99999999)]
+fn test_rlp_decode_list_lazy() {
+    let header = array![
+        0xe8b262aba04d02f9,
+        0xe92b43b7269adf2c,
+        0x3219c99e0e62e108,
+        0xdbd718a65e62ee2c,
+        0x4dcc1da0a7025592,
+        0xb585ab7a5dc7dee8,
+        0x4512d31ad4ccb667,
+        0x42a1f013748a941b,
+        0x76e2944793d440fd,
+        0xb392877a528a37bc,
+        0x3d26535e5bcacd53,
+        0xad8845282ba09efb,
+        0xadd0ff882e102608,
+        0x9377fd4a5e390028,
+        0xa12a5b983f7494f6,
+        0xbb0912aa0f040a8,
+        0x908c7c096ebb3e55,
+        0xaf8972d156174118,
+        0x2052c8ee7d4dfcdd,
+        0x30074ba0dd8f0136,
+        0x29fbe705757dfc39,
+        0xd5bf3e2a18cd7521,
+        0xa4236967d566a919,
+        0x1b96afce6f5b3,
+        0x83c162e3cf68b4e0,
+        0x603d92a232041c65,
+        0x4205289502249be4,
+        0xa953375766002824,
+        0x27022be1a1d03a26,
+        0x865184121ec29456,
+        0x4a736a83a546402b,
+        0xa4e6d4212124090,
+        0x1bb1bcd95a562041,
+        0xc2880c131ac690c6,
+        0x476d4591ed464a24,
+        0x1152501072246a61,
+        0x1feac0a84a852d4,
+        0xca4d0015481089ac,
+        0x48845640f0680802,
+        0x623498201b6e6803,
+        0x5690f81f6811e4e6,
+        0x10fa5240ab1144a4,
+        0xa5908e488386b004,
+        0x289c44caa01415f,
+        0x212636b0ea269a42,
+        0xb4e051a1cb078fb,
+        0xc20040d091026f98,
+        0x1b42e2a412c0c6a8,
+        0xa060389a66bb9413,
+        0x48eb16f89694bb01,
+        0x46666b03c62101c0,
+        0x6ced8022d21396c2,
+        0x528930242007d84a,
+        0x2612953852d414a9,
+        0xde22b54e141e508b,
+        0x2432452d008887e,
+        0xc901846371598380,
+        0x848e9a1c018480c3,
+        0x8987a08080923b66,
+        0xb70ac31dd828882,
+        0xbe0d1998c187602b,
+        0x84e021ad60db368a,
+        0x886e92cd1e5cf7,
+        0x8500000000000000,
+        0xe271a0cd0fefcb08,
+        0xb13f931db22a2c83,
+        0x23f9cf41e107c409,
+        0xccfd4c39f2afd5a7,
+        0xc837cf063a840dc,
+        0xa000009805840000,
+        0xcb1b14988ae5328c,
+        0xa2ab435d3495032,
+        0x38e31c987d75b08b,
+        0xbba3bdee6b8da852
+    ].span();
+    let (decoded_rlp, _) = rlp_decode_list_lazy(
+        header,
+        array![8, 11].span()
+    )
+        .unwrap();
+    let ((block_number, block_number_byte_len), (timestamp, timestamp_byte_len)) =
+        match decoded_rlp {
+        RLPItem::Bytes(_) => panic_with_felt252('Invalid header rlp'),
+        RLPItem::List(l) => { (*l.at(0), *l.at(1)) },
+    };
+    let block0 = *block_number.at(0);
+    let time0 = *timestamp.at(0);
+    assert(block0 == 0x637159, 'invalid block0');
+    assert(time0 == 0x80923b66, 'invalid time0');
+}
+
+#[test]
+#[available_gas(99999999)]
 fn test_rlp_decode_string() {
     let mut i = 1;
     loop {
