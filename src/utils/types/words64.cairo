@@ -138,7 +138,7 @@ impl Words64Impl of Words64Trait {
                 i += 1;
             };
             if (n_ending_bytes != 0) {
-                let last_word: u64 = *self.at(start_index + q) / (pow2(8 * n_ending_bytes)).into();
+                let last_word: u64 = *self.at(start_index + q) % (pow2(8 * n_ending_bytes)).into();
                 output.append(last_word);
                 return output.span();
             }
