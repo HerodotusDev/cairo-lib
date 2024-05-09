@@ -38,9 +38,7 @@ impl MMRImpl of MMRTrait {
     // @return Result with the new root and new peaks of the MMR
     fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
         let leaf_count = mmr_size_to_leaf_count(self.last_pos.into());
-        let peaks_count = peaks.len();
-
-        if leaf_count_to_peaks_count(leaf_count) != peaks_count.into() {
+        if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
             return Result::Err('Invalid peaks count');
         }
         if !peaks.valid(self.last_pos, self.root) {
@@ -49,35 +47,54 @@ impl MMRImpl of MMRTrait {
 
         self.last_pos += 1;
 
-        // number of new nodes = trailing_ones(leaf_count)
-        // explanation: https://mmr.herodotus.dev/append
-        let no_merged_peaks = trailing_ones(leaf_count);
-        let no_preserved_peaks = peaks_count - no_merged_peaks;
-        let mut preserved_peaks = peaks.slice(0, no_preserved_peaks);
-        let mut merged_peaks = peaks.slice(no_preserved_peaks, no_merged_peaks);
-
-        let mut last_peak = hash;
+        let mut peaks_arr = ArrayTrait::new();
+        let mut i: usize = 0;
         loop {
-            match merged_peaks.pop_back() {
-                Option::Some(x) => { last_peak = PoseidonHasher::hash_double(*x, last_peak); },
-                Option::None => { break; }
-            };
+            if i == peaks.len() {
+                break ();
+            }
+
+            peaks_arr.append(*peaks.at(i));
+
+            i += 1;
+        };
+        peaks_arr.append(hash);
+
+        let mut height = 0;
+        loop {
+            if get_height(self.last_pos + 1) <= height {
+                break ();
+            }
             self.last_pos += 1;
-        };
 
-        let mut new_peaks = ArrayTrait::new();
-        loop {
-            match preserved_peaks.pop_front() {
-                Option::Some(x) => { new_peaks.append(*x); },
-                Option::None => { break; }
+            let mut peaks_span = peaks_arr.span();
+            // As the above condition verifies that a merge is happening, we have at least 2 peaks (that are about to be merged)
+            let right = peaks_span.pop_back().unwrap();
+            let left = peaks_span.pop_back().unwrap();
+
+            let mut new_peaks = ArrayTrait::new();
+            i = 0;
+            loop {
+                if i == peaks_arr.len() - 2 {
+                    break ();
+                }
+
+                new_peaks.append(*peaks_arr.at(i));
+
+                i += 1;
             };
-        };
-        new_peaks.append(last_peak);
 
-        let new_root = compute_root(self.last_pos.into(), new_peaks.span());
+            let hash = PoseidonHasher::hash_double(*left, *right);
+            new_peaks.append(hash);
+            peaks_arr = new_peaks;
+
+            height += 1;
+        };
+
+        let new_root = compute_root(self.last_pos.into(), peaks_arr.span());
         self.root = new_root;
 
-        Result::Ok((new_root, new_peaks.span()))
+        Result::Ok((new_root, peaks_arr.span()))
     }
 
     // @notice Verifies a proof for an element in the MMR
