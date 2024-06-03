@@ -48,8 +48,7 @@ fn test_valid() {
 
     let bag = peaks.span().bag();
     let last_pos = 923048;
-    let last_pos_u32 = 923048_u32;
-    let root = PoseidonHasher::hash_double(last_pos, bag);
+    let root = PoseidonHasher::hash_double(last_pos.into(), bag);
 
-    assert(peaks.span().valid(last_pos_u32, root), 'Valid');
+    assert(peaks.span().valid(last_pos, root), 'Valid');
 }

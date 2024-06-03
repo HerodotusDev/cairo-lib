@@ -27,7 +27,7 @@ fn test_compute_root() {
 
     let bag = peaks.span().bag();
     let last_pos = 923048;
-    let root = PoseidonHasher::hash_double(last_pos, bag);
+    let root = PoseidonHasher::hash_double(last_pos.into(), bag);
     let computed_root = compute_root(last_pos, peaks.span());
 
     assert(root == computed_root, 'Roots not matching');

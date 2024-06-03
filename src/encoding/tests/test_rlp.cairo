@@ -84,7 +84,7 @@ fn test_rlp_decode_list_lazy() {
         array![8, 11].span()
     )
         .unwrap();
-    let ((block_number, block_number_byte_len), (timestamp, timestamp_byte_len)) =
+    let ((block_number, _block_number_byte_len), (timestamp, _timestamp_byte_len)) =
         match decoded_rlp {
         RLPItem::Bytes(_) => panic_with_felt252('Invalid header rlp'),
         RLPItem::List(l) => { (*l.at(0), *l.at(1)) },

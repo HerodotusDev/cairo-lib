@@ -1,12 +1,13 @@
 use cairo_lib::utils::bitwise::{bit_length, left_shift};
 use cairo_lib::utils::math::pow;
 use cairo_lib::hashing::poseidon::PoseidonHasher;
+use cairo_lib::data_structures::mmr::mmr::{MmrSize, MmrElement};
 use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 
 // @notice Computes the height of a node in the MMR
 // @param index The index of the node
 // @return The height of the node
-fn get_height(index: usize) -> usize {
+fn get_height(index: MmrSize) -> MmrSize {
     let bits = bit_length(index);
     let ones = pow(2, bits) - 1;
 
@@ -22,15 +23,15 @@ fn get_height(index: usize) -> usize {
 // @param last_pos The position of the last node in the MMR
 // @param peaks The peaks of the MMR
 // @return The root of the MMR
-fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
+fn compute_root(last_pos: MmrSize, peaks: Peaks) -> MmrElement {
     let bag = peaks.bag();
-    PoseidonHasher::hash_double(last_pos, bag)
+    PoseidonHasher::hash_double(last_pos.into(), bag)
 }
 
 // @notice Count the number of bits set to 1 in an unsigned integer
-// @param arg The usize (u32) unsigned integer
+// @param arg The u128 unsigned integer
 // @return The number of bits set to 1 in n
-fn count_ones(n: usize) -> usize {
+fn count_ones(n: MmrSize) -> usize {
     let mut n = n;
     let mut count = 0;
     loop {
@@ -47,8 +48,8 @@ fn count_ones(n: usize) -> usize {
 // @return The MMR index
 // Explanation of why this formula is correct
 // https://mmr.herodotus.dev/mmr-size-vs-leaf-count#leaf-count-to-mmr-size-algorithm
-fn leaf_index_to_mmr_index(n: usize) -> usize {
-    2 * n - 1 - count_ones(n - 1)
+fn leaf_index_to_mmr_index(n: MmrSize) -> MmrSize {
+    2 * n - 1 - count_ones(n - 1).into()
 }
 
 // @notice Convert a Merkle Mountain Range tree size to number of leaves
@@ -56,7 +57,7 @@ fn leaf_index_to_mmr_index(n: usize) -> usize {
 // @result Number of leaves
 // Explanation of why this algorithm is correct
 // https://mmr.herodotus.dev/mmr-size-vs-leaf-count#mmr-size-to-leaf-count-algorithm
-fn mmr_size_to_leaf_count(n: usize) -> usize {
+fn mmr_size_to_leaf_count(n: MmrSize) -> MmrSize {
     let mut mmr_size = n;
     let bits = bit_length(mmr_size + 1);
     let mut mountain_leaf_count = pow(2, bits - 1);
@@ -78,19 +79,19 @@ fn mmr_size_to_leaf_count(n: usize) -> usize {
 // @notice Convert a number of leaves to number of peaks
 // @param leaf_count Number of leaves
 // @return Number of peaks
-fn leaf_count_to_peaks_count(leaf_count: usize) -> usize {
+fn leaf_count_to_peaks_count(leaf_count: MmrSize) -> usize {
     count_ones(leaf_count)
 }
 
 // @notice Get the number of trailing ones in the binary representation of a number
 // @param n The number
 // @return Number of trailing ones
-fn trailing_ones(n: usize) -> usize {
+fn trailing_ones(n: MmrSize) -> usize {
     let mut n = n;
     let mut count = 0;
     loop {
         let (halfed, rem) = DivRem::div_rem(
-            n, TryInto::<usize, NonZero<usize>>::try_into(2).unwrap()
+            n, TryInto::<MmrSize, NonZero<MmrSize>>::try_into(2).unwrap()
         );
         if rem == 0 {
             break count;
@@ -104,12 +105,12 @@ fn trailing_ones(n: usize) -> usize {
 // @param elements_count The size of the MMR (number of elements in the MMR)
 // @param element_index The index of the element in the MMR
 // @return (peak index, peak height)
-fn get_peak_info(elements_count: usize, element_index: usize) -> (usize, usize) {
+fn get_peak_info(elements_count: MmrSize, element_index: MmrSize) -> (usize, usize) {
     let mut elements_count = elements_count;
     let mut element_index = element_index;
 
-    let mut mountain_height = bit_length(elements_count);
-    let mut mountain_elements_count = pow(2, mountain_height) - 1;
+    let mut mountain_height: usize = bit_length(elements_count).try_into().unwrap();
+    let mut mountain_elements_count: MmrSize = pow(2, mountain_height.into()) - 1;
     let mut mountain_index = 0;
     loop {
         if mountain_elements_count <= elements_count {

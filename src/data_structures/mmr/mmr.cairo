@@ -6,11 +6,14 @@ use cairo_lib::data_structures::mmr::utils::{
 };
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
+type MmrElement = felt252;
+type MmrSize = u128;
+
 // @notice Merkle Mountatin Range struct
 #[derive(Drop, Clone, Serde, starknet::Store)]
 struct MMR {
-    root: felt252,
-    last_pos: usize
+    root: MmrElement,
+    last_pos: MmrSize
 }
 
 impl MMRDefault of Default<MMR> {
@@ -28,7 +31,7 @@ impl MMRImpl of MMRTrait {
     // @param last_pos The last position in the MMR
     // @return MMR with the given root and last_pos
     #[inline(always)]
-    fn new(root: felt252, last_pos: usize) -> MMR {
+    fn new(root: MmrElement, last_pos: MmrSize) -> MMR {
         MMR { root, last_pos }
     }
 
@@ -36,9 +39,9 @@ impl MMRImpl of MMRTrait {
     // @param hash The hashed element to append
     // @param peaks The peaks of the MMR
     // @return Result with the new root and new peaks of the MMR
-    fn append(ref self: MMR, hash: felt252, peaks: Peaks) -> Result<(felt252, Peaks), felt252> {
-        let leaf_count = mmr_size_to_leaf_count(self.last_pos.into());
-        let peaks_count = peaks.len();
+    fn append(ref self: MMR, hash: MmrElement, peaks: Peaks) -> Result<(MmrElement, Peaks), felt252> {
+        let leaf_count = mmr_size_to_leaf_count(self.last_pos);
+        let peaks_count= peaks.len();
 
         if leaf_count_to_peaks_count(leaf_count) != peaks_count.into() {
             return Result::Err('Invalid peaks count');
@@ -74,7 +77,7 @@ impl MMRImpl of MMRTrait {
         };
         new_peaks.append(last_peak);
 
-        let new_root = compute_root(self.last_pos.into(), new_peaks.span());
+        let new_root = compute_root(self.last_pos, new_peaks.span());
         self.root = new_root;
 
         Result::Ok((new_root, new_peaks.span()))
@@ -87,9 +90,9 @@ impl MMRImpl of MMRTrait {
     // @param proof The proof for the element
     // @return Result with true if the proof is valid, false otherwise
     fn verify_proof(
-        self: @MMR, index: usize, hash: felt252, peaks: Peaks, proof: Proof
+        self: @MMR, index: MmrSize, hash: MmrElement, peaks: Peaks, proof: Proof
     ) -> Result<bool, felt252> {
-        let leaf_count = mmr_size_to_leaf_count((*self.last_pos).into());
+        let leaf_count = mmr_size_to_leaf_count(*self.last_pos);
         if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
             return Result::Err('Invalid peaks count');
         }
