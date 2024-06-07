@@ -7,7 +7,7 @@ use cairo_lib::data_structures::mmr::utils::{
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 type MmrElement = felt252;
-type MmrSize = u128;
+type MmrSize = u256;
 
 // @notice Merkle Mountatin Range struct
 #[derive(Drop, Clone, Serde, starknet::Store)]

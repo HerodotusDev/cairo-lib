@@ -25,7 +25,7 @@ fn get_height(index: MmrSize) -> MmrSize {
 // @return The root of the MMR
 fn compute_root(last_pos: MmrSize, peaks: Peaks) -> MmrElement {
     let bag = peaks.bag();
-    PoseidonHasher::hash_double(last_pos.into(), bag)
+    PoseidonHasher::hash_double(last_pos.try_into().unwrap(), bag)
 }
 
 // @notice Count the number of bits set to 1 in an unsigned integer
