@@ -1,27 +1,27 @@
-use math::Oneable;
+use core::num::traits::{Zero, One};
 
 // @notice Computes `base ^ exp`
 // @param base The base of the exponentiation
 // @param exp The exponent of the exponentiation
 // @return The exponentiation result
 
-fn pow<
+pub fn pow<
     T,
-    impl TZeroable: Zeroable<T>,
-    impl TOneable: Oneable<T>,
-    impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>,
-    impl TAdd: Add<T>,
-    impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
-    impl TDiv: Div<T>,
-    impl TRem: Rem<T>,
-    impl TPartialEq: PartialEq<T>,
-    impl TPartialOrd: PartialOrd<T>
+    +Zero<T>,
+    +One<T>,
+    +Copy<T>,
+    +Drop<T>,
+    +Add<T>,
+    +Sub<T>,
+    +Mul<T>,
+    +Div<T>,
+    +Rem<T>,
+    +PartialEq<T>,
+    +PartialOrd<T>
 >(
     mut base: T, mut exp: T
 ) -> T {
-    let two = TOneable::one() + TOneable::one();
+    let two = One::one() + One::one();
     let four = two + two;
     let sixteen = four * four;
     if exp < sixteen {
@@ -31,49 +31,49 @@ fn pow<
     }
 }
 
-fn slow_pow<
+pub fn slow_pow<
     T,
-    impl TZeroable: Zeroable<T>,
-    impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
-    impl TOneable: Oneable<T>,
-    impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    +Zero<T>,
+    +Sub<T>,
+    +Mul<T>,
+    +One<T>,
+    +Copy<T>,
+    +Drop<T>
 >(
     base: T, mut exp: T
 ) -> T {
     if exp.is_zero() {
-        TOneable::one()
+        One::one()
     } else {
-        base * slow_pow(base, exp - TOneable::one())
+        base * slow_pow(base, exp - One::one())
     }
 }
 
-fn fast_pow<
+pub fn fast_pow<
     T,
-    impl TZeroable: Zeroable<T>,
-    impl TOneable: Oneable<T>,
-    impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>,
-    impl TAdd: Add<T>,
-    impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
-    impl TDiv: Div<T>,
-    impl TRem: Rem<T>,
-    impl TPartialEq: PartialEq<T>
+    +Zero<T>,
+    +One<T>,
+    +Copy<T>,
+    +Drop<T>,
+    +Add<T>,
+    +Sub<T>,
+    +Mul<T>,
+    +Div<T>,
+    +Rem<T>,
+    +PartialEq<T>
 >(
     mut base: T, mut exp: T
 ) -> T {
-    let mut ans = TOneable::one();
+    let mut ans = One::one();
     loop {
         if exp.is_zero() {
             break ans;
         }
-        let two = TOneable::one() + TOneable::one();
+        let two = One::one() + One::one();
         let mm = exp % two;
-        if mm == TOneable::one() {
+        if mm == One::one() {
             ans = ans * base;
-            exp = exp - TOneable::one();
+            exp = exp - One::one();
         } else {
             base = base * base;
             exp = exp / two;

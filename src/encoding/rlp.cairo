@@ -5,7 +5,7 @@ use cairo_lib::utils::array::span_contains;
 // @notice Enum with all possible RLP types
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 #[derive(Drop, PartialEq)]
-enum RLPType {
+pub enum RLPType {
     String: (),
     StringShort: (),
     StringLong: (),
@@ -14,7 +14,7 @@ enum RLPType {
 }
 
 #[generate_trait]
-impl RLPTypeImpl of RLPTypeTrait {
+pub impl RLPTypeImpl of RLPTypeTrait {
     // @notice Returns RLPType from the leading byte
     // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
     // @param byte Leading byte
@@ -38,7 +38,7 @@ impl RLPTypeImpl of RLPTypeTrait {
 
 // @notice Represent a RLP item
 #[derive(Drop, PartialEq)]
-enum RLPItem {
+pub enum RLPItem {
     Bytes: (Words64, usize),
     // Should be Span<RLPItem> to allow for any depth/recursion, not yet supported by the compiler
     List: Span<(Words64, usize)>
@@ -48,7 +48,7 @@ enum RLPItem {
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 // @param input RLP encoded input, in little endian 64 bits words
 // @return Result with RLPItem and size of the encoded item
-fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
+pub fn rlp_decode(input: Words64) -> Result<(RLPItem, usize), felt252> {
     // It's guaranteed to fid in 32 bits, as we are masking with 0xff
     let prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
 
@@ -135,14 +135,14 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usiz
                 total_len -= decoded_len;
             },
             RLPItem::List(_) => {
-                panic_with_felt252('Recursive list not supported');
+                panic!("Recursive list not supported");
             }
         }
         i += decoded_len;
     }
 }
 
-fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, usize), felt252> {
+pub fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, usize), felt252> {
     let mut output = ArrayTrait::new();
     let mut lazy_index = 0;
 
@@ -219,10 +219,10 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
                 (1 + len_len, len.into())
             },
             RLPType::ListShort(()) => {
-                panic_with_felt252('Recursive list not supported')
+                panic!("Recursive list not supported")
             },
             RLPType::ListLong(()) => {
-                panic_with_felt252('Recursive list not supported')
+                panic!("Recursive list not supported")
             }
         };
 

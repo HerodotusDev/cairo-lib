@@ -1,8 +1,8 @@
 // @notice Represents a single byte
-type Byte = u8;
+pub type Byte = u8;
 
 #[generate_trait]
-impl ByteImpl of ByteTrait {
+pub impl ByteImpl of ByteTrait {
     // @notice Extracts the high and low nibbles from a byte
     // @return (high, low), example: 0xab -> (0xa, 0xb)
     fn extract_nibbles(self: Byte) -> (Byte, Byte) {

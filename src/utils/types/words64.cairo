@@ -4,10 +4,10 @@ use cairo_lib::utils::math::pow;
 // @notice Represents a span of 64 bit words
 // @dev In many cases it's expected that the words are in little endian, but the overall order is big endian
 // Example: 0x34957c6d8a83f9cff74578dea9 is represented as [0xcff9838a6d7c9534, 0xa9de7845f7]
-type Words64 = Span<u64>;
+pub type Words64 = Span<u64>;
 
 #[generate_trait]
-impl Words64Impl of Words64Trait {
+pub impl Words64Impl of Words64Trait {
     // @notice Converts little endian 64 bit words to a big endian u256
     // @param bytes_used The number of bytes used
     // @return The big endian u256 representation of the words
@@ -195,7 +195,7 @@ impl Words64Impl of Words64Trait {
 // @param val The value to check
 // @return The number of bytes used to represent the value
 // Example: 0xabcd -> 2
-fn bytes_used_u64(val: u64) -> usize {
+pub fn bytes_used_u64(val: u64) -> usize {
     if val < 4294967296 { // 256^4
         if val < 65536 { // 256^2
             if val < 256 { // 256^1
@@ -229,7 +229,7 @@ fn bytes_used_u64(val: u64) -> usize {
 // @param input The value to reverse
 // @param significant_bytes The number of bytes to reverse
 // @return The reversed value
-fn reverse_endianness_u64(input: u64, significant_bytes: Option<u32>) -> u64 {
+pub fn reverse_endianness_u64(input: u64, significant_bytes: Option<u32>) -> u64 {
     let sb = match significant_bytes {
         Option::Some(x) => x,
         Option::None(()) => 8
@@ -250,7 +250,7 @@ fn reverse_endianness_u64(input: u64, significant_bytes: Option<u32>) -> u64 {
 }
 
 // This should be replaced with a "dw" equivalent when the compiler supports it
-fn pow2(pow: usize) -> u64 {
+pub fn pow2(pow: usize) -> u64 {
     if pow == 0 {
         return 0x1;
     } else if pow == 1 {

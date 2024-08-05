@@ -3,10 +3,10 @@ use cairo_lib::data_structures::mmr::utils::compute_root;
 use cairo_lib::utils::array::span_contains;
 
 // @notice Represents the peaks of the MMR
-type Peaks = Span<felt252>;
+pub type Peaks = Span<felt252>;
 
 #[generate_trait]
-impl PeaksImpl of PeaksTrait {
+pub impl PeaksImpl of PeaksTrait {
     // @notice Bags the peaks (hashing them together)
     // @return The bagged peaks
     fn bag(self: Peaks) -> felt252 {

@@ -1,28 +1,29 @@
 use cairo_lib::utils::math::pow;
 use cairo_lib::utils::types::byte::Byte;
-use math::Oneable;
+use core::num::traits::{Zero, One};
+
 
 // @notice Bitwise left shift
 // @param num The number to be shifted
 // @param shift The number of bits to shift
 // @return The left shifted number
-fn left_shift<
+pub fn left_shift<
     T,
-    impl TZeroable: Zeroable<T>,
-    impl TAdd: Add<T>,
-    impl TSub: Sub<T>,
-    impl TMul: Mul<T>,
-    impl TOneable: Oneable<T>,
-    impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>,
-    impl TDiv: Div<T>,
-    impl TRem: Rem<T>,
-    impl TPartialEq: PartialEq<T>,
-    impl TPartialOrd: PartialOrd<T>
+    +Zero<T>,
+    +Add<T>,
+    +Sub<T>,
+    +Mul<T>,
+    +One<T>,
+    +Copy<T>,
+    +Drop<T>,
+    +Div<T>,
+    +Rem<T>,
+    +PartialEq<T>,
+    +PartialOrd<T>
 >(
     num: T, shift: T
 ) -> T {
-    let two = TOneable::one() + TOneable::one();
+    let two = One::one() + One::one();
     num * pow(two, shift)
 }
 
@@ -30,54 +31,54 @@ fn left_shift<
 // @param num The number to be shifted
 // @param shift The number of bits to shift
 // @return The right shifted number
-fn right_shift<
+pub fn right_shift<
     T,
-    impl TZeroable: Zeroable<T>,
-    impl TOneable: Oneable<T>,
-    impl TAdd: Add<T>,
-    impl TSub: Sub<T>,
-    impl TDiv: Div<T>,
-    impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    +Zero<T>,
+    +One<T>,
+    +Add<T>,
+    +Sub<T>,
+    +Div<T>,
+    +Copy<T>,
+    +Drop<T>
 >(
     num: T, shift: T
 ) -> T {
     let mut num = num;
     let mut shift = shift;
-    let two = TOneable::one() + TOneable::one();
+    let two = One::one() + One::one();
 
     loop {
         if shift.is_zero() {
             break num;
         }
         num = num / two;
-        shift = shift - TOneable::one();
+        shift = shift - One::one();
     }
 }
 
 // @notice Bit length of a number
 // @param num The number to be measured
 // @return The number of bits in the number
-fn bit_length<
+pub fn bit_length<
     T,
-    impl TZeroable: Zeroable<T>,
-    impl TOneable: Oneable<T>,
-    impl TAddImpl: Add<T>,
-    impl TDiv: Div<T>,
-    impl TCopy: Copy<T>,
-    impl TDrop: Drop<T>
+    +Zero<T>,
+    +One<T>,
+    +Add<T>,
+    +Div<T>,
+    +Copy<T>,
+    +Drop<T>
 >(
     num: T
 ) -> T {
-    let mut bit_position = TZeroable::zero();
+    let mut bit_position = Zero::zero();
     let mut cur_n = num;
-    let two = TOneable::one() + TOneable::one();
+    let two = One::one() + One::one();
 
     loop {
         if cur_n.is_zero() {
             break ();
         };
-        bit_position = bit_position + TOneable::one();
+        bit_position = bit_position + One::one();
         cur_n = cur_n / two;
     };
     bit_position
@@ -86,7 +87,7 @@ fn bit_length<
 // @notice Reverse the endianness of a u256
 // @param num The number to be reversed
 // @return The reversed number
-fn reverse_endianness_u256(num: u256) -> u256 {
+pub fn reverse_endianness_u256(num: u256) -> u256 {
     let pow2_8 = 0x100;
     let pow2_16 = 0x10000;
     let pow2_32 = 0x100000000;

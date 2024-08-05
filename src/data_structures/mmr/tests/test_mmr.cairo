@@ -22,7 +22,7 @@ fn test_append_initial() {
     let mut mmr: MMR = Default::default();
 
     let peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    mmr.append(*elems.at(0), peaks).unwrap();
 
     let root = PoseidonHasher::hash_double(1, *elems.at(0));
     assert(mmr.last_pos == 1, 'Wrong last_pos');
@@ -36,10 +36,10 @@ fn test_append_1() {
     let mut mmr: MMR = Default::default();
 
     let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    mmr.append(*elems.at(0), peaks).unwrap();
 
     peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    mmr.append(*elems.at(1), peaks).unwrap();
 
     let root = PoseidonHasher::hash_double(3, *elems.at(2));
     assert(mmr.last_pos == 3, 'Wrong last_pos');
@@ -53,13 +53,13 @@ fn test_append_2() {
     let mut mmr: MMR = Default::default();
 
     let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    mmr.append(*elems.at(0), peaks).unwrap();
 
     peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    mmr.append(*elems.at(1), peaks).unwrap();
 
     peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    mmr.append(*elems.at(3), peaks).unwrap();
 
     let root = PoseidonHasher::hash_double(
         4, PoseidonHasher::hash_double(*elems.at(2), *elems.at(3))
@@ -75,16 +75,16 @@ fn test_append_3() {
     let mut mmr: MMR = Default::default();
 
     let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    mmr.append(*elems.at(0), peaks).unwrap();
 
     peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    mmr.append(*elems.at(1), peaks).unwrap();
 
     peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    mmr.append(*elems.at(3), peaks).unwrap();
 
     peaks = array![*elems.at(2), *elems.at(3)].span();
-    mmr.append(*elems.at(4), peaks);
+    mmr.append(*elems.at(4), peaks).unwrap();
 
     let root = PoseidonHasher::hash_double(7, *elems.at(6));
     assert(mmr.last_pos == 7, 'Wrong last_pos');
@@ -98,19 +98,19 @@ fn test_append_4() {
     let mut mmr: MMR = Default::default();
 
     let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    mmr.append(*elems.at(0), peaks).unwrap();
 
     peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    mmr.append(*elems.at(1), peaks).unwrap();
 
     peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    mmr.append(*elems.at(3), peaks).unwrap();
 
     peaks = array![*elems.at(2), *elems.at(3)].span();
-    mmr.append(*elems.at(4), peaks);
+    mmr.append(*elems.at(4), peaks).unwrap();
 
     peaks = array![*elems.at(6)].span();
-    mmr.append(*elems.at(7), peaks);
+    mmr.append(*elems.at(7), peaks).unwrap();
 
     let root = PoseidonHasher::hash_double(
         8, PoseidonHasher::hash_double(*elems.at(6), *elems.at(7))
@@ -126,13 +126,13 @@ fn test_append_wrong_peaks() {
     let mut mmr: MMR = Default::default();
 
     let mut peaks = array![].span();
-    mmr.append(*elems.at(0), peaks);
+    mmr.append(*elems.at(0), peaks).unwrap();
 
     peaks = array![*elems.at(0)].span();
-    mmr.append(*elems.at(1), peaks);
+    mmr.append(*elems.at(1), peaks).unwrap();
 
     peaks = array![*elems.at(2)].span();
-    mmr.append(*elems.at(3), peaks);
+    mmr.append(*elems.at(3), peaks).unwrap();
 
     peaks = array![*elems.at(2), *elems.at(4)].span();
     let res = mmr.append(*elems.at(4), peaks);
@@ -240,7 +240,7 @@ fn test_attack_forge_peaks() {
 
     // add the next element normally to mmr_real and get the root;
     let peaks_real = array![*elems.at(6), *elems.at(7)].span();
-    mmr_real.append(9, peaks_real);
+    mmr_real.append(9, peaks_real).unwrap();
 
     // add the next element abnormally to mmr_real and get the root;
     let forged_peak = PoseidonHasher::hash_double(*elems.at(6), *elems.at(7));

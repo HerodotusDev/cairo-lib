@@ -1,4 +1,4 @@
-mod rlp;
+pub mod rlp;
 
 #[cfg(test)]
 mod tests;

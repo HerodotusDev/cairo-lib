@@ -7,12 +7,12 @@ use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // @notice Merkle Mountatin Range struct
 #[derive(Drop, Clone, Serde, starknet::Store)]
-struct MMR {
-    root: felt252,
-    last_pos: usize
+pub struct MMR {
+    pub root: felt252,
+    pub last_pos: usize
 }
 
-impl MMRDefault of Default<MMR> {
+pub impl MMRDefault of Default<MMR> {
     // @return MMR with last_pos 0 and root poseidon(0, 0)
     #[inline(always)]
     fn default() -> MMR {
@@ -21,7 +21,7 @@ impl MMRDefault of Default<MMR> {
 }
 
 #[generate_trait]
-impl MMRImpl of MMRTrait {
+pub impl MMRImpl of MMRTrait {
     // @notice Creates a new MMR
     // @param root The root of the MMR
     // @param last_pos The last position in the MMR

@@ -1,5 +1,5 @@
-mod eth_mpt;
-mod mmr;
+pub mod eth_mpt;
+pub mod mmr;
 
 #[cfg(test)]
 mod tests;
