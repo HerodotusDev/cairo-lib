@@ -6,7 +6,7 @@ use cairo_lib::data_structures::mmr::utils::{
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 
 // @notice Merkle Mountatin Range struct
-#[derive(Drop, Clone, Serde)]
+#[derive(Drop, Clone, Serde, starknet::Store)]
 pub struct MMR {
     pub root: felt252,
     pub last_pos: usize
