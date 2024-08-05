@@ -1,5 +1,5 @@
 // @notice A common interface for all hashers
-trait Hasher<T, V> {
+pub trait Hasher<T, V> {
     // @notice Hashes a single value
     // @param a The value to hash
     // @return The hash of the value

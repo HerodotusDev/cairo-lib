@@ -7,11 +7,11 @@ use cairo_lib::utils::math::pow;
 
 // @notice Ethereum Merkle Patricia Trie struct
 #[derive(Drop)]
-struct MPT {
+pub struct MPT {
     root: u256
 }
 
-impl MPTDefault of Default<MPT> {
+pub impl MPTDefault of Default<MPT> {
     // @return MPT with root 0
     fn default() -> MPT {
         MPTTrait::new(0)
@@ -20,7 +20,7 @@ impl MPTDefault of Default<MPT> {
 
 // @notice Represents a node in the MPT
 #[derive(Drop, PartialEq)]
-enum MPTNode {
+pub enum MPTNode {
     // @param hashes 16 hashes of children
     // @param value value of the node
     Branch: (Span<Words64>, Words64),
@@ -39,7 +39,7 @@ enum MPTNode {
 }
 
 #[generate_trait]
-impl MPTImpl of MPTTrait {
+pub impl MPTImpl of MPTTrait {
     // @notice Create a new MPT with a root
     // @param root Root of the MPT
     // @return MPT with the given root
@@ -76,7 +76,7 @@ impl MPTImpl of MPTTrait {
             let (decoded, rlp_byte_len) = if proof_index != proof_len - 1 && node.len() > 9 {
                 let current_nibble = (key / key_pow2) & 0xf;
                 // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
-                match MPTTrait::lazy_rlp_decode_branch_node(
+                match Self::lazy_rlp_decode_branch_node(
                     node, current_nibble.try_into().unwrap()
                 ) {
                     Result::Ok(d) => d,
@@ -85,7 +85,7 @@ impl MPTImpl of MPTTrait {
                     }
                 }
             } else {
-                match MPTTrait::decode_rlp_node(node) {
+                match Self::decode_rlp_node(node) {
                     Result::Ok(d) => d,
                     Result::Err(e) => {
                         break Result::Err(e);
@@ -98,7 +98,7 @@ impl MPTImpl of MPTTrait {
                 last_word_byte_len = 8;
             }
 
-            let hash = MPTTrait::hash_rlp_node(node, last_word_byte_len);
+            let hash = Self::hash_rlp_node(node, last_word_byte_len);
             assert(hash == current_hash, 'Element not matching');
 
             match decoded {

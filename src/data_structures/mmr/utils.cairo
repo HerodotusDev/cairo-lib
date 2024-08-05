@@ -6,7 +6,7 @@ use cairo_lib::data_structures::mmr::peaks::{Peaks, PeaksTrait};
 // @notice Computes the height of a node in the MMR
 // @param index The index of the node
 // @return The height of the node
-fn get_height(index: usize) -> usize {
+pub fn get_height(index: usize) -> usize {
     let bits = bit_length(index);
     let ones = pow(2, bits) - 1;
 
@@ -22,7 +22,7 @@ fn get_height(index: usize) -> usize {
 // @param last_pos The position of the last node in the MMR
 // @param peaks The peaks of the MMR
 // @return The root of the MMR
-fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
+pub fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
     let bag = peaks.bag();
     PoseidonHasher::hash_double(last_pos, bag)
 }
@@ -30,7 +30,7 @@ fn compute_root(last_pos: felt252, peaks: Peaks) -> felt252 {
 // @notice Count the number of bits set to 1 in a 256-bit unsigned integer
 // @param arg The 256-bit unsigned integer
 // @return The number of bits set to 1 in n
-fn count_ones(arg: u256) -> u256 {
+pub fn count_ones(arg: u256) -> u256 {
     let mut n = arg;
     let mut count = 0;
     loop {
@@ -45,14 +45,14 @@ fn count_ones(arg: u256) -> u256 {
 // @notice Convert a leaf index to an Merkle Mountain Range tree index
 // @param n The leaf index
 // @return The MMR index
-fn leaf_index_to_mmr_index(n: u256) -> u256 {
+pub fn leaf_index_to_mmr_index(n: u256) -> u256 {
     2 * n - 1 - count_ones(n - 1)
 }
 
 // @notice Convert a Merkle Mountain Range tree size to number of leaves
 // @param n MMR size
 // @result Number of leaves
-fn mmr_size_to_leaf_count(n: u256) -> u256 {
+pub fn mmr_size_to_leaf_count(n: u256) -> u256 {
     let mut mmr_size = n;
     let bits = bit_length(mmr_size + 1);
     let mut mountain_leaf_count = pow(2, bits - 1);
@@ -73,7 +73,7 @@ fn mmr_size_to_leaf_count(n: u256) -> u256 {
 // @notice Convert a number of leaves to number of peaks
 // @param leaf_count Number of leaves
 // @return Number of peaks
-fn leaf_count_to_peaks_count(leaf_count: u256) -> u256 {
+pub fn leaf_count_to_peaks_count(leaf_count: u256) -> u256 {
     count_ones(leaf_count)
 }
 
@@ -81,7 +81,7 @@ fn leaf_count_to_peaks_count(leaf_count: u256) -> u256 {
 // @param elements_count The size of the MMR (number of elements in the MMR)
 // @param element_index The index of the element in the MMR
 // @return (peak index, peak height)
-fn get_peak_info(elements_count: u32, element_index: u32) -> (u32, u32) {
+pub fn get_peak_info(elements_count: u32, element_index: u32) -> (u32, u32) {
     let mut elements_count = elements_count;
     let mut element_index = element_index;
 

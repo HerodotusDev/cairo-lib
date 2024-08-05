@@ -1,6 +1,5 @@
 use cairo_lib::data_structures::eth_mpt::{MPTNode, MPTTrait};
 use cairo_lib::utils::types::words64::{Words64, Words64Trait};
-use debug::PrintTrait;
 
 #[test]
 #[available_gas(9999999999)]
@@ -113,13 +112,13 @@ fn test_decode_rlp_node_branch() {
             };
         },
         MPTNode::LazyBranch(_) => {
-            panic_with_felt252('Branch node differs');
+            panic!("Branch node differs");
         },
         MPTNode::Extension(_) => {
-            panic_with_felt252('Branch node differs');
+            panic!("Branch node differs");
         },
         MPTNode::Leaf(_) => {
-            panic_with_felt252('Branch node differs');
+            panic!("Branch node differs");
         },
     }
 }
