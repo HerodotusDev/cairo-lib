@@ -98,9 +98,6 @@ impl Words64Impl of Words64Trait {
     // start: 5 | len: 17
     // output: [0x3295abcdef123456, 0x2576758493478594, 0x54]
     fn slice_le(self: Words64, start: usize, len: usize) -> Words64 {
-        if len == 0 {
-            return ArrayTrait::new().span();
-        }
         let (q, n_ending_bytes) = DivRem::div_rem(
             len, TryInto::<usize, NonZero<usize>>::try_into(8).unwrap()
         );
