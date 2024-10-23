@@ -1,7 +1,6 @@
 use cairo_lib::utils::types::words64::{Words64, Words64Trait, reverse_endianness_u64, pow2};
 use cairo_lib::utils::types::byte::Byte;
 use cairo_lib::utils::array::span_contains;
-
 // @notice Enum with all possible RLP types
 // For more info: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
 #[derive(Drop, PartialEq)]
@@ -119,24 +118,22 @@ fn rlp_decode_list(ref input: Words64, len: usize) -> Result<Span<(Words64, usiz
 
         let (decoded, decoded_len) = match rlp_decode(input) {
             Result::Ok((d, dl)) => (d, dl),
-            Result::Err(e) => {
-                break Result::Err(e);
-            }
+            Result::Err(e) => { break Result::Err(e); }
         };
         match decoded {
             RLPItem::Bytes(b) => {
                 output.append(b);
-                let word = decoded_len / 8;
-                let reversed = 7 - (decoded_len % 8);
+                let (word, offset) = DivRem::div_rem(
+                    decoded_len, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+                );
+                let reversed = 7 - offset;
                 let next_start = word * 8 + reversed;
                 if (total_len - decoded_len != 0) {
                     input = input.slice_le(next_start, total_len - decoded_len);
                 }
                 total_len -= decoded_len;
             },
-            RLPItem::List(_) => {
-                panic_with_felt252('Recursive list not supported');
-            }
+            RLPItem::List(_) => { panic_with_felt252('Recursive list not supported'); }
         }
         i += decoded_len;
     }
@@ -149,15 +146,9 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
     let list_prefix: u32 = (*input.at(0) & 0xff).try_into().unwrap();
     let list_type = RLPTypeTrait::from_byte(list_prefix.try_into().unwrap()).unwrap();
     let (mut current_input_index, len) = match list_type {
-        RLPType::String(()) => {
-            return Result::Err('Not a list');
-        },
-        RLPType::StringShort(()) => {
-            return Result::Err('Not a list');
-        },
-        RLPType::StringLong(()) => {
-            return Result::Err('Not a list');
-        },
+        RLPType::String(()) => { return Result::Err('Not a list'); },
+        RLPType::StringShort(()) => { return Result::Err('Not a list'); },
+        RLPType::StringLong(()) => { return Result::Err('Not a list'); },
         RLPType::ListShort(()) => (1, list_prefix - 0xc0),
         RLPType::ListLong(()) => {
             let len_len = list_prefix - 0xf7;
@@ -184,16 +175,16 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
             break Result::Err('Too many items to decode');
         }
 
-        let current_word = current_input_index / 8;
+        let (current_word, current_word_offset) = DivRem::div_rem(
+            current_input_index, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+        );
 
-        let pow2_shift = pow2((current_input_index % 8) * 8);
+        let pow2_shift = pow2(current_word_offset * 8);
         let prefix = (*input.at(current_word) / pow2_shift) & 0xff;
 
         let rlp_type = RLPTypeTrait::from_byte(prefix.try_into().unwrap()).unwrap();
         let (item_start_skip, item_len) = match rlp_type {
-            RLPType::String(()) => {
-                (0, 1)
-            },
+            RLPType::String(()) => { (0, 1) },
             RLPType::StringShort(()) => {
                 let len = prefix - 0x80;
                 (1, len)
@@ -201,8 +192,10 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
             RLPType::StringLong(()) => {
                 let len_len = prefix - 0xb7;
 
-                let current_word = (current_input_index + 1) / 8;
-                let current_word_offset = 7 - ((current_input_index + 1) % 8);
+                let (current_word, offset) = DivRem::div_rem(
+                    current_input_index + 1, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+                );
+                let current_word_offset = 7 - offset;
 
                 let len_span = input
                     .slice_le(current_word * 8 + current_word_offset, len_len.try_into().unwrap());
@@ -218,18 +211,16 @@ fn rlp_decode_list_lazy(input: Words64, lazy: Span<usize>) -> Result<(RLPItem, u
 
                 (1 + len_len, len.into())
             },
-            RLPType::ListShort(()) => {
-                panic_with_felt252('Recursive list not supported')
-            },
-            RLPType::ListLong(()) => {
-                panic_with_felt252('Recursive list not supported')
-            }
+            RLPType::ListShort(()) => { panic_with_felt252('Recursive list not supported') },
+            RLPType::ListLong(()) => { panic_with_felt252('Recursive list not supported') }
         };
 
         current_input_index += item_start_skip.try_into().unwrap();
         if span_contains(lazy, lazy_index) {
-            let current_word = current_input_index / 8;
-            let current_word_offset = 7 - (current_input_index % 8);
+            let (current_word, offset) = DivRem::div_rem(
+                current_input_index, TryInto::<u32, NonZero<u32>>::try_into(8).unwrap()
+            );
+            let current_word_offset = 7 - offset;
             let start = current_word * 8 + current_word_offset;
 
             let item_len = item_len.try_into().unwrap();

@@ -75,21 +75,18 @@ impl MPTImpl of MPTTrait {
             // If it's not the last node and more than 9 words, it must be a branch node
             let (decoded, rlp_byte_len) = if proof_index != proof_len - 1 && node.len() > 9 {
                 let current_nibble = (key / key_pow2) & 0xf;
-                // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
+                // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is
+                // always a nibble
                 match MPTTrait::lazy_rlp_decode_branch_node(
                     node, current_nibble.try_into().unwrap()
                 ) {
                     Result::Ok(d) => d,
-                    Result::Err(e) => {
-                        break Result::Err(e);
-                    }
+                    Result::Err(e) => { break Result::Err(e); }
                 }
             } else {
                 match MPTTrait::decode_rlp_node(node) {
                     Result::Ok(d) => d,
-                    Result::Err(e) => {
-                        break Result::Err(e);
-                    }
+                    Result::Err(e) => { break Result::Err(e); }
                 }
             };
 
@@ -111,17 +108,16 @@ impl MPTImpl of MPTTrait {
                     }
 
                     let current_nibble = (key / key_pow2) & 0xf;
-                    // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is always a nibble
+                    // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is
+                    // always a nibble
                     let current_hash_words = *nibbles.at(current_nibble.try_into().unwrap());
                     current_hash =
                         if current_hash_words.len() == 0 {
                             break Result::Ok(array![].span());
                         } else {
-                            match current_hash_words.as_u256_le(32) {
+                            match current_hash_words.as_u256_le() {
                                 Result::Ok(h) => h,
-                                Result::Err(_) => {
-                                    break Result::Err('Invalid hash');
-                                }
+                                Result::Err(_) => { break Result::Err('Invalid hash'); }
                             }
                         };
                     key_pow2 = key_pow2 / 16;
@@ -192,9 +188,7 @@ impl MPTImpl of MPTTrait {
                             }
                             current_hash = next_hash;
                         },
-                        Result::Err(e) => {
-                            break Result::Err(e);
-                        }
+                        Result::Err(e) => { break Result::Err(e); }
                     }
                 },
                 MPTNode::Leaf((
@@ -277,21 +271,22 @@ impl MPTImpl of MPTTrait {
                 } else if len == 2 {
                     let (first, first_len) = *l.at(0);
                     let (second, _) = *l.at(1);
-                    // Unwrap impossible to fail, as we are making with 0xff, meaning the result always fits in a byte
+                    // Unwrap impossible to fail, as we are making with 0xff, meaning the result
+                    // always fits in a byte
                     let prefix_byte: Byte = (*first.at(0) & 0xff).try_into().unwrap();
                     let (prefix, _) = prefix_byte.extract_nibbles();
 
                     let n_nibbles = (first_len * 2) - 1;
 
                     if prefix == 0 {
-                        match second.as_u256_le(32) {
+                        match second.as_u256_le() {
                             Result::Ok(n) => Result::Ok(
                                 (MPTNode::Extension((first, n, 2, n_nibbles - 1)), rlp_byte_len)
                             ),
                             Result::Err(_) => Result::Err('Invalid next node')
                         }
                     } else if prefix == 1 {
-                        match second.as_u256_le(32) {
+                        match second.as_u256_le() {
                             Result::Ok(n) => Result::Ok(
                                 (MPTNode::Extension((first, n, 1, n_nibbles)), rlp_byte_len)
                             ),
@@ -322,7 +317,7 @@ impl MPTImpl of MPTTrait {
             RLPItem::Bytes(_) => Result::Err('Invalid RLP for node'),
             RLPItem::List(l) => {
                 let (hash_words, _) = *l.at(0);
-                match hash_words.as_u256_le(32) {
+                match hash_words.as_u256_le() {
                     Result::Ok(h) => Result::Ok((MPTNode::LazyBranch(h), rlp_byte_len)),
                     Result::Err(_) => Result::Err('Invalid hash')
                 }
