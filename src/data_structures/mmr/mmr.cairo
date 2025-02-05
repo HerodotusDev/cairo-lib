@@ -91,7 +91,7 @@ impl MMRImpl of MMRTrait {
     // @return Result with true if the proof is valid, false otherwise
     fn verify_proof(
         self: @MMR, index: MmrSize, hash: MmrElement, peaks: Peaks, proof: Proof
-    ) -> Result<bool, felt252> {
+    ) -> Result<(), felt252> {
         let leaf_count = mmr_size_to_leaf_count(*self.last_pos);
         if leaf_count_to_peaks_count(leaf_count) != peaks.len().into() {
             return Result::Err('Invalid peaks count');
@@ -103,11 +103,14 @@ impl MMRImpl of MMRTrait {
         let (peak_index, peak_height) = get_peak_info(*self.last_pos, index);
 
         if proof.len() != peak_height {
-            return Result::Ok(false);
+            return Result::Err('Invalid peaks');
         }
 
         let peak = proof.compute_peak(index, hash);
 
-        Result::Ok(*peaks.at(peak_index) == peak)
+        if *peaks.at(peak_index) != peak {
+            return Result::Err('Invalid proof');
+        }
+        Result::Ok(())
     }
 }
