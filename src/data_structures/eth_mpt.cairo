@@ -77,14 +77,14 @@ impl MPTImpl of MPTTrait {
                 let current_nibble = (key / key_pow2) & 0xf;
                 // Unwrap impossible to fail, as we are masking with 0xf, meaning the result is
                 // always a nibble
-                match MPTTrait::lazy_rlp_decode_branch_node(
+                match Self::lazy_rlp_decode_branch_node(
                     node, current_nibble.try_into().unwrap()
                 ) {
                     Result::Ok(d) => d,
                     Result::Err(e) => { break Result::Err(e); }
                 }
             } else {
-                match MPTTrait::decode_rlp_node(node) {
+                match Self::decode_rlp_node(node) {
                     Result::Ok(d) => d,
                     Result::Err(e) => { break Result::Err(e); }
                 }
@@ -95,7 +95,7 @@ impl MPTImpl of MPTTrait {
                 last_word_byte_len = 8;
             }
 
-            let hash = MPTTrait::hash_rlp_node(node, last_word_byte_len);
+            let hash = Self::hash_rlp_node(node, last_word_byte_len);
             assert(hash == current_hash, 'Element not matching');
 
             match decoded {
