@@ -1,7 +1,9 @@
-![](/banner.png)
-
 # `cairo-lib`: Comprehensive Library for Cairo 🐺
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/HerodotusDev/cairo-lib)
 [![CI](https://github.com/HerodotusDev/cairo-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/HerodotusDev/cairo-lib/actions/workflows/ci.yml)
+
+![](/banner.png)
 
 Welcome to `cairo-lib` – a comprehensive library for the Cairo language. This library provides a suite of tools to supercharge your Cairo development experience. Inspired by [Alexandria](https://github.com/keep-starknet-strange/alexandria).
 
