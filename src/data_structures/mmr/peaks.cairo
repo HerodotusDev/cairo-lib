@@ -1,15 +1,16 @@
 use cairo_lib::hashing::poseidon::PoseidonHasher;
 use cairo_lib::data_structures::mmr::utils::compute_root;
+use cairo_lib::data_structures::mmr::mmr::{MmrSize, MmrElement};
 use cairo_lib::utils::array::span_contains;
 
 // @notice Represents the peaks of the MMR
-type Peaks = Span<felt252>;
+type Peaks = Span<MmrElement>;
 
 #[generate_trait]
 impl PeaksImpl of PeaksTrait {
     // @notice Bags the peaks (hashing them together)
     // @return The bagged peaks
-    fn bag(self: Peaks) -> felt252 {
+    fn bag(self: Peaks) -> MmrElement {
         if self.is_empty() {
             return 0;
         }
@@ -35,16 +36,8 @@ impl PeaksImpl of PeaksTrait {
     // @param last_pos The last position in the MMR
     // @param root The root of the MMR
     // @return True if the peaks are valid
-    fn valid(self: Peaks, last_pos: usize, root: felt252) -> bool {
-        let computed_root = compute_root(last_pos.into(), self);
+    fn valid(self: Peaks, last_pos: MmrSize, root: MmrElement) -> bool {
+        let computed_root = compute_root(last_pos, self);
         computed_root == root
-    }
-
-    // @notice Checks if the peaks contain a peak
-    // @param peak The peak to check inclusion
-    // @return True if the peaks contain the peak
-    #[inline(always)]
-    fn contains_peak(self: Peaks, peak: felt252) -> bool {
-        span_contains(self, peak)
     }
 }

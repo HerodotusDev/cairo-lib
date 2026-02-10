@@ -19,7 +19,6 @@ fn test_slice_words64_le_multiple_words_not_full() {
 fn test_slice_words64_le_multiple_words_full() {
     let val: Words64 = array![0xabcdef1234567890, 0x7584934785943295, 0x48542576].span();
 
-    let gas = testing::get_available_gas();
     let res = val.slice_le(4, 16);
     assert(res.len() == 2, 'Wrong len');
     assert(*res.at(0) == 0x943295abcdef1234, 'Wrong value at 0');
@@ -94,34 +93,16 @@ fn test_as_u256_le_full() {
         .span();
 
     let expected = 0x09898DA43A5D35F4B6F239256FF310F9480829EBCEE54BC42E8B632605E21673;
-    assert(words.as_u256_le(32).unwrap() == expected, 'Wrong value');
+    assert(words.as_u256_le().unwrap() == expected, 'Wrong value');
 }
 
 #[test]
 #[available_gas(99999999)]
 fn test_as_u256_le_not_full() {
-    let words = array![0x2e8b632605e21673, 0x480829ebcee54bc4, 0xb6f2392a].span();
+    let words = array![0x2e8b632605e21673, 0x480829ebcee54bc4, 0xb6f239256ff310f9].span();
 
-    let expected: u256 = 0xB6F2392A480829EBCEE54BC42E8B632605E21673000000000000000000000000;
-    assert(words.as_u256_le(20).unwrap() == expected, 'Wrong value');
-}
-
-#[test]
-#[available_gas(99999999)]
-fn test_as_u256_le_not_full_start() {
-    let words = array![0x008b632605e20000, 0x480829ebcee54bc4, 0xb6f2392a].span();
-
-    let expected = 0xB6F2392A480829EBCEE54BC4008B632605E20000000000000000000000000000;
-    assert(words.as_u256_le(20).unwrap() == expected, 'Wrong value');
-}
-
-#[test]
-#[available_gas(99999999)]
-fn test_as_u256_le_not_full_end() {
-    let words = array![0x008b632605e20000, 0x480829ebcee54bc4, 0xb6f2392a].span();
-
-    let expected: u256 = 0x00B6F2392A480829EBCEE54BC4008B632605E200000000000000000000000000;
-    assert(words.as_u256_le(21).unwrap() == expected, 'Wrong value');
+    let expected = 0xB6F239256FF310F9480829EBCEE54BC42E8B632605E21673;
+    assert(words.as_u256_le().unwrap() == expected, 'Wrong value');
 }
 
 #[test]

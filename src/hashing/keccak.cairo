@@ -6,7 +6,8 @@ const EMPTY_KECCAK: u256 = 0x70A4855D04D8FA7B3B2782CA53B600E5C003C7DCB27D7E923C2
 // @notice Wrapper arround cairo_keccak that format the input for compatibility with EVM
 // @param words The input data, as a list of 64-bit little-endian words
 // @param last_word_bytes Number of bytes in the last word
-// @return The little endian keccak hash of the input, matching the output of the EVM's keccak256 opcode
+// @return The little endian keccak hash of the input, matching the output of the EVM's keccak256
+// opcode
 fn keccak_cairo_words64(words: Words64, last_word_bytes: usize) -> u256 {
     if words.is_empty() {
         return EMPTY_KECCAK;
